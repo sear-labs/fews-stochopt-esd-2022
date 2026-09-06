@@ -1,0 +1,266 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(gurobi)
+library(tidyverse)
+library(Matrix)
+library(viridis)
+```
+
+```{r}
+# This example formulates and solves the following simple LP model:
+#  maximize
+#        price*Area*y - cost (x) - cost (e)
+#  subject to
+#        mm/1000 *   Area       = x
+#             0.20*x*1000/Area = y + 2.000
+#            x * pump = e
+
+
+
+#mm water depth conversion to m mm / 1000 Area (ha) * 10000 = 10 * mm = m^3
+#cost per m^3 $5 / 1000 gal * 1 gal / 3.78541 L * 1000 L / 1 m^3 = $1.32 / m^3
+#https://todayshomeowner.com/calculating-lawn-irrigation-costs/
+#Wheat $200 / mton
+#https://markets.businessinsider.com/commodities/wheat-price
+#200 kWh / kL
+#https://www.pumpindustry.com.au/measuring-pumping-costs-for-electric-irrigation-pumps
+# $0.12 / kWh
+#Price $200 / ton * 10000 m^3 (1 ha) = $2,000,000 / kg * m^2
+model <- list()
+
+
+
+model$A          <- matrix(c(-1,2000,0,0,2000000,-1), nrow=2, byrow=T)
+model$obj        <- c(200,-13200,-0.12)
+model$modelsense <- 'max'
+model$rhs        <- c(400,0)
+model$sense      <- c('=', '=')
+model$ub         <- c(Inf,.6,Inf)
+
+result <- gurobi(model)
+
+#print(model$A)
+#print(result$objval)
+#print(result$x)
+
+print('model parameters:')
+model
+print('results:')
+result
+
+
+# Clear space
+rm(result, params, model)
+```
+```{r}
+# This example formulates and solves the following simple LP model:
+#  maximize
+#        price*Area*(-0.0002164*x^2+0.329x - 5.8556) - cost (x) - cost (e)
+#  subject to
+#        mm/1000 *   Area       = x
+#             0.20*x*1000/Area = y + 2.000
+#            x * pump = e
+
+
+
+#mm water depth conversion to m mm / 1000 Area (ha) * 10000 = 10 * mm = m^3
+#cost per m^3 $5 / 1000 gal * 1 gal / 3.78541 L * 1000 L / 1 m^3 = $1.32 / m^3
+#https://todayshomeowner.com/calculating-lawn-irrigation-costs/
+#Wheat $200 / mton
+#https://markets.businessinsider.com/commodities/wheat-price
+#200 kWh / kL
+#https://www.pumpindustry.com.au/measuring-pumping-costs-for-electric-irrigation-pumps
+# $0.12 / kWh
+model <- list()
+
+
+
+model$A          <- matrix(c(-1,0.20,0,0,200,-1), nrow=2, byrow=T)
+#model$Q     <- matrix(c(1,1,0,0,1,1,0,0,1), nrow=3, byrow=T)
+model$obj        <- c(200,1.32,0.12)
+model$modelsense <- 'max'
+model$rhs        <- c(2,0)
+model$sense      <- c('=', '=')
+model$ub         <- c(6,Inf,Inf)
+
+result <- gurobi(model)
+
+#print(model$A)
+#print(result$objval)
+#print(result$x)
+
+print('model parameters:')
+model
+print('results:')
+result
+
+
+# Clear space
+rm(result, params, model)
+```
+
+```{r}
+linear = function(x,p){3200*p - 500 - 7260*x}
+linear1 = function(x,c){812.8 - 500 + 2740*x - c*10000*x}
+p1 <- ggplot(data.frame(x=c(0, 0.4)), aes(x=x)) + 
+  stat_function(fun=linear, n = 1000, args = list(p = 0.25), aes(colour = '10 inches (0.25 meters)'))+
+  stat_function(fun=linear, n = 1000, args = list(p = 0.30), aes(colour = '12 inches'))+
+  stat_function(fun=linear, n = 1000, args = list(p = 0.35), aes(colour = '14 inches'))+
+  stat_function(fun=linear, n = 1000, args = list(p = 0.40), aes(colour = '16 inches'))+
+  stat_function(fun=linear, n = 1000, args = list(p = 0.45), aes(colour = '18 inches (0.45 meters)'))+
+  scale_color_viridis("Profit", discrete = TRUE, option = 'D') +
+  labs(x = 'Water Depth (m)')+
+  labs(y = 'Profit ($)')+
+  labs(title = 'Profit vs Depth of Water Linear Function (Cost of Water = $1/m^3)')+
+   ylim(-3000,1000)+
+  theme_minimal()
+  #scale_colour_manual("Preciptation Level", values = c("red", "blue", "green", "yellow", "brown"))
+
+p1
+
+ggsave('linear.png')
+
+p1a <- ggplot(data.frame(x=c(0, 0.4)), aes(x=x)) + 
+  stat_function(fun=linear1, n = 1000, args = list(c = 0.25), aes(colour = '$0.25/m^3'))+
+  stat_function(fun=linear1, n = 1000, args = list(c = 0.50), aes(colour = '$0.50/m^3'))+
+  stat_function(fun=linear1, n = 1000, args = list(c = 0.75), aes(colour = '$0.75/m^3'))+
+  stat_function(fun=linear1, n = 1000, args = list(c = 1), aes(colour = '$1.00/m^3'))+
+  stat_function(fun=linear1, n = 1000, args = list(c = 1.25), aes(colour = '$1.25/m^3'))+
+   scale_color_viridis("Profit", discrete = TRUE, option = 'D') +
+  labs(x = 'Water Depth (m)')+
+  labs(y = 'Profit ($)')+
+  labs(title = 'Profit vs Depth of Water Linear Function (Precipitation = 10 inches)')+
+   ylim(-3000,1000)+
+  theme_minimal()
+ 
+
+p1a
+
+
+ggsave('linear1.png')
+
+
+  
+  
+```
+
+```{r}
+
+quadratic = function(x,p){- 4368 * (x+p)^2 + 6580 * p - 3879*x - 1171 }
+quadratic1 = function(x,c){- 4368 * (x+0.254)^2 + 6580 * 0.254 + 6120*x - c*10000*x - 1171 }
+p2 <- ggplot(data.frame(x=c(0, 0.4)), aes(x=x)) + 
+  stat_function(fun=quadratic, n = 1000, args = list(p = 0.25), aes(colour = '10 inches (0.25 meters)'))+
+  stat_function(fun=quadratic, n = 1000, args = list(p = 0.30), aes(colour = '12 inches'))+
+  stat_function(fun=quadratic, n = 1000, args = list(p = 0.35), aes(colour = '14 inches'))+
+  stat_function(fun=quadratic, n = 1000, args = list(p = 0.40), aes(colour = '16 inches'))+
+  stat_function(fun=quadratic, n = 1000, args = list(p = 0.45), aes(colour = '18 inches (0.45 meters)'))+
+  scale_color_viridis("Profit", discrete = TRUE, option = 'D')+
+   labs(x = 'Water Depth (m)')+
+  labs(y = 'Profit ($)')+
+  labs(title = 'Profit vs Depth of Water Quadratic Function (Cost of Water = $1/m^3)')+
+  ylim(-3000,1000)+
+  theme_minimal()
+  #scale_colour_manual("Preciptation Level", values = c("red", "blue", "green", "yellow", "brown"))
+
+p2
+ggsave('quadratic.png')
+
+p2a <- ggplot(data.frame(x=c(0, 0.4)), aes(x=x)) + 
+  stat_function(fun=quadratic1, n = 1000, args = list(c = 0.25), aes(colour = '$0.25/m^3'))+
+  stat_function(fun=quadratic1, n = 1000, args = list(c = 0.50), aes(colour = '$0.50/m^3'))+
+  stat_function(fun=quadratic1, n = 1000, args = list(c = 0.75), aes(colour = '$0.75/m^3'))+
+  stat_function(fun=quadratic1, n = 1000, args = list(c = 1.00), aes(colour = '$1.00/m^3'))+
+  stat_function(fun=quadratic1, n = 1000, args = list(c = 1.25), aes(colour = '$1.25/m^3'))+
+  scale_color_viridis("Profit", discrete = TRUE, option = 'D')+
+   labs(x = 'Water Depth (m)')+
+  labs(y = 'Profit ($)')+
+  labs(title = 'Profit vs Depth of Water Quadratic Function (Precipatation = 10 inches) ')+
+  ylim(-3000,1000)+
+  theme_minimal()
+  #scale_colour_manual("Preciptation Level", values = c("red", "blue", "green", "yellow", "brown"))
+
+p2a
+ggsave('quadratic1.png')
+  
+
+```
+
+```{r}
+#25,625 – 21840 * x ^ 2 – 30,495 *x  - 5125 * F + 4368 * F * x^2 + 6099 * F * x
+
+z3 = function(x, a){a*(216.4  - 4368 * x^2 - 6099*x)}
+x <- rep(seq(0,0.5,0.005), each = 101)
+
+#Checks length of f to determine how much to put in the each for x, similiar function for x to f
+length(seq(-20,20,0.25))
+
+a <- rep(c(seq(0,25,0.25)),101)
+cost <- z3(x,a)
+dfz3 <- data.frame("Profit" = cost, "Water Depth" = x, "Land Area" = a)
+dfz3
+
+z4 = function(x, a){a*(- 4368 * (x+0.254)^2 + 6580 * 0.254 + 6120*x - 0.25*10000*x - 1171)}
+x <- rep(seq(0,0.5,0.005), each = 101)
+
+#Checks length of f to determine how much to put in the each for x, similiar function for x to f
+length(seq(-20,20,0.25))
+
+a <- rep(c(seq(0,25,0.25)),101)
+cost <- z4(x,a)
+dfz4 <- data.frame("Profit" = cost, "Water Depth" = x, "Land Area" = a)
+dfz4
+
+
+
+```
+
+```{r}
+
+p3 <- ggplot(dfz3, aes(x = Water.Depth, y = Land.Area, z = Profit, colour = ..level.. )) +
+        # stat_contour() 
+  stat_contour(breaks = quantile(dfz3$Profit, seq(0, 1, 0.05)), size = 1.5) +
+        # scale_color_continuous() +
+  scale_color_viridis("Profit") +
+         theme(legend.justification=c(1, 0), legend.position=c(1, 0)) +
+   labs(x = 'Water Depth (m)')+
+  labs(y = 'Land Area (ha)')+
+  labs(title = 'Contour Plot of Profit ($): Water Depth vs. Land Area (Cost of Water = $1/m^3)')+
+  ylim(0,25)+
+  xlim(0,0.5)+
+  theme_minimal()
+  #
+
+p3
+ggsave('contour.png')
+
+p3a <- ggplot(dfz4, aes(x = Water.Depth, y = Land.Area, z = Profit, colour = ..level.. )) +
+        # stat_contour() 
+  stat_contour(breaks = quantile(dfz3$Profit, seq(0, 1, 0.05)), size = 1.5) +
+        # scale_color_continuous() +
+  scale_color_viridis("Profit") +
+         theme(legend.justification=c(1, 0), legend.position=c(1, 0)) +
+   labs(x = 'Water Depth (m)')+
+  labs(y = 'Land Area (ha)')+
+  labs(title = 'Contour Plot of Profit ($): Water Depth vs. Land Area (Cost of Water = $0.25/m^3)')+
+  ylim(0,25)+
+  xlim(0,0.5)+
+  theme_minimal()
+  #
+
+p3a
+ggsave('contour1.png')
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.

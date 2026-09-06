@@ -1,0 +1,187 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+library(tidyverse)
+library(markovchain)
+library(diagram)
+```
+
+```{r}
+tmA <- read.csv('trans_matrix.csv', header = TRUE)
+tma <- tmA %>% as.matrix()
+tmA
+```
+
+```{r}
+dtmca <- new("markovchain", transitionMatrix=tma, states = c('c1w1', 'c1w2', 'c1w3', 'c1w4', 'c1w5',
+                                                             'c2w1', 'c2w2', 'c2w3', 'c2w4', 'c2w5',
+                                                             'c3w1', 'c3w2', 'c3w3', 'c3w4', 'c3w5',
+                                                             'c4w1', 'c4w2', 'c4w3', 'c4w4', 'c4w5'),
+             name="Weather MC")
+dtmca
+```
+
+
+```{r}
+plot(dtmca)
+```
+```{r}
+stateNames = c('c1w1', 'c1w2', 'c1w3', 'c1w4', 'c1w5',
+                                                             'c2w1', 'c2w2', 'c2w3', 'c2w4', 'c2w5',
+                                                             'c3w1', 'c3w2', 'c3w3', 'c3w4', 'c3w5',
+                                                             'c4w1', 'c4w2', 'c4w3', 'c4w4', 'c4w5')
+
+row.names(tma) <- stateNames;colnames(tma) <- stateNames
+
+plotmat(tma, 
+        lwd = 1, box.lwd = 2, 
+        cex.txt = 0.8, 
+        box.size = 0.05, 
+        box.type = "circle", 
+        box.prop = 0.5,
+        box.col = "light blue",
+        arr.length=.05,
+        arr.width=.1,
+        self.cex = .3,
+        self.shifty = -.01,
+        self.shiftx = .14,
+        main = "Markov Chain")
+
+
+```
+```{r}
+
+as(dtmca, "data.frame")
+
+initialState <- rep(0.05,20)
+
+steps <- 10
+
+finalState <- initialState*dtmca^steps
+
+finalState
+
+steadyStates(dtmca)
+
+rmarkovchain(n = 10,object = dtmca)
+
+```
+
+```{r}
+
+probc1 <- 0.25
+probc2 <- 0.25
+probc3 <- 0.25
+probc4 <- 0.25
+
+
+start <- runif(1)
+
+if(start < probc1){climate <- 'c1'}
+if(start >= probc1 & start < probc1+probc2){climate <- 'c2'}
+if(start >= probc1+probc2 & start < probc1+probc2+probc3){climate <- 'c3'}
+if(start >= probc1+probc2+probc3){ climate <- 'c4'}
+
+print('Climate is equal to:')
+climate
+
+
+
+```
+```{r}
+
+stateNames = c('w1', 'w2', 'w3', 'w4', 'w5')
+
+c1m <- tma[1:5,1:5]
+c2m <- tma[6:10,6:10]
+c3m <- tma[11:15,11:15]
+c4m <- tma[16:20,16:20]
+
+row.names(c1m) <- stateNames;colnames(c1m) <- stateNames
+row.names(c2m) <- stateNames;colnames(c2m) <- stateNames
+row.names(c3m) <- stateNames;colnames(c3m) <- stateNames
+row.names(c4m) <- stateNames;colnames(c4m) <- stateNames
+
+plotmat(c1m, 
+        lwd = 1, box.lwd = 2, 
+        cex.txt = 0.8, 
+        box.size = 0.1, 
+        box.type = "circle", 
+        box.prop = 0.5,
+        box.col = "light blue",
+        arr.length=.1,
+        arr.width=.1,
+        self.cex = .6,
+        self.shifty = -.01,
+        self.shiftx = .1,
+        main = "Markov Chain")
+
+c1mc <- new("markovchain", transitionMatrix=c1m, states = c('w1', 'w2', 'w3', 'w4', 'w5'),
+             name="climate1")
+
+c2mc <- new("markovchain", transitionMatrix=c2m, states = c('w1', 'w2', 'w3', 'w4', 'w5'),
+             name="climate2")
+
+c3mc <- new("markovchain", transitionMatrix=c3m, states = c('w1', 'w2', 'w3', 'w4', 'w5'),
+             name="climate3")
+
+c4mc <- new("markovchain", transitionMatrix=c4m, states = c('w1', 'w2', 'w3', 'w4', 'w5'),
+             name="climate4")
+
+
+```
+
+```{r}
+
+
+if(climate == 'c1'){
+  seq <- rmarkovchain(n = 10,object = c1mc)
+}
+
+if(climate == 'c2'){
+  seq <- rmarkovchain(n = 10,object = c2mc)
+}
+
+if(climate == 'c3'){
+  seq <- rmarkovchain(n = 10,object = c3mc)
+}
+
+if(climate == 'c4'){
+  seq <- rmarkovchain(n = 10,object = c4mc)
+}
+
+seq
+
+
+
+```
+
+```{r}
+cm_in <- 2.54
+rainfall_days_perc <- 0.5
+
+w1p <- 10 *cm_in * rainfall_days_perc
+w2p <- 20 *cm_in * rainfall_days_perc
+w3p <- 30 *cm_in * rainfall_days_perc
+w4p <- 40 *cm_in * rainfall_days_perc
+w5p <- 50 *cm_in * rainfall_days_perc
+
+seq
+seq <- gsub('w1',as.character(w1p),seq)
+seq <- gsub('w2',as.character(w2p),seq)
+seq <- gsub('w3',as.character(w3p),seq)
+seq <- gsub('w4',as.character(w4p),seq)
+seq <- gsub('w5',as.character(w5p),seq)
+seq
+
+c(seq,seq)
+```
+
+```{r}
+write(seq)
+```
+
