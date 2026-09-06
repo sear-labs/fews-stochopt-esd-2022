@@ -1,0 +1,354 @@
+---
+title: "Farm Model Markov Chain"
+author: "Erick Jones"
+date: "2/17/2021"
+output:
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
+---
+
+```{r global_options, include=FALSE}
+#DO NOT EDIT THIS CHUNK OR ANYTHING ABOVE IT!
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F, tidy=T, tidy.opts=list(width.cutoff=50))
+```
+
+
+## Libraries
+
+```{r, echo = FALSE}
+library(tidyverse)
+library(reticulate)
+library(markovchain)
+library(diagram)
+library(gridExtra)
+library(grid)
+set.seed(12345)
+```
+
+
+## Full Transition Matrix as One Big Markov Chain
+
+```{r}
+tmA <- read.csv('~/Coding/Data/Farm_Model/trans_matrix.csv', header = TRUE)
+tma <- tmA %>% as.matrix()
+tmA
+```
+## Creating Markov Chains for each Climate
+
+```{r}
+
+stateNames = c('w1', 'w2', 'w3', 'w4', 'w5')
+
+c1m <- tma[1:5,1:5]
+c2m <- tma[6:10,6:10]
+c3m <- tma[11:15,11:15]
+c4m <- tma[16:20,16:20]
+
+row.names(c1m) <- stateNames;colnames(c1m) <- stateNames
+row.names(c2m) <- stateNames;colnames(c2m) <- stateNames
+row.names(c3m) <- stateNames;colnames(c3m) <- stateNames
+row.names(c4m) <- stateNames;colnames(c4m) <- stateNames
+
+plotmat(c1m, 
+        lwd = 1, box.lwd = 2, 
+        cex.txt = 0.8, 
+        box.size = 0.1, 
+        box.type = "circle", 
+        box.prop = 0.5,
+        box.col = "light blue",
+        arr.length=.1,
+        arr.width=.1,
+        self.cex = .6,
+        self.shifty = -.01,
+        self.shiftx = .1,
+        main = "Climate 1 Markov Chain")
+
+c1mc <- new("markovchain", transitionMatrix=c1m, states = c('w1', 'w2', 'w3', 'w4', 'w5'),
+             name="climate1")
+
+c2mc <- new("markovchain", transitionMatrix=c2m, states = c('w1', 'w2', 'w3', 'w4', 'w5'),
+             name="climate2")
+
+c3mc <- new("markovchain", transitionMatrix=c3m, states = c('w1', 'w2', 'w3', 'w4', 'w5'),
+             name="climate3")
+
+c4mc <- new("markovchain", transitionMatrix=c4m, states = c('w1', 'w2', 'w3', 'w4', 'w5'),
+             name="climate4")
+
+
+```
+
+## Setting the Probabilities for Each Climate
+
+```{r}
+
+probc1 <- 0.25
+probc2 <- 0.25
+probc3 <- 0.25
+probc4 <- 0.25
+
+
+start <- runif(1)
+
+if(start < probc1){climate <- 'c1'}
+if(start >= probc1 & start < probc1+probc2){climate <- 'c2'}
+if(start >= probc1+probc2 & start < probc1+probc2+probc3){climate <- 'c3'}
+if(start >= probc1+probc2+probc3){ climate <- 'c4'}
+
+print('Climate is equal to:')
+climate
+
+
+
+```
+
+
+## Code for Markov Chain Sequence
+
+
+
+```{r}
+climate_realizations <- c()
+precips <- c()
+iters <- 1000
+year_length <- 25
+
+for(i in 1:iters){
+  
+start <- runif(1)
+
+if(start < probc1){climate <- 'c1'}
+if(start >= probc1 & start < probc1+probc2){climate <- 'c2'}
+if(start >= probc1+probc2 & start < probc1+probc2+probc3){climate <- 'c3'}
+if(start >= probc1+probc2+probc3){ climate <- 'c4'}
+
+climate_realizations <- c(climate_realizations,climate)
+
+if(climate == 'c1'){
+  seq <- rmarkovchain(n = year_length,object = c1mc)
+}
+
+if(climate == 'c2'){
+  seq <- rmarkovchain(n = year_length,object = c2mc)
+}
+
+if(climate == 'c3'){
+  seq <- rmarkovchain(n = year_length,object = c3mc)
+}
+
+if(climate == 'c4'){
+  seq <- rmarkovchain(n = year_length,object = c4mc)
+}
+
+precips <- c(precips,seq)
+
+}
+```
+
+#Organizing and Summarizing Climate Realizations and Precipcatiation Information
+
+```{r}
+cm_in <- 2.54 # 2.54
+rainfall_days_perc <- 0.70 # Use 75%
+
+w1p <- 5 *cm_in * rainfall_days_perc
+w2p <- 15 *cm_in * rainfall_days_perc
+w3p <- 30 *cm_in * rainfall_days_perc
+w4p <- 45 *cm_in * rainfall_days_perc
+w5p <- 60 *cm_in * rainfall_days_perc
+
+precips <- gsub('w1',as.character(w1p),precips)
+precips <- gsub('w2',as.character(w2p),precips)
+precips <- gsub('w3',as.character(w3p),precips)
+precips <- gsub('w4',as.character(w4p),precips)
+precips <- gsub('w5',as.character(w5p),precips)
+
+
+climate_realizations <- as.factor(climate_realizations)
+summary(climate_realizations)
+precips <- as.numeric(precips)
+summary(precips)
+
+precips_df <- matrix(precips, ncol = year_length , byrow = T)
+precips_df <- cbind(as.matrix(climate_realizations),precips_df)
+precips_df <- precips_df %>% as_tibble() %>% arrange(V1)
+precips <- precips_df %>% select(-V1) %>% t %>% as.vector %>% as.numeric
+
+
+
+
+```
+## Repeating for Other Scenarios
+
+```{r}
+# Climate 1 Scenario
+
+
+precips_c1 <- c()
+
+for(i in 1:iters){
+  
+seq <- rmarkovchain(n = year_length,object = c1mc)
+
+
+precips_c1 <- c(precips_c1,seq)
+
+}
+
+# Climate 2 Scenario
+
+
+precips_c2 <- c()
+
+for(i in 1:iters){
+  
+seq <- rmarkovchain(n = year_length,object = c2mc)
+
+
+precips_c2 <- c(precips_c2,seq)
+
+}
+
+# Climate 3 Scenario
+
+
+precips_c3 <- c()
+
+for(i in 1:iters){
+  
+seq <- rmarkovchain(n = year_length,object = c3mc)
+
+
+precips_c3 <- c(precips_c3,seq)
+
+}
+
+# Climate 4 Scenario
+
+
+precips_c4 <- c()
+
+for(i in 1:iters){
+  
+seq <- rmarkovchain(n = year_length,object = c4mc)
+
+
+precips_c4 <- c(precips_c4,seq)
+
+}
+
+
+
+
+```
+
+```{r}
+#Converting Climate 1 to Numbers
+
+precips_c1 <- gsub('w1',as.character(w1p),precips_c1)
+precips_c1 <- gsub('w2',as.character(w2p),precips_c1)
+precips_c1 <- gsub('w3',as.character(w3p),precips_c1)
+precips_c1 <- gsub('w4',as.character(w4p),precips_c1)
+precips_c1 <- gsub('w5',as.character(w5p),precips_c1)
+
+
+precips_c1 <- as.numeric(precips_c1)
+summary(precips_c1)
+
+precips_c1_df <- matrix(precips_c1, ncol = year_length , byrow = T)
+precips_c1_df <- precips_c1_df %>% as_tibble()
+precips_c1 <- precips_c1_df %>% t %>% as.vector %>% as.numeric
+
+#Converting Climate 2 to Numbers
+
+precips_c2 <- gsub('w1',as.character(w1p),precips_c2)
+precips_c2 <- gsub('w2',as.character(w2p),precips_c2)
+precips_c2 <- gsub('w3',as.character(w3p),precips_c2)
+precips_c2 <- gsub('w4',as.character(w4p),precips_c2)
+precips_c2 <- gsub('w5',as.character(w5p),precips_c2)
+
+
+precips_c2 <- as.numeric(precips_c2)
+summary(precips_c2)
+
+precips_c2_df <- matrix(precips_c2, ncol = year_length , byrow = T)
+precips_c2_df <- precips_c2_df %>% as_tibble()
+precips_c2 <- precips_c2_df %>% t %>% as.vector %>% as.numeric
+
+#Converting Climate 3 to Numbers
+
+precips_c3 <- gsub('w1',as.character(w1p),precips_c3)
+precips_c3 <- gsub('w2',as.character(w2p),precips_c3)
+precips_c3 <- gsub('w3',as.character(w3p),precips_c3)
+precips_c3 <- gsub('w4',as.character(w4p),precips_c3)
+precips_c3 <- gsub('w5',as.character(w5p),precips_c3)
+
+
+precips_c3 <- as.numeric(precips_c3)
+summary(precips_c3)
+
+precips_c3_df <- matrix(precips_c3, ncol = year_length , byrow = T)
+precips_c3_df <- precips_c3_df %>% as_tibble()
+precips_c3 <- precips_c3_df %>% t %>% as.vector %>% as.numeric
+
+#Converting Climate 4 to Numbers
+
+precips_c4 <- gsub('w1',as.character(w1p),precips_c4)
+precips_c4 <- gsub('w2',as.character(w2p),precips_c4)
+precips_c4 <- gsub('w3',as.character(w3p),precips_c4)
+precips_c4 <- gsub('w4',as.character(w4p),precips_c4)
+precips_c4 <- gsub('w5',as.character(w5p),precips_c4)
+
+
+precips_c4 <- as.numeric(precips_c4)
+summary(precips_c4)
+
+precips_c4_df <- matrix(precips_c4, ncol = year_length , byrow = T)
+precips_c4_df <- precips_c4_df %>% as_tibble()
+precips_c4 <- precips_c4_df %>% t %>% as.vector %>% as.numeric
+
+
+
+precips_c0 <- c(precips_c1,precips_c2,precips_c3,precips_c4)
+
+```
+
+```{r}
+# Outputting CSV for Python Run
+
+
+
+
+precips_c1_tbl <- precips_c1_df %>% mutate( run = seq(1,nrow(precips_c1_df)) )%>% 
+  pivot_longer(!run, names_to = 'year', names_prefix = 'V', values_to = 'precip')
+
+precips_c2_tbl <- precips_c2_df %>% mutate( run = seq(1,nrow(precips_c2_df)) )%>% 
+  pivot_longer(!run, names_to = 'year', names_prefix = 'V', values_to = 'precip')
+
+precips_c3_tbl <- precips_c3_df %>% mutate( run = seq(1,nrow(precips_c3_df)) )%>% 
+  pivot_longer(!run, names_to = 'year', names_prefix = 'V', values_to = 'precip')
+
+precips_c4_tbl <- precips_c4_df %>% mutate( run = seq(1,nrow(precips_c4_df)) )%>% 
+  pivot_longer(!run, names_to = 'year', names_prefix = 'V', values_to = 'precip')
+
+
+precips_c0_tbl <- rbind(precips_c1_tbl, precips_c2_tbl, precips_c3_tbl, precips_c4_tbl)
+
+precips_c0_tbl <- precips_c0_tbl %>% mutate(run = rep(seq(1,4000), each=25) )
+```
+
+
+```{r}
+
+path <- 'C:\\Users\\Jones\\Documents\\Coding\\Python\\Farm Model\\'
+
+write.csv(precips_c1_tbl, paste(path,'precips_c1.csv',sep = ''))
+```
+
+```{r}
+
+save.image(file = "EP-MC.RData")
+
+```
