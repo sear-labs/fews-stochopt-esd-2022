@@ -22,6 +22,26 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 REFERENCE = ROOT / "reference" / "solnvalues.csv"
 
+# These are the paper's Table 4, cross-checked against reference/solnvalues.csv
+# (produced by stage2-r/FM Final Outputs.Rmd). Five of six agree to the paper's
+# printed precision. One does NOT:
+#
+#     EVPI, equally probable:   paper $108,725.10   solnvalues.csv 108,725.1417
+#
+# A 0.04 discrepancy. Too small to be a different solution and too large to be
+# rounding of the CSV value, which would give .14. Either the article carries a
+# typo or its table was produced by a slightly earlier run. The CSV value is
+# pinned below because it is the one this pipeline actually produces; the paper's
+# figure is recorded here so the difference is not silently lost.
+#
+# The paper also reports EVKC (Expected Value of Known Climate) - $98,328.78 and
+# $64,865.98 - which solnvalues.csv does not contain at all. Any future run_all.py
+# should emit it so all four columns can be checked.
+PAPER_TABLE_4 = {
+    "Equally Probable": {"EVPI": 108_725.10, "VSS": 0.49, "EVKW": 10_396.32, "EVKC": 98_328.78},
+    "Dry Most Likely": {"EVPI": 76_606.01, "VSS": 940.90, "EVKW": 11_740.03, "EVKC": 64_865.98},
+}
+
 # From reference/solnvalues.csv, produced by stage2-r/FM Final Outputs.Rmd.
 PUBLISHED = {
     "Equally Probable": {
@@ -72,3 +92,24 @@ def test_pipeline_reproduces_published_values(regime):
     got = _regenerate()
     for field, value in PUBLISHED[regime].items():
         assert got[regime][field] == pytest.approx(value, rel=1e-6), f"{regime}/{field}"
+
+
+@pytest.mark.pinned
+def test_pinned_values_agree_with_the_published_table():
+    """Five of the six shared figures match the article to its printed precision.
+
+    The sixth is asserted as a KNOWN discrepancy rather than skipped, so that if a
+    future edit changes it the difference is noticed rather than absorbed.
+    """
+    field = {"EVPI": "Value_of_Perfect_Information",
+             "VSS": "Value_of_Stochastic_Solution",
+             "EVKW": "Value_of_Known_Weather"}
+    mismatches = []
+    for regime, paper in PAPER_TABLE_4.items():
+        for short, key in field.items():
+            ours = PUBLISHED[regime][key]
+            if round(ours, 2) != pytest.approx(paper[short], abs=1e-9):
+                mismatches.append((regime, short, paper[short], round(ours, 2)))
+    assert mismatches == [("Equally Probable", "EVPI", 108725.10, 108725.14)], (
+        f"the set of paper-vs-pipeline discrepancies changed: {mismatches}"
+    )

@@ -23,14 +23,27 @@ That failure is the honest state of the work, written where it will be read — 
 
 ## The published values
 
-From `reference/solnvalues.csv`:
+`reference/solnvalues.csv` holds **the paper's Table 4** — confirmed by reading the article, not
+assumed. Against it:
 
-| Climate regime | Value of known weather | Value of perfect information | Value of stochastic solution |
-|---|---|---|---|
-| Equally Probable | 10,396.32 | 108,725.14 | 0.4887 |
-| Dry Most Likely | 11,740.03 | 76,606.01 | 940.90 |
+| Climate regime | | EVKW | EVPI | VSS | EVKC |
+|---|---|---|---|---|---|
+| Equally Probable | paper | $10,396.32 | **$108,725.10** | $0.49 | $98,328.78 |
+| | pipeline | 10,396.3181 | **108,725.1417** | 0.4887 | *(not produced)* |
+| Dry Most Likely | paper | $11,740.03 | $76,606.01 | $940.90 | $64,865.98 |
+| | pipeline | 11,740.0306 | 76,606.0081 | 940.8999 | *(not produced)* |
 
-`reference/simstatstrad.csv` holds the Monte Carlo statistics behind them.
+**Five of six agree to the article's printed precision. One does not.** EVPI for the
+equally-probable regime is **$108,725.10** in the paper against **108,725.1417** in the pipeline
+output — a 0.04 gap, too small to be a different solution and too large to be rounding, which would
+give `.14`. Either the article carries a typo or its table came from a slightly earlier run. The
+discrepancy is asserted in `tests/test_reproduces_paper.py` rather than smoothed over, so a future
+edit cannot quietly absorb it.
+
+**EVKC is in the paper and not in the pipeline output at all.** Any `scripts/run_all.py` should emit
+all four columns.
+
+`reference/simstatstrad.csv` holds the Monte Carlo statistics behind Table 5.
 
 ## How the pipeline actually works
 
