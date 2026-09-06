@@ -53,15 +53,24 @@ notebooks are **raw gurobipy** — the two stages of the project used different 
 
 ## What is not done yet
 
-1. **No single entry point.** Part 1's first invariant is that one command reproduces everything.
-   Neither stage runs headless; both are notebooks driven by hand.
-2. **The intermediate CSVs are gitignored.** They are 68 MB of generated scenario output, and
+1. **The R stage cannot run on any machine as committed.** All seven files in `stage2-r/` carry
+   hardcoded absolute paths to a layout that no longer exists — `~/Coding/R/Research/Farm Model/
+   Graphs/`, `C:\Users\Jones\Documents\Coding\Python\Farm Model\`. `FM Final Outputs.Rmd`, the file
+   that produces the reference table above, has **nine** of them. This is not "needs running by
+   hand"; it is broken until the paths are parameterised.
+2. **One input has been missing all along.** `FM DML MC.Rmd` reads
+   `~/Coding/Data/Farm_Model/trans_matrix.csv` — a Markov transition matrix that **exists nowhere in
+   the source archive** and was already absent before this repository was split out. Whatever it
+   held has to be reconstructed or the file rewritten.
+3. **No single entry point.** Part 1's first invariant is that one command reproduces everything.
+   Neither stage runs headless.
+4. **The intermediate CSVs are gitignored.** They are 68 MB of generated scenario output, and
    invariant 5 says generated files do not belong in git. But until stage 1 runs from a clean clone,
    removing them means stage 2 has nothing to read. `reference/` is the documented exception.
-3. **No seeds.** The Monte Carlo loops (`range(1000)`, `range(4000)`) do not record a seed, so a
+5. **No seeds.** The Monte Carlo loops (`range(1000)`, `range(4000)`) do not record a seed, so a
    re-run will not reproduce the published statistics exactly even once the pipeline runs. Fixing
    this is a prerequisite for the red test ever going green, not an afterthought.
-4. **No environment lock.** Requires `gurobipy` and a Gurobi licence; the R stage requires
+6. **No environment lock.** Requires `gurobipy` and a Gurobi licence; the R stage requires
    `tidyverse`. Neither is pinned.
 
 ## Which notebook is the model
