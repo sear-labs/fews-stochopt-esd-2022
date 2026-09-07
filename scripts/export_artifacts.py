@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
@@ -158,9 +159,15 @@ def build_all(cfg) -> dict[str, tuple[dict, dict, str]]:
     return out
 
 
+# Gurobi can only write an LP to a path, so it goes to a real temporary
+# directory. It used to go to `artifacts/` and be unlinked after reading, which
+# meant `--check` DELETED the committed .lp files as a side effect -- a check
+# that destroys what it is checking. tests/test_artifacts.py caught it.
+_TMPDIR = Path(tempfile.mkdtemp(prefix="fews-lp-"))
+
+
 def _tmp_lp(name: str) -> Path:
-    ARTIFACTS.mkdir(parents=True, exist_ok=True)
-    return ARTIFACTS / f"{name}.lp"
+    return _TMPDIR / f"{name}.lp"
 
 
 def main(argv=None) -> int:

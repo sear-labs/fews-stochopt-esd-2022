@@ -80,7 +80,8 @@ class ScenarioResult:
         return float(self.profit["profit"].mean())
 
 
-def _env(cfg: Config) -> gp.Env:
+def _base_params(cfg: Config) -> dict:
+    """Settings that hold for every solve, independent of the ladder."""
     params = {
         "OutputFlag": cfg.solver.get("output_flag", 0),
         "Seed": cfg.solver.get("seed", 0),
@@ -88,7 +89,11 @@ def _env(cfg: Config) -> gp.Env:
     threads = cfg.solver.get("threads", 0)
     if threads:
         params["Threads"] = threads
-    return gp.Env(params=params)
+    return params
+
+
+def _env(cfg: Config) -> gp.Env:
+    return gp.Env(params=_base_params(cfg))
 
 
 def _optimize(m: gp.Model, cfg: Config) -> int:
@@ -116,8 +121,11 @@ def _optimize(m: gp.Model, cfg: Config) -> int:
         # rung's parameters and the ladder stops testing what it names -- rung 3
         # was running with rung 1's BarHomogeneous still set, and two rungs
         # reported identical results because they were the same solve.
+        # `resetParams` restores GUROBI's defaults, not the environment's, so
+        # the base settings have to be re-applied after it -- otherwise
+        # OutputFlag goes back to 1 and every solve prints its barrier log.
         m.resetParams()
-        for name, value in params.items():
+        for name, value in {**_base_params(cfg), **params}.items():
             m.setParam(name, value)
         m.optimize()
         if m.Status == gp.GRB.OPTIMAL:
