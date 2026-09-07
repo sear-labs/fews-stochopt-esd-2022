@@ -26,7 +26,9 @@ that does not reproduce*. A cold run takes about seven minutes; solved scenarios
 digest of everything that could change them, so a second run takes seconds.
 
 This required a Gurobi licence. The academic one this was verified on is node-locked and expires
-2026-12-04, so the suite cannot run in CI as it stands.
+2026-12-04, so the suite cannot run in CI as it stands. The *per-run* solves are 178 variables and
+fit the free licence that ships with `pip install gurobipy`; only the two joint models -- 176k and
+704k variables -- need a real one. See `docs/reproduction-notes.md` section 10.
 
 ## The published values
 

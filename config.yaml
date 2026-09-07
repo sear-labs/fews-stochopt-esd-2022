@@ -138,7 +138,7 @@ sites:
 #
 # `parameter_ladder` is not tuning for speed. On default settings the barrier
 # stalls short of its optimality tolerance on most single-run solves and returns
-# status 13, SUBOPTIMAL -- measured at 27 of 40 sampled runs. The original code
+# status 13, SUBOPTIMAL -- measured at 25 of 40 sampled runs. The original code
 # never read the status, so the published numbers were computed partly from
 # solutions Gurobi declined to certify. `model.py` refuses anything that is not
 # status OPTIMAL and works down this ladder until one rung certifies:

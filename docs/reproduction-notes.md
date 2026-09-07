@@ -129,7 +129,7 @@ This one was found by adding a status check the original does not have.
 
 On Gurobi's default settings, the barrier stalls short of its optimality tolerance
 on most single-run solves of this model and returns **status 13, SUBOPTIMAL**.
-Measured over 40 sampled runs at Equally Probable: **27 of 40 uncertified.** The
+Measured over 40 sampled runs at Equally Probable: **25 of 40 uncertified.** The
 original notebooks read `profit.X` immediately after `m.optimize()` and never look
 at `m.Status`, so those solutions went into the published means.
 
@@ -148,12 +148,51 @@ the full run, **240 of 16,010 solves (1.5%) needed a fallback rung**, and
 share ever exceeds 10% — which would mean the first rung had quietly stopped being
 the normal path.
 
-Tightening tolerances instead does **not** work and is worth recording so nobody
-tries it again: `BarQCPConvTol 1e-9`, `1e-12` and `BarConvTol 1e-12` all certify
-*fewer* solves, not more, and the full-run mean moved further from the published
-value (2,355,663.26 against 2,355,663.17 at defaults, published 2,355,663.10).
-The residual is not convergence tolerance; it is where the interior-point method
-stops.
+### Why not just widen the tolerance until it certifies?
+
+The obvious move, and it **works** — which is exactly the problem. Measured over
+the same 40 runs, building each model directly so no ladder can intervene:
+
+| Setting | Certified | Worst gap vs the anchor |
+|---|---:|---:|
+| Gurobi defaults | 15 / 40 | $2.01 |
+| **loosen** `BarQCPConvTol 1e-4` | 27 / 40 | $154.63 |
+| **loosen** `BarQCPConvTol 1e-3` | **40 / 40** | **$264.77** |
+| **loosen** `BarQCPConvTol 1e-2` | 40 / 40 | $264.77 |
+| tighten `BarQCPConvTol 1e-9` | 0 / 40 | $4.76 |
+| **`BarHomogeneous 1, NumericFocus 3`** (shipped) | **40 / 40** | anchor |
+
+Loosening buys the **status**, not the convergence. At `1e-3` every solve reports
+OPTIMAL and the answers are up to $265 out — against an EVPI of $108,725 and a VSS
+of $941, that would swamp the quantities the paper is about. It is the mirror of
+the failure the standard records as *a loose MIP gap manufactures agreement*.
+
+`BarHomogeneous` and `NumericFocus` are a different kind of change: they select
+the homogeneous self-dual barrier and make Gurobi more careful numerically. They
+move the **algorithm**, not the acceptance threshold, so the certification is
+earned rather than relabelled.
+
+### Is the anchor right, or only self-consistent?
+
+A setting that certifies everything and agrees with itself proves nothing. Two
+independent cross-checks, on the same 40 runs:
+
+| Comparison | Where both certify | Worst | Median |
+|---|---|---:|---:|
+| anchor vs rung 2 (different scaling) | 40 / 40 | $0.34 | $0.20 |
+| anchor vs **Gurobi defaults**, on the runs defaults *did* certify | 15 / 40 | $1.14 | $0.49 |
+
+Where the default solve reaches certified optimality it agrees with the anchor.
+Where it does not, the disagreement is **signed**: mean +$0.69, sd $0.34, never
+negative. That is a bias, not scatter, so it does not average away over 4,000
+runs — and it is the same sign and size as the residual in section 1, where
+Perfect Information reproduces +$0.69 at Equally Probable and +$0.75 at Dry Most
+Likely. **The reproduction gap on those rows is largely the uncertified-solve
+bias in the published numbers.**
+
+Tightening is also worth recording so nobody tries it: `BarQCPConvTol 1e-9` and
+`1e-12` certify *fewer* solves, not more. The residual is not convergence
+tolerance; it is where the interior-point method stops.
 
 ---
 
@@ -263,7 +302,7 @@ A guard that has only ever passed is indistinguishable from one that cannot fail
 | Guard | Defect injected | Result |
 |---|---|---|
 | `reconstruct_markov.py --check` | one cell of the committed matrix moved by 1e-6 | red, naming `trans_matrix_EP.csv`; green again after restoring |
-| `model.py` optimality check | ran the ladder with Gurobi defaults | red on 27 of 40 runs — which is how section 4 was found |
+| `model.py` optimality check | ran the ladder with Gurobi defaults | red on 25 of 40 runs — which is how section 4 was found |
 | `markov_chain.Rmd` distribution check | unrounded state values, so the join found no matches | red; fixed by reproducing the original's rounding, then green |
 | `data.py::_check_blocks` | — | fires at load; see below |
 
@@ -278,9 +317,40 @@ float-equality join.
 ## 10. What a clean clone needs
 
 - **Gurobi.** Academic node-locked licence, expiring 2026-12-04, so this cannot
-  run in CI as it stands. Each per-scenario solve is small — under 200 variables
-  and 25 quadratic constraints — so HiGHS via Pyomo would lift that, at the cost
-  of re-verifying every number in section 1 against a second solver.
+  run in CI as it stands.
+
+  **How big the models actually are**, measured, because it decides what a free
+  licence can run. `pip install gurobipy` ships a size-limited licence capped at
+  2,000 variables and 2,000 linear constraints:
+
+  | Model | Variables | Linear | Quadratic | Fits the free licence |
+  |---|---:|---:|---:|---|
+  | one run — Perfect Information, Expected Value evaluation | 178 | 126 | 25 | **yes** |
+  | 11 runs | 1,938 | 1,386 | 275 | **yes**, just |
+  | 1,000 runs — one Known Climate block | 176,002 | 126,000 | 25,000 | no |
+  | 4,000 runs — Stochastic | 704,002 | 504,000 | 100,000 | no |
+
+  So the per-run scenarios run anywhere, with no licence at all. Only the two
+  *joint* models need one, and they need it because they are genuinely large.
+
+  > **The "HiGHS via Pyomo would lift this" line, inherited from the original
+  > README, is NOT established and should not be repeated until it is.** HiGHS
+  > solves LPs, MIPs and convex quadratic *objectives*. This model's
+  > nonlinearity is a quadratic *constraint* —
+  > `crop_yield <= a0 + a1*w + a2*w^2` — which is a different capability, and
+  > nobody here has checked that HiGHS has it.
+
+  Two routes that do work on the mathematics, neither tried yet:
+
+  - **A conic solver** (Clarabel, ECOS or SCS through cvxpy — all pip-installable,
+    no licence). The curve is concave, `a2 < 0`, so the constraint is a rotated
+    second-order cone.
+  - **A piecewise-linear outer approximation**, which is the boring option and
+    probably the right one. Because the curve is concave and enters a
+    maximisation as an upper bound, a set of tangent lines is a valid relaxation
+    that tightens monotonically with the number of pieces — and the result is a
+    plain LP that any solver handles. The cost is a documented approximation
+    error to add to the tolerances in section 1.
 - **R with `rmarkdown`, `ggplot2`, `dplyr`, `tidyr`, `readr`** for stage 2's
   reports. The `markovchain` and `diagram` dependencies are gone. Without R the
   `rstage` tests skip with a reason; they never report success.

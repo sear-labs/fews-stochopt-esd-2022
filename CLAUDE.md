@@ -70,9 +70,12 @@ measurements.
   the precipitation inputs, `reference/`, and the headline `results/*.csv`. The 68 MB of
   per-run scenario CSVs are gitignored.
 - **Invariant 6, CI on a clean machine.** Not possible as things stand: Gurobi's licence
-  here is academic and node-locked, expiring 2026-12-04. The per-scenario solves are small
-  enough for HiGHS via Pyomo, which would lift the constraint at the cost of re-verifying
-  every number against a second solver. Not done.
+  here is academic and node-locked, expiring 2026-12-04. The per-run solves are 178
+  variables and fit the size-limited licence that ships with `pip install gurobipy`; the
+  two joint models are 176k and 704k variables and do not. **Do not repeat the inherited
+  claim that HiGHS lifts this** -- HiGHS does convex quadratic objectives, this model has a
+  quadratic constraint, and nobody has checked. See section 10 of
+  `docs/reproduction-notes.md` for two routes that do work on the mathematics.
 - **Part 6, the published path.** This repository is run from a checkout, not a wheel — it
   needs the committed inputs and a licence. `config.repo_root()` says so loudly rather
   than returning a path that is only right on the machine that built it.
