@@ -355,3 +355,53 @@ float-equality join.
   reports. The `markovchain` and `diagram` dependencies are gone. Without R the
   `rstage` tests skip with a reason; they never report success.
 - The committed precipitation inputs. Everything else is regenerated.
+
+---
+
+## 11. The joint models are large by accident, not by necessity
+
+**Not yet implemented. Measured on 2026-09-07 and recorded so it is not lost.**
+
+The 704,002-variable stochastic model exists because the original wrote out every
+run and every year explicitly. It does not need to.
+
+Given the first-stage capacities, nothing couples one `(run, year)` to another:
+every constraint is either a capacity bound on `(r, y)` or a balance within it.
+And precipitation takes **five distinct values**. So the 100,000 second-stage
+blocks are 100,000 copies of five distinct problems, and the model collapses to
+those five carrying integer weights.
+
+The only thing that could break the equivalence is the `profit[r] >= 0` bound,
+which couples the years within a run. It is nowhere near binding — the smallest
+run profit is $769,058 — and `test_profit_non_negativity_never_binds` already
+asserts that.
+
+Measured against the full solve:
+
+| Site | | Collapsed (37 vars) | Full (704,002 vars) | Published |
+|---|---|---:|---:|---:|
+| EP | objective | 2,246,937.9654 | 2,246,937.8797 | 2,246,937.9615 |
+| EP | water cap | 5.445671 | 5.445671 | — |
+| EP | elc cap | 94.4104 | 94.4165 | — |
+| DML | objective | 1,899,221.2705 | 1,899,221.1807 | 1,899,221.2314 |
+| DML | water cap | 10.958137 | 10.957609 | — |
+| DML | elc cap | 206.8482 | 206.8392 | — |
+
+**0.01 seconds against 40, agreeing to $0.09** — inside the noise established in
+section 1. The collapsed value is the *higher* of the two and lands closer to the
+published figure at both sites, which is what a well-conditioned 37-variable
+problem should do against a 704,002-variable barrier solve.
+
+Two consequences:
+
+- **The whole pipeline would fit the free `pip install gurobipy` licence.** The
+  per-run scenarios already do (178 variables). Collapsing the two joint models
+  brings them to 37. Nothing would need a licence file, which is what a Colab
+  badge requires and what invariant 6 has been exempted from.
+- **Table 5 still needs the per-run solves**, because its standard deviations are
+  taken over runs. Those are 178 variables each and run anywhere; they are just
+  4,000 of them.
+
+If this is built, it is a second implementation of the same model and Part 4
+applies: one assertion comparing the collapsed and full solves, at a tolerance
+this table already measures.
