@@ -569,3 +569,75 @@ repository public.
 - **The dependency guard fired on `nbformat` and `nbclient`**, imported by the
   new builder and declared nowhere. That is exactly the defect it exists to
   catch, and it caught it on the first run after the file appeared.
+
+
+---
+
+## 15. Bounds are not equations, and a port checks them separately
+
+From the SAV session, which hit this directly. Their gurobipy port came out
+**1.6977 low against GAMS** — relative 2.3e-5, too small to see and far too large
+to be arithmetic — *after* they had diffed all 107 GAMS equations against the
+port and confirmed every one had a counterpart.
+
+That check could not have found it. The cause was one line among the variable
+declarations, 130 lines from anything resembling a constraint:
+
+```gams
+ProductionByTechnology.fx(y, LowV2G, "EV_CHARGE", f, r) = 0;
+```
+
+**A bound is not an equation.** An equation-by-equation port misses bounds by
+construction, and the resulting error is small enough to be mistaken for
+tolerance.
+
+### Applied here
+
+Every `addVar`/`addVars` call in the four sources that built the published
+scenarios was extracted rather than recalled:
+
+    every variable        lb = 0
+    irrigation_water      ub = max_irrigation_water   <- the ONLY non-default ub
+    profit                lb = 0, by Gurobi's default, never written explicitly
+    nowhere               any post-hoc .LB / .UB / setAttr assignment
+
+The port carries all of them, and `tests/test_bounds_match_the_original.py` now
+asserts it — including by reading the Bounds section out of the twelve shipped
+`.lp` files, which is the frozen record rather than the source. The post-hoc
+probe is shown capable of firing before its clean result is believed.
+
+### Two things the check found about itself
+
+- **Globbing `superseded/` swept in abandoned variants of a different model.**
+  `Farm Model Original.ipynb` and `FarmModelStoch.ipynb` declare integer
+  `pick_c*` variables the canonical model has none of, and the suite reported
+  them as an upper bound the published model does not have. That was the scan's
+  scope, not a finding, and the canonical sources are now named explicitly.
+  A second test asserts no shipped model has a `Generals` or `Binaries` section,
+  since an integer variable would end the convexity every optimality claim rests on.
+- **`v.UB != GRB.INFINITY` is the wrong comparison.** Gurobi returns
+  `float('inf')`; `GRB.INFINITY` is `1e100`. The two are unequal, so every
+  variable looked bounded and the test "found" nine violations that did not exist.
+
+### The sign of a discrepancy narrows the search
+
+Also from them, and worth keeping: on a **minimisation**, reproducing *below* the
+reference means under-constrained — a missing restriction, which is what a
+missing bound is. A wrong coefficient could go either way.
+
+This model is a **maximisation**, and every scenario reproduces at or slightly
+below. That would point at an extra restriction, except that the
+published-first-stage diagnostic reproduces VSS to within $0.50: an extra binding
+constraint would drag that down too, and it does not. The sign is explained by
+the feasibility repair, which clips to a feasible point and therefore reports a
+lower bound by design. `test_the_discrepancy_has_the_sign_a_conservative_solve_should`
+records that reasoning where it will be re-read.
+
+### One more, for anyone reading solver output
+
+**Read objectives from the solver, never from a rounded results file.** Their
+results writer printed two decimals, and several apparent mismatches turned out
+to be exactly 0.005 — half of the last printed digit. `reference/solnvalues.csv`
+here carries fifteen significant figures, so this repository is not exposed, but
+the failure mode is worth naming: a rounded file can both hide a real
+disagreement and manufacture a fake one.
