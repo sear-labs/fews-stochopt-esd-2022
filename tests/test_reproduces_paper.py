@@ -9,7 +9,9 @@ What changed, and what did not:
 - The pins are untouched. `PAPER_TABLE_4` and `PUBLISHED` hold the same values,
   and the known EVPI discrepancy is still asserted as a known one rather than
   smoothed away.
-- `_regenerate()` now runs the pipeline instead of failing.
+- `_regenerate()`, which used to fail with "RED BY DESIGN", is replaced by the
+  `pipeline_run` fixture in `conftest.py`, which runs `scripts/run_all.py` once
+  per session and checks that it wrote what it claims to have written.
 - The tolerance is no longer `rel=1e-6`. That figure was written before anything
   had been run, and it is unattainable: the published means themselves carry
   about a dollar of barrier-solver noise, so `rel=1e-6` on a $0.49 quantity was
@@ -21,7 +23,6 @@ Run with `-m pinned` to check only that the reference files still parse, without
 solving anything.
 """
 import csv
-import subprocess
 import sys
 from pathlib import Path
 
@@ -159,31 +160,8 @@ def test_evkc_definition_matches_the_paper():
 # --------------------------------------------------------------------------
 
 @pytest.fixture(scope="session")
-def regenerated():
-    """Run the pipeline and return its tables.
-
-    `run_all.py` reuses cached per-scenario solutions when the configuration, the
-    inputs and the source that builds the model are all unchanged, so this costs
-    seconds on a warm tree and minutes on a cold one. The cache compares digests
-    rather than timestamps; see `src/fews_stochopt/pipeline.py`.
-    """
-    runner = ROOT / "scripts" / "run_all.py"
-    assert runner.exists(), (
-        "scripts/run_all.py is missing -- nothing regenerates the paper's numbers"
-    )
-    proc = subprocess.run(
-        [sys.executable, str(runner), "--quiet"],
-        cwd=str(ROOT),
-        capture_output=True,
-        text=True,
-    )
-    # Both streams and the return code. Printing only stdout is how a failing
-    # script looks like one that did nothing.
-    if proc.returncode != 0:
-        pytest.fail(
-            f"scripts/run_all.py exited {proc.returncode}\n"
-            f"--- stdout ---\n{proc.stdout}\n--- stderr ---\n{proc.stderr}"
-        )
+def regenerated(pipeline_run):
+    """The pipeline's tables. `pipeline_run` (see conftest.py) does the running."""
     values = read_csv_rows(RESULTS / "solnvalues.csv", "Climate_Probability")
     stats = {
         (r["Climate_Probability"], r["sim"]): r

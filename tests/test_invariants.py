@@ -167,7 +167,7 @@ def _meta_files() -> list[Path]:
 
 
 @pytest.mark.pipeline
-def test_profit_non_negativity_never_binds():
+def test_profit_non_negativity_never_binds(pipeline_run):
     """`profit` carries Gurobi's default lower bound of zero, as in the original.
 
     If it ever bound, it would truncate the loss tail and bias every mean above --
@@ -186,7 +186,7 @@ def test_profit_non_negativity_never_binds():
 
 
 @pytest.mark.pipeline
-def test_every_solve_was_certified_optimal():
+def test_every_solve_was_certified_optimal(pipeline_run):
     """The ladder records which rung certified; none may have run out of rungs.
 
     `model.py` raises rather than returning an uncertified solution, so reaching
@@ -210,7 +210,7 @@ def test_every_solve_was_certified_optimal():
 
 
 @pytest.mark.pipeline
-def test_information_is_never_worth_less_than_none():
+def test_information_is_never_worth_less_than_none(pipeline_run):
     """Expected profit must not fall as the farm is told more.
 
     Perfect Information >= Known Climate >= Stochastic. This is the ordering the
@@ -256,7 +256,7 @@ def _per_climate_pi_profit(cfg, site):
 
 
 @pytest.mark.pipeline
-def test_the_same_climate_earns_the_same_at_both_sites(cfg):
+def test_the_same_climate_earns_the_same_at_both_sites(cfg, pipeline_run):
     """A climate is a climate, whichever site's sample it appears in.
 
     The two sites draw from the same four chains and differ only in how many runs
@@ -279,7 +279,7 @@ def test_the_same_climate_earns_the_same_at_both_sites(cfg):
 
 
 @pytest.mark.pipeline
-def test_profit_is_not_monotone_in_rainfall(cfg):
+def test_profit_is_not_monotone_in_rainfall(cfg, pipeline_run):
     """More rain is not always better, and the model must show that.
 
     The yield curve peaks near 72 cm and declines beyond it, and the farm can add

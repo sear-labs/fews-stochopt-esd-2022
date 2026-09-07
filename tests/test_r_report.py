@@ -56,15 +56,12 @@ requires_r = pytest.mark.skipif(
 
 
 @pytest.fixture(scope="module")
-def rendered():
+def rendered(pipeline_run):
     rscript = _rscript()
     if rscript is None:
         pytest.skip("Rscript is not on PATH")
     if not _has_rmarkdown(rscript):
         pytest.skip("the rmarkdown package is not installed for this R")
-    if not (ROOT / "results" / "solnvalues.csv").exists():
-        pytest.skip("stage 1 has not run; `python scripts/run_all.py` first")
-
     proc = subprocess.run(
         [rscript, str(ROOT / "stage2-r" / "render_reports.R")],
         cwd=str(ROOT),
