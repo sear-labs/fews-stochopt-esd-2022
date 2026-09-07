@@ -1,0 +1,312 @@
+---
+title: "FEWS farm model: `r params$label`"
+author: "Jones (2022), Environment Systems and Decisions"
+date: "`r format(Sys.Date())`"
+params:
+  site: EP
+  label: Equally Probable
+  root: ".."
+output:
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE, eval = TRUE, fig.align = "center",
+  warning = FALSE, message = FALSE
+)
+```
+
+```{r libraries, include = FALSE}
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
+
+# The seed does not affect any number in this report -- nothing here samples.
+# It is set because the report is about a stochastic model and a reader is
+# entitled to see that the randomness lives in the committed input file rather
+# than in this session. See docs/reproduction-notes.md.
+set.seed(12345)
+```
+
+<!--
+This one file replaces eleven.
+
+  FM DML Graphs.Rmd            FM EP Graphs.Rmd
+  FM DML MC.Rmd                FM EP MC.Rmd
+  FM Traditional DML.Rmd       FM Traditional EP.Rmd
+  FM MI DML All Climates.Rmd   FM MI EP All Climates.Rmd
+                               FM MI EP 1 Climate.Rmd
+  FM Final Outputs.Rmd         FM output combine.Rmd
+
+They were a 2 x 5 grid built by copy-paste, differing in a site name, plus two
+files that combined the results. Between them they carried more than thirty
+absolute paths to a machine layout that no longer exists -- nine in
+`FM Final Outputs.Rmd` alone -- and eleven copies of the same aggregation, so a
+correction to one of them reached none of the others.
+
+Every path here is derived from `params$root`, which is how the duplication was
+removed rather than merely reduced: a path cannot stay hardcoded once the site is
+an argument.
+
+This report READS what stage 1 wrote and does not solve anything. The model lives
+in `src/fews_stochopt/`, is exercised by `scripts/run_all.py`, and is the single
+source of every number below.
+-->
+
+# What this report covers
+
+`r params$label` (`r params$site`) is one of the paper's two climate regimes. Four
+scenarios differ only in what the farm knows when it chooses its alternative water
+and electricity capacity:
+
+| Scenario | The farm invests knowing |
+|---|---|
+| Perfect Information | exactly the weather it is about to get |
+| Known Climate, Unknown Weather | which climate it is in, not which years |
+| Stochastic | the distribution over all climates |
+| Expected Value | one deterministic precipitation path |
+
+The differences between their expected profits are the value-of-information
+figures the paper reports.
+
+```{r paths}
+root <- normalizePath(params$root, mustWork = TRUE)
+results <- file.path(root, "results", params$site)
+
+stopifnot(dir.exists(results))
+
+slug <- function(scenario) {
+  gsub(" ", "_", gsub(",", "", tolower(scenario)))
+}
+
+scenarios <- c(
+  "Perfect Information",
+  "Known Climate, Unknown Weather",
+  "Stochastic",
+  "Expected Value"
+)
+
+read_part <- function(scenario, part) {
+  path <- file.path(results, paste0(slug(scenario), "_", part, ".csv"))
+  if (!file.exists(path)) {
+    stop(
+      "missing ", basename(path), " in ", results, ".\n",
+      "Stage 1 has not run for this site. From the repository root:\n",
+      "    python scripts/run_all.py",
+      call. = FALSE
+    )
+  }
+  read_csv(path, show_col_types = FALSE)
+}
+```
+
+# Stage 1 output
+
+```{r load}
+profit <- lapply(scenarios, read_part, part = "profit")
+detail <- lapply(scenarios, read_part, part = "detail")
+invest <- lapply(scenarios, read_part, part = "investment")
+names(profit) <- names(detail) <- names(invest) <- scenarios
+
+# A silently short read would give a plausible mean and a wrong table, so check
+# the shape rather than the absence of an error.
+runs <- nrow(profit[["Stochastic"]])
+years <- length(unique(detail[["Stochastic"]]$year))
+stopifnot(runs > 0, years > 0)
+for (s in scenarios) {
+  stopifnot(nrow(profit[[s]]) == runs)
+  stopifnot(nrow(detail[[s]]) == runs * years)
+}
+
+cat(sprintf("%d Monte Carlo runs x %d years, in each of %d scenarios\n",
+            runs, years, length(scenarios)))
+```
+
+# Profit, by scenario
+
+The whole of Table 5 is mean, standard deviation and a 95% interval for profit and
+crop yield. Two details of the original are reproduced rather than corrected,
+because the published numbers carry them: the standard error divides by
+`sqrt(n - 1)`, and profit is summarised over runs while crop yield is summarised
+over run-years, so the two carry different degrees of freedom in the same row.
+
+```{r stats}
+summarise_vector <- function(x) {
+  n <- length(x)
+  sd_x <- sd(x)
+  t <- -qt(0.025, df = n - 1)
+  se <- sd_x / sqrt(n - 1)
+  c(mean = mean(x), sd = sd_x, t = t, se = se, h = t * se)
+}
+
+sim_stats <- bind_rows(lapply(scenarios, function(s) {
+  p <- summarise_vector(profit[[s]]$profit)
+  y <- summarise_vector(detail[[s]]$crop_yield)
+  tibble(
+    sim = s,
+    profit_mean = p[["mean"]], profit_sd = p[["sd"]], profit_t = p[["t"]],
+    profit_se = p[["se"]], profit_h = p[["h"]],
+    crop_yield_mean = y[["mean"]], crop_yield_sd = y[["sd"]],
+    crop_yield_t = y[["t"]], crop_yield_se = y[["se"]], crop_yield_h = y[["h"]]
+  )
+})) %>%
+  mutate(sim = factor(sim, levels = scenarios))
+
+knitr::kable(
+  sim_stats %>% select(sim, profit_mean, profit_sd, profit_h,
+                       crop_yield_mean, crop_yield_sd),
+  digits = 4,
+  caption = paste("Table 5 for", params$label)
+)
+```
+
+```{r profit-plot, fig.width = 8, fig.height = 4.5}
+# Alt text: four horizontal 95% confidence intervals for mean profit, one per
+# scenario, ordered Perfect Information at the top down to Expected Value at the
+# bottom. Perfect Information is highest at about $2.36M for Equally Probable and
+# $1.98M for Dry Most Likely; Known Climate sits just below it; Stochastic and
+# Expected Value are lower and lie almost exactly on top of each other. The
+# intervals are far narrower than the gaps between the first three, and the gap
+# between the last two is invisible at this scale -- which is the point the value
+# of the stochastic solution makes numerically below.
+ggplot(sim_stats, aes(x = profit_mean, y = sim)) +
+  geom_errorbarh(aes(xmin = profit_mean - profit_h, xmax = profit_mean + profit_h),
+                 height = 0.2) +
+  geom_point(size = 2.5, shape = 21, fill = "white") +
+  scale_x_continuous(labels = function(x) sprintf("%.2fM", x / 1e6)) +
+  labs(
+    title = paste("Mean profit by scenario --", params$label),
+    subtitle = "point and 95% interval; shape and position carry the meaning, not colour",
+    x = "Mean profit ($)", y = NULL
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+The numbers behind that figure are the `profit_mean` and `profit_h` columns of the
+table above, so a reader who cannot see the plot is not asked to take it on trust.
+
+# The investment decision
+
+```{r investment}
+first_stage <- bind_rows(lapply(scenarios, function(s) {
+  inv <- invest[[s]]
+  tibble(
+    sim = s,
+    alt_water_cap_cm = weighted.mean(inv$alt_water_cap, inv$n_runs),
+    alt_elc_cap_kW = weighted.mean(inv$alt_elc_cap, inv$n_runs),
+    groups = nrow(inv)
+  )
+})) %>%
+  mutate(sim = factor(sim, levels = scenarios))
+
+knitr::kable(first_stage, digits = 6,
+             caption = "First-stage capacity, run-weighted across groups")
+```
+
+`groups` is how many separate investment decisions the scenario makes: one per run
+under perfect information, one per climate when the climate is known, one
+otherwise. That column *is* the difference between the four scenarios -- everything
+else about the model is identical.
+
+# Value of information
+
+```{r values}
+mean_profit <- vapply(scenarios, function(s) mean(profit[[s]]$profit), numeric(1))
+
+values <- tibble(
+  Climate_Probability = params$label,
+  Value_of_Known_Weather = mean_profit[["Perfect Information"]] -
+    mean_profit[["Known Climate, Unknown Weather"]],
+  Value_of_Perfect_Information = mean_profit[["Perfect Information"]] -
+    mean_profit[["Stochastic"]],
+  Value_of_Stochastic_Solution = mean_profit[["Stochastic"]] -
+    mean_profit[["Expected Value"]],
+  Value_of_Known_Climate = mean_profit[["Known Climate, Unknown Weather"]] -
+    mean_profit[["Stochastic"]]
+)
+
+# Assert the theory. More information cannot be worth less than none, and EVPI is
+# EVKW and EVKC by construction. If either fails the scenarios were mixed up, and
+# four plausible numbers would otherwise hide it.
+stopifnot(
+  mean_profit[["Perfect Information"]] >=
+    mean_profit[["Known Climate, Unknown Weather"]],
+  mean_profit[["Known Climate, Unknown Weather"]] >= mean_profit[["Stochastic"]],
+  abs(values$Value_of_Perfect_Information -
+        (values$Value_of_Known_Weather + values$Value_of_Known_Climate)) < 1e-6
+)
+
+knitr::kable(values, digits = 4,
+             caption = paste("Table 4 for", params$label))
+```
+
+`Value_of_Known_Climate` is the column the original pipeline never produced. It is
+in the paper -- $98,328.78 and $64,865.98 -- and is the part of the value of
+perfect information that comes from learning *which climate you are in*, as
+opposed to which years within it.
+
+# Agreement with the Python stage
+
+The package computes this same table, and this report recomputes it from the same
+per-run output. Two implementations of arithmetic small enough to look obviously
+right is exactly where a difference hides, so the two are compared rather than
+assumed to agree.
+
+```{r agreement}
+python_table <- read_csv(file.path(root, "results", "solnvalues.csv"),
+                         show_col_types = FALSE) %>%
+  filter(Climate_Probability == params$label)
+
+stopifnot(nrow(python_table) == 1)
+
+fields <- c("Value_of_Known_Weather", "Value_of_Perfect_Information",
+            "Value_of_Stochastic_Solution", "Value_of_Known_Climate")
+
+comparison <- tibble(
+  field = fields,
+  r = as.numeric(values[fields]),
+  python = as.numeric(python_table[fields]),
+  difference = r - python
+)
+
+# Both sides read the same CSVs and do the same arithmetic in double precision.
+# The tolerance is set by floating-point summation order, not by the model, so it
+# is tight on purpose: anything larger means the two implementations disagree
+# about what they are computing.
+worst <- max(abs(comparison$difference))
+stopifnot(worst < 1e-6)
+
+knitr::kable(comparison, digits = 8,
+             caption = "R report against the Python package")
+cat(sprintf("largest disagreement: %.3e dollars\n", worst))
+
+write_csv(values, file.path(results, "report_table.csv"))
+```
+
+# Where these numbers come from
+
+```{r provenance}
+meta_files <- list.files(results, pattern = "\\.meta\\.json$", full.names = TRUE)
+stopifnot(length(meta_files) > 0)
+
+provenance <- bind_rows(lapply(meta_files, function(f) {
+  txt <- paste(readLines(f, warn = FALSE), collapse = " ")
+  field <- function(name) {
+    m <- regmatches(txt, regexpr(paste0('"', name, '"\\s*:\\s*"[^"]*"'), txt))
+    if (length(m) == 0) NA_character_ else sub('.*:\\s*"([^"]*)"', "\\1", m)
+  }
+  tibble(scenario = field("scenario"), gurobi = field("gurobi"),
+         config = field("config_digest"), source = field("source_digest"))
+}))
+
+knitr::kable(provenance, caption = "Solver and code version behind each scenario")
+```
+
+Every file read by this report was written by `scripts/run_all.py`, and each
+carries the digest of the configuration and the source that produced it. Re-running
+that script with any of them changed re-solves rather than reusing the result.

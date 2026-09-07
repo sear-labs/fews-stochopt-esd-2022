@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68,<81"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fews-stochopt"
+version = "1.0.0"
+description = "Stochastic programming model for climate risk management in agriculture (Jones 2022)"
+readme = "README.md"
+requires-python = ">=3.10,<3.14"
+license = { file = "LICENSE" }
+authors = [{ name = "Erick C. Jones, Jr." }]
+
+# Upper bounds on everything. An unpinned dependency will one day install a
+# major version with a changed API and either break or -- worse -- silently
+# alter results. pandas 2.0 removing DataFrame.append is exactly why the
+# original notebooks no longer run.
+dependencies = [
+    "gurobipy>=10,<14",
+    "numpy>=1.24,<3",
+    "pandas>=2.0,<4",
+    "scipy>=1.10,<2",
+    "PyYAML>=6.0,<7",
+    "tomli>=2.0,<3; python_version < '3.11'",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4,<9"]
+
+[project.urls]
+Paper = "https://doi.org/10.1007/s10669-021-09838-8"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "pinned: checks the pinned reference values still parse; expected to pass",
+    "pipeline: runs the full two-stage pipeline; minutes on a cold cache",
+    "rstage: renders the parameterised R report; needs R and rmarkdown",
+]

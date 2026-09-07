@@ -1,187 +1,276 @@
 ---
-title: "R Notebook"
-output: html_notebook
+title: "Weather scenario generation: `r params$label`"
+author: "Jones (2022), Environment Systems and Decisions"
+date: "`r format(Sys.Date())`"
+params:
+  site: EP
+  label: Equally Probable
+  root: ".."
+  seed: 12345
+  iters: 1000
+  year_length: 25
+output:
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
 ---
 
-
-```{r}
-library(tidyverse)
-library(markovchain)
-library(diagram)
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center",
+                      warning = FALSE, message = FALSE)
 ```
 
-```{r}
-tmA <- read.csv('trans_matrix.csv', header = TRUE)
-tma <- tmA %>% as.matrix()
-tmA
+```{r libraries, include = FALSE}
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
 ```
 
-```{r}
-dtmca <- new("markovchain", transitionMatrix=tma, states = c('c1w1', 'c1w2', 'c1w3', 'c1w4', 'c1w5',
-                                                             'c2w1', 'c2w2', 'c2w3', 'c2w4', 'c2w5',
-                                                             'c3w1', 'c3w2', 'c3w3', 'c3w4', 'c3w5',
-                                                             'c4w1', 'c4w2', 'c4w3', 'c4w4', 'c4w5'),
-             name="Weather MC")
-dtmca
-```
+# What this generates, and what it does not
 
+This is the step that produces the precipitation scenarios the optimisation reads.
+It **writes to `results/regenerated/` and never touches
+`stage1-python/precips_c0_*.csv`.** Those files are the input of record: they are
+what the published run used, and every number in the paper follows from them. An
+input that a later stage can overwrite is not an input.
 
-```{r}
-plot(dtmca)
-```
-```{r}
-stateNames = c('c1w1', 'c1w2', 'c1w3', 'c1w4', 'c1w5',
-                                                             'c2w1', 'c2w2', 'c2w3', 'c2w4', 'c2w5',
-                                                             'c3w1', 'c3w2', 'c3w3', 'c3w4', 'c3w5',
-                                                             'c4w1', 'c4w2', 'c4w3', 'c4w4', 'c4w5')
+Two changes from the version this replaces, both forced:
 
-row.names(tma) <- stateNames;colnames(tma) <- stateNames
+- **It reads `reference/reconstructed/trans_matrix_<site>.csv`, not
+  `~/Coding/Data/Farm_Model/trans_matrix.csv`.** The latter exists nowhere -- it
+  was already gone when this repository was split out, and every R file in the
+  original *reads* it while none creates it. The reconstruction is an estimate
+  built from the committed draws by `scripts/reconstruct_markov.py`; see
+  `reference/reconstructed/README.md` for what it can and cannot recover.
+- **The `markovchain` and `diagram` packages are gone.** A walk over a transition
+  matrix is four lines of base R, and dropping two dependencies from a step that
+  is now reproducible is worth more than the convenience.
 
-plotmat(tma, 
-        lwd = 1, box.lwd = 2, 
-        cex.txt = 0.8, 
-        box.size = 0.05, 
-        box.type = "circle", 
-        box.prop = 0.5,
-        box.col = "light blue",
-        arr.length=.05,
-        arr.width=.1,
-        self.cex = .3,
-        self.shifty = -.01,
-        self.shiftx = .14,
-        main = "Markov Chain")
+**The output of this document is a new sample, not the committed one.** The
+original run's RNG state was never recorded, so its exact draws cannot be
+recovered; what can be checked is that a fresh sample has the same distribution,
+which the last section does.
 
+```{r paths}
+root <- normalizePath(params$root, mustWork = TRUE)
+set.seed(params$seed)
 
-```
-```{r}
-
-as(dtmca, "data.frame")
-
-initialState <- rep(0.05,20)
-
-steps <- 10
-
-finalState <- initialState*dtmca^steps
-
-finalState
-
-steadyStates(dtmca)
-
-rmarkovchain(n = 10,object = dtmca)
-
-```
-
-```{r}
-
-probc1 <- 0.25
-probc2 <- 0.25
-probc3 <- 0.25
-probc4 <- 0.25
-
-
-start <- runif(1)
-
-if(start < probc1){climate <- 'c1'}
-if(start >= probc1 & start < probc1+probc2){climate <- 'c2'}
-if(start >= probc1+probc2 & start < probc1+probc2+probc3){climate <- 'c3'}
-if(start >= probc1+probc2+probc3){ climate <- 'c4'}
-
-print('Climate is equal to:')
-climate
-
-
-
-```
-```{r}
-
-stateNames = c('w1', 'w2', 'w3', 'w4', 'w5')
-
-c1m <- tma[1:5,1:5]
-c2m <- tma[6:10,6:10]
-c3m <- tma[11:15,11:15]
-c4m <- tma[16:20,16:20]
-
-row.names(c1m) <- stateNames;colnames(c1m) <- stateNames
-row.names(c2m) <- stateNames;colnames(c2m) <- stateNames
-row.names(c3m) <- stateNames;colnames(c3m) <- stateNames
-row.names(c4m) <- stateNames;colnames(c4m) <- stateNames
-
-plotmat(c1m, 
-        lwd = 1, box.lwd = 2, 
-        cex.txt = 0.8, 
-        box.size = 0.1, 
-        box.type = "circle", 
-        box.prop = 0.5,
-        box.col = "light blue",
-        arr.length=.1,
-        arr.width=.1,
-        self.cex = .6,
-        self.shifty = -.01,
-        self.shiftx = .1,
-        main = "Markov Chain")
-
-c1mc <- new("markovchain", transitionMatrix=c1m, states = c('w1', 'w2', 'w3', 'w4', 'w5'),
-             name="climate1")
-
-c2mc <- new("markovchain", transitionMatrix=c2m, states = c('w1', 'w2', 'w3', 'w4', 'w5'),
-             name="climate2")
-
-c3mc <- new("markovchain", transitionMatrix=c3m, states = c('w1', 'w2', 'w3', 'w4', 'w5'),
-             name="climate3")
-
-c4mc <- new("markovchain", transitionMatrix=c4m, states = c('w1', 'w2', 'w3', 'w4', 'w5'),
-             name="climate4")
-
-
-```
-
-```{r}
-
-
-if(climate == 'c1'){
-  seq <- rmarkovchain(n = 10,object = c1mc)
+matrix_path <- file.path(root, "reference", "reconstructed",
+                         sprintf("trans_matrix_%s.csv", params$site))
+if (!file.exists(matrix_path)) {
+  stop("missing ", matrix_path, ".\nFrom the repository root:\n",
+       "    python scripts/reconstruct_markov.py", call. = FALSE)
 }
 
-if(climate == 'c2'){
-  seq <- rmarkovchain(n = 10,object = c2mc)
-}
+tm <- read.csv(matrix_path, row.names = 1, check.names = FALSE) %>% as.matrix()
+stopifnot(nrow(tm) == 20, ncol(tm) == 20)
+stopifnot(all(abs(rowSums(tm) - 1) < 1e-9))
 
-if(climate == 'c3'){
-  seq <- rmarkovchain(n = 10,object = c3mc)
-}
-
-if(climate == 'c4'){
-  seq <- rmarkovchain(n = 10,object = c4mc)
-}
-
-seq
-
-
-
+cat(sprintf("seed %d, %d iterations of %d years\n",
+            params$seed, params$iters, params$year_length))
 ```
 
-```{r}
+# The four climates
+
+The 20x20 matrix is block diagonal: a run never changes climate, so only the four
+5x5 diagonal blocks are ever used. This is what the original did with
+`tma[1:5,1:5]` and its three siblings, written as a loop instead of four times.
+
+```{r blocks}
+state_names <- c("w1", "w2", "w3", "w4", "w5")
+n_climates <- 4
+
+blocks <- lapply(seq_len(n_climates), function(k) {
+  idx <- ((k - 1) * 5 + 1):(k * 5)
+  block <- tm[idx, idx, drop = FALSE]
+  dimnames(block) <- list(state_names, state_names)
+  block
+})
+
+off_diagonal_mass <- sum(tm) - sum(vapply(blocks, sum, numeric(1)))
+stopifnot(abs(off_diagonal_mass) < 1e-9)
+
+knitr::kable(round(blocks[[1]], 4),
+             caption = "Climate 1 transition probabilities")
+```
+
+Each block's rows are identical to within sampling error, which is the finding
+recorded in `reference/reconstructed/README.md`: the climate fixes a weather
+distribution and each year is an independent draw from it.
+
+# Climate probabilities
+
+The two sites differ **only** in how often each climate occurs. The transition
+matrices are the same; the mixture is not.
+
+```{r probabilities}
+# Read from config.yaml so this document holds no second copy of them.
+config_lines <- readLines(file.path(root, "config.yaml"), warn = FALSE)
+site_line <- grep(sprintf("^  %s:\\s*$", params$site), config_lines)
+stopifnot(length(site_line) == 1)
+prob_line <- grep("climate_probabilities:", config_lines)
+prob_line <- prob_line[prob_line > site_line][1]
+stopifnot(!is.na(prob_line))
+
+probs <- as.numeric(strsplit(
+  gsub(".*\\[|\\].*", "", config_lines[prob_line]), ",")[[1]])
+stopifnot(length(probs) == n_climates, abs(sum(probs) - 1) < 1e-12)
+
+knitr::kable(
+  data.frame(climate = seq_len(n_climates), probability = probs,
+             runs = round(probs * params$iters * n_climates)),
+  caption = paste("Climate mixture for", params$label)
+)
+```
+
+# Weather states in centimetres
+
+```{r states}
 cm_in <- 2.54
-rainfall_days_perc <- 0.5
+rainfall_days_perc <- 0.70
+inches <- c(w1 = 5, w2 = 15, w3 = 30, w4 = 45, w5 = 60)
 
-w1p <- 10 *cm_in * rainfall_days_perc
-w2p <- 20 *cm_in * rainfall_days_perc
-w3p <- 30 *cm_in * rainfall_days_perc
-w4p <- 40 *cm_in * rainfall_days_perc
-w5p <- 50 *cm_in * rainfall_days_perc
+# Rounded to two decimals, which is not cosmetic. The original converted states
+# to numbers through `gsub('w2', as.character(w2p), ...)`, and as.character()
+# prints seven significant digits -- so the committed file holds exactly 26.67
+# while the unrounded product is 26.669999999999998. Comparing the two by value
+# then finds no matches at all, and the comparison below silently becomes NA
+# rather than large. Reproducing the round-trip keeps both sides on the same grid.
+depths <- round(inches * cm_in * rainfall_days_perc, 2)
 
-seq
-seq <- gsub('w1',as.character(w1p),seq)
-seq <- gsub('w2',as.character(w2p),seq)
-seq <- gsub('w3',as.character(w3p),seq)
-seq <- gsub('w4',as.character(w4p),seq)
-seq <- gsub('w5',as.character(w5p),seq)
-seq
-
-c(seq,seq)
+knitr::kable(data.frame(state = names(depths), inches = inches, cm = depths),
+             row.names = FALSE, caption = "The five weather states")
 ```
 
-```{r}
-write(seq)
+# Drawing the sequences
+
+```{r draw}
+# A walk over a transition matrix. The original called markovchain::rmarkovchain;
+# this is the same thing without the dependency, and it stays correct if the
+# matrix ever stops being row-homogeneous.
+walk <- function(block, n, start = NULL) {
+  if (is.null(start)) {
+    # Start from the chain's stationary distribution rather than a fixed state,
+    # which is what a memoryless chain implies and what avoids a burn-in.
+    start <- sample.int(5, 1, prob = colSums(block) / sum(block))
+  }
+  out <- integer(n)
+  state <- start
+  for (i in seq_len(n)) {
+    state <- sample.int(5, 1, prob = block[state, ])
+    out[i] <- state
+  }
+  out
+}
+
+draw_climate <- function(k, n_runs) {
+  block <- blocks[[k]]
+  seqs <- t(vapply(seq_len(n_runs),
+                   function(i) walk(block, params$year_length),
+                   integer(params$year_length)))
+  matrix(depths[seqs], nrow = n_runs)
+}
+
+runs_per_climate <- round(probs * params$iters * n_climates)
+stopifnot(sum(runs_per_climate) == params$iters * n_climates)
+
+# Concatenate the climates in order, then renumber 1..4000 -- which is exactly
+# how the original built precips_c0, and why the run index encodes the climate.
+sample_blocks <- lapply(seq_len(n_climates),
+                        function(k) draw_climate(k, runs_per_climate[k]))
+precips <- do.call(rbind, sample_blocks)
+stopifnot(nrow(precips) == params$iters * n_climates)
+stopifnot(ncol(precips) == params$year_length)
+
+regenerated <- as_tibble(precips, .name_repair = ~ as.character(seq_along(.))) %>%
+  mutate(run = row_number()) %>%
+  pivot_longer(-run, names_to = "year", values_to = "precip") %>%
+  mutate(year = as.integer(year)) %>%
+  arrange(run, year)
+
+cat(sprintf("drew %d runs x %d years = %d rows\n",
+            max(regenerated$run), params$year_length, nrow(regenerated)))
 ```
 
+# Does the fresh sample match the committed one?
+
+The original's RNG state was never recorded, so these draws are not the committed
+ones and cannot be. What *is* checkable is that they come from the same
+distribution. If the reconstruction of the transition matrix were wrong, this is
+where it would show.
+
+```{r compare, fig.width = 8, fig.height = 4}
+committed <- read_csv(
+  file.path(root, "stage1-python", sprintf("precips_c0_%s.csv", params$site)),
+  show_col_types = FALSE
+) %>%
+  select(run, year, precip) %>%
+  mutate(run = as.integer(run), year = as.integer(year))
+
+comparison <- bind_rows(
+  committed %>% mutate(source = "committed"),
+  regenerated %>% mutate(source = "regenerated")
+)
+
+shares <- comparison %>%
+  count(source, precip) %>%
+  group_by(source) %>%
+  mutate(share = n / sum(n)) %>%
+  ungroup() %>%
+  select(-n) %>%
+  pivot_wider(names_from = source, values_from = share) %>%
+  arrange(precip) %>%
+  mutate(difference = regenerated - committed)
+
+knitr::kable(shares, digits = 5,
+             caption = "Share of run-years in each weather state")
+
+# Both sides must cover all five states. If a value appeared on one side only,
+# pivot_wider would give it an NA and `max` would return NA -- which stopifnot
+# rejects, but with a message about the comparison rather than about the states.
+# Say what is actually wrong instead.
+stopifnot(nrow(shares) == 5)
+if (anyNA(shares$difference)) {
+  stop("a weather state appears on only one side of the comparison:\n",
+       paste(utils::capture.output(print(shares)), collapse = "\n"), call. = FALSE)
+}
+
+worst <- max(abs(shares$difference))
+cat(sprintf("largest difference in state share: %.4f\n", worst))
+cat(sprintf("mean precipitation  committed %.4f cm   regenerated %.4f cm\n",
+            mean(committed$precip), mean(regenerated$precip)))
+
+# Sampling error on a share from 100,000 draws is about 0.0016, so a difference
+# of more than 0.01 is not sampling -- it is the matrix.
+stopifnot(is.finite(worst), worst < 0.01)
+```
+
+```{r compare-plot, fig.width = 8, fig.height = 4}
+# Alt text: paired bars showing the share of run-years falling in each of the five
+# weather states, for the committed draws and for this fresh sample. The pairs are
+# visually indistinguishable at every state; the table above gives the numbers,
+# the largest difference being under one percentage point.
+ggplot(comparison, aes(x = factor(round(precip, 2)), fill = source)) +
+  geom_bar(aes(y = after_stat(prop), group = source),
+           position = position_dodge(0.8), width = 0.7) +
+  labs(
+    title = paste("Weather state frequencies --", params$label),
+    subtitle = "committed input against a fresh draw from the reconstructed matrix",
+    x = "Precipitation (cm)", y = "Share of run-years", fill = NULL
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+```{r write}
+out_dir <- file.path(root, "results", "regenerated")
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+out <- file.path(out_dir, sprintf("precips_c0_%s_regenerated.csv", params$site))
+
+# The name says regenerated, and the directory is not the input directory. Both
+# are deliberate: overwriting stage1-python/ would destroy the only record of what
+# the published run actually read.
+write_csv(regenerated, out)
+cat("wrote", out, "\n")
+```

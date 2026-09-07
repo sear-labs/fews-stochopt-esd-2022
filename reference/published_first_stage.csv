@@ -1,0 +1,3 @@
+site,label,alt_water_cap_cm,alt_elc_cap_kW,source
+EP,Equally Probable,5.445670612732769,94.34376384684164,stage2-r/FM Traditional EP.Rmd:74-75
+DML,Dry Most Likely,11.844907090764611,221.91113690195056,stage2-r/FM Traditional DML.Rmd:72-73

@@ -1,0 +1,38 @@
+Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+WHAT THIS COVERS
+----------------
+`LICENSE` (MIT) speaks about the Software. It says nothing about a database
+right, which leaves the data in this repository -- the part a reader is most
+likely to reuse -- with unstated terms. This file states them, by path:
+
+    reference/**                    published values, transcribed capacities,
+                                    and the reconstructed transition matrix
+    stage1-python/precips_c0_*.csv  the committed precipitation scenarios
+    results/*.csv                   the reproduced tables
+    figures/**                      the published result figures
+
+Everything else in this repository, including all Python and R source, is
+covered by `LICENSE` (MIT).
+
+TERMS
+-----
+You are free to share and adapt this material for any purpose, including
+commercially, provided you give appropriate credit, link to this licence, and
+indicate if changes were made.
+
+Full text: https://creativecommons.org/licenses/by/4.0/legalcode
+Summary:   https://creativecommons.org/licenses/by/4.0/
+
+ATTRIBUTION
+-----------
+Jones, Erick C., Jr. "Climate risk management in agriculture using alternative
+electricity and water resources: a stochastic programming framework."
+Environment Systems and Decisions, 2022. doi:10.1007/s10669-021-09838-8
+
+A NOTE ON `reference/reconstructed/`
+------------------------------------
+Those files are an ESTIMATE of an input that was lost, not the input itself.
+Attribution alone is not enough there: anyone reusing them should also carry the
+limits recorded in `reference/reconstructed/README.md`, which state what the
+estimate can and cannot recover.

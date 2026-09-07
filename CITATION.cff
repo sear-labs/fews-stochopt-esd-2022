@@ -1,8 +1,11 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite the paper."
 title: "fews-stochopt: stochastic FEWS farm model for agricultural climate risk"
-version: 0.1.0
+version: 1.0.0
 license: MIT
+# The code is MIT. The committed data -- reference/, stage1-python/*.csv,
+# results/*.csv and figures/ -- is CC-BY-4.0; see LICENSE-DATA.
+license-url: "https://github.com/sear-labs/fews-stochopt-esd-2022/blob/main/LICENSE"
 repository-code: "https://github.com/sear-labs/fews-stochopt-esd-2022"
 authors:
   - family-names: Jones

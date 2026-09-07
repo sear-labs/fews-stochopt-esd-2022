@@ -1,0 +1,18 @@
+# Resolved environment: what actually produced results/ on 2026-09-06.
+#
+# pyproject.toml says what the code TOLERATES. This says what RAN. A range is not
+# a record -- re-solving it next month installs something else -- so both ship,
+# per invariant 3 of the code standard.
+#
+# python      3.13.9
+# platform    Windows-11-10.0.26200-SP0
+# gurobi      13.0.2 (academic, node-locked, expires 2026-12-04)
+#
+# The R stage is recorded in requirements-lock-R.txt.
+gurobipy==13.0.2
+numpy==2.3.5
+pandas==2.3.3
+scipy==1.16.3
+PyYAML==6.0.3
+pytest==8.4.2
+setuptools==80.9.0
