@@ -92,26 +92,93 @@ def _env(cfg: Config) -> gp.Env:
 
 
 def _optimize(m: gp.Model, cfg: Config) -> int:
-    """Optimise, working down the configured ladder until a rung certifies.
+    """Optimise, working down the ladder until a rung reaches certified optimality.
 
-    Returns the index of the rung that succeeded, so the caller can report how
-    often the fallbacks were needed. Raises if none of them does: an uncertified
-    solution is not a result, and the whole point of reading the status is that
-    the original code did not.
+    Returns that rung's index. Raises if none does -- the original code never
+    read the status at all, and most single-run solves stall short of it on
+    Gurobi's defaults.
+
+    **Status OPTIMAL is not evidence that the solution is feasible**, which is a
+    second trap one level in: Gurobi has been observed here returning status 2
+    with a maximum violation of 2.1e-03, two thousand times its own
+    `FeasibilityTol`. Gating this function on `MaxVio` was tried and is wrong --
+    an absolute tolerance is the wrong instrument for a model whose quantities
+    run from 0.08 to 2,000,000, and it rejected 87 of 91 solves that were
+    numerically excellent in relative terms. Feasibility is enforced instead by
+    `_repair`, which clips the returned point back inside the region and
+    re-prices it, so what leaves this module is feasible by construction.
     """
     ladder = cfg.solver.get("parameter_ladder") or [{}]
+    attempts = []
     for rung, params in enumerate(ladder):
+        # Parameters must NOT accumulate. `m.reset()` clears the solution, not
+        # the settings, so without this a later rung inherits every earlier
+        # rung's parameters and the ladder stops testing what it names -- rung 3
+        # was running with rung 1's BarHomogeneous still set, and two rungs
+        # reported identical results because they were the same solve.
+        m.resetParams()
         for name, value in params.items():
             m.setParam(name, value)
-        m.reset()
         m.optimize()
         if m.Status == gp.GRB.OPTIMAL:
             return rung
+        attempts.append(f"rung {rung}: status {m.Status}")
     raise RuntimeError(
-        f"no rung of solver.parameter_ladder reached certified optimality; the "
-        f"last attempt returned Gurobi status {m.Status} on a model with "
-        f"{m.NumVars} variables. Nothing downstream may use this result."
+        "no rung of solver.parameter_ladder reached certified optimality on a "
+        f"model with {m.NumVars} variables. " + "; ".join(attempts)
+        + ". Nothing downstream may use this result."
     )
+
+
+def _repair(
+    cfg: Config,
+    rain: dict[tuple[int, int], float],
+    runs: list[int],
+    years: list[int],
+    profit: np.ndarray,
+    detail: dict[str, np.ndarray],
+) -> tuple[np.ndarray, dict[str, np.ndarray], float]:
+    """Pull the returned point back inside the feasible region, and re-price it.
+
+    **Gurobi returns points that violate its own tolerances while reporting
+    OPTIMAL**, and the violations here are one-sided: the barrier stops just
+    outside the yield curve and just outside the water balance, never inside. So
+    they do not average away. Measured over 120 runs, the shipped solver rung
+    overshoots the yield curve by a mean of **$1.03 per run and never less than
+    zero** -- which is the same size and sign as the residual against the
+    published figures, and was very nearly reported as a property of the
+    published run rather than of this one.
+
+    The repair is two clips, in order, each of which only ever *relaxes* the
+    constraints it is not about:
+
+        water     <- min(water, rain + alt_water + irrigation)   (2)
+        crop_yield<- min(crop_yield, a0 + a1*water + a2*water^2) (6)
+
+    `water` appears only in those two rows and `crop_yield` only in (6) and in
+    the profit definition, so lowering either leaves every other constraint
+    satisfied. Profit is then recomputed from the clipped yield.
+
+    The result is a point that is **feasible by construction**, so the value
+    reported is a valid lower bound on the model's optimum rather than a number
+    just outside it. `scripts/verify_solution.py` re-checks that from outside.
+    """
+    a = cfg.yield_coeffs
+    water = detail["water"]
+    available = np.array(
+        [[rain[r, y] + detail["alt_water"][i, j] + detail["irrigation"][i, j]
+          for j, y in enumerate(years)]
+         for i, r in enumerate(runs)]
+    )
+    water = np.minimum(water, available)
+    curve = a.a0 + a.a1 * water + a.a2 * water * water
+    clipped = np.minimum(detail["crop_yield"], curve)
+
+    removed = detail["crop_yield"] - clipped
+    profit = profit - removed.sum(axis=1) * cfg.hectares * cfg.crop_price
+
+    detail = {**detail, "water": water, "crop_yield": clipped}
+    return profit, detail, float(removed.sum() * cfg.hectares * cfg.crop_price)
 
 
 def _solve_block(
@@ -226,12 +293,15 @@ def _solve_block(
         "alt_elc": grid(alt_elc),
         "utility_elc": grid(utility_elc),
     }
+    # Gurobi reports OPTIMAL on points that sit just outside its own tolerances,
+    # one-sidedly. Pull them back in before anything downstream sees them.
+    profits, detail, repaired = _repair(cfg, rain, runs, years, profits, detail)
     caps = (
         (float(awc.X), float(aec.X))
         if fixed_first_stage is None
         else (float(awc), float(aec))
     )
-    return profits, detail, caps, rung
+    return profits, detail, caps, rung, repaired
 
 
 def _assemble(
@@ -294,12 +364,14 @@ def solve_scenario(
     env = _env(cfg)
     t0 = time.perf_counter()
     rungs: list[int] = []
+    repaired = 0.0
 
     if scenario == PERFECT_INFORMATION:
         # Every run invests knowing its own weather: one group per run.
         blocks = []
         for r in all_runs:
-            p, d, c, rung = _solve_block(cfg, rain, [r], env)
+            p, d, c, rung, fixed = _solve_block(cfg, rain, [r], env)
+            repaired += fixed
             blocks.append(([r], p, d, c))
             rungs.append(rung)
 
@@ -307,30 +379,33 @@ def solve_scenario(
         # One investment per climate, taken over that climate's runs.
         blocks = []
         for runs in blocks_runs:
-            p, d, c, rung = _solve_block(cfg, rain, runs, env)
+            p, d, c, rung, fixed = _solve_block(cfg, rain, runs, env)
+            repaired += fixed
             blocks.append((runs, p, d, c))
             rungs.append(rung)
 
     elif scenario == STOCHASTIC:
-        p, d, c, rung = _solve_block(cfg, rain, all_runs, env)
+        p, d, c, rung, repaired = _solve_block(cfg, rain, all_runs, env)
         blocks = [(all_runs, p, d, c)]
         rungs.append(rung)
 
     elif scenario == EXPECTED_VALUE:
         # Stage one: invest against the single deterministic precipitation path.
         ev_rain = expected_value_rain(cfg, site)
-        _, _, caps, rung = _solve_block(
+        _, _, caps, rung, repaired = _solve_block(
             cfg, {(0, y): v for y, v in ev_rain.items()}, [0], env
         )
         rungs.append(rung)
         # Stage two: live with that investment through every realised run.
-        p, d, _, rung = _solve_block(cfg, rain, all_runs, env, fixed_first_stage=caps)
+        p, d, _, rung, fixed = _solve_block(cfg, rain, all_runs, env, fixed_first_stage=caps)
+        repaired += fixed
         blocks = [(all_runs, p, d, caps)]
         rungs.append(rung)
 
     elif scenario == EXPECTED_VALUE_PUBLISHED_FIRST_STAGE:
         caps = published_first_stage(site)
-        p, d, _, rung = _solve_block(cfg, rain, all_runs, env, fixed_first_stage=caps)
+        p, d, _, rung, fixed = _solve_block(cfg, rain, all_runs, env, fixed_first_stage=caps)
+        repaired += fixed
         blocks = [(all_runs, p, d, caps)]
         rungs.append(rung)
 
@@ -348,6 +423,8 @@ def solve_scenario(
         "solves": float(len(rungs)),
         "fallback_solves": float(sum(1 for r in rungs if r > 0)),
         "worst_rung": float(max(rungs)),
+        # Total dollars clipped off by _repair. One-sided, so it is a bias.
+        "repaired_dollars": float(repaired),
     }
     del env
     return result

@@ -31,7 +31,19 @@ water:
   days_per_year: 365
   # 6.25 kWh/kGal of alternative water, converted to kWh per cm of depth
   alt_kwh_per_kgal: 6.25
-  # $7 per acre-inch of irrigation water
+  # $7 per acre-inch of irrigation water.
+  #
+  # A SECOND, DISABLED PARAMETERISATION sits commented out in both canonical
+  # notebooks, with its citation intact:
+  #
+  #     # cost_irrigation_water = 40 / gal_acre_ft / cm3_gal * cm2_ha * ha
+  #     #   news.berkeley.edu/berkeley_blog/the-cost-of-irrigation-water...
+  #
+  # $40 per acre-FOOT, which works out at 648.57 $/cm against the live line's
+  # 1,361.99 -- a factor of 2.1, not a rounding. It is recorded here rather than
+  # enabled: the published table came from the live value, and a commented-out
+  # line is a configuration somebody saved without labelling it, not a correction
+  # somebody applied. Switching to it would be a different paper.
   irrigation_dollars_per_acre_in: 7.0
   # 1 kWh/kGal of irrigation water
   irrigation_kwh_per_kgal: 1.0
@@ -143,17 +155,35 @@ sites:
 # solutions Gurobi declined to certify. `model.py` refuses anything that is not
 # status OPTIMAL and works down this ladder until one rung certifies:
 #
-#   rung 1 (BarHomogeneous + NumericFocus)  197 of 200 sampled runs
-#   rung 2 (+ aggressive scaling)           the remaining 3
+# A rung is accepted when Gurobi reports OPTIMAL. Feasibility is NOT gated here:
+# Gurobi has been seen returning status 2 with MaxVio 2.1e-03, two thousand times
+# its own tolerance, on a model it declared solved -- but gating on MaxVio was
+# tried and is wrong, because an absolute tolerance is the wrong instrument for a
+# model whose quantities run from 0.08 to 2,000,000, and it rejected 87 of 91
+# solves that were excellent in relative terms. `model._repair` handles it
+# instead, clipping the returned point back inside the region and re-pricing it,
+# so what leaves the solver is feasible by construction.
 #
-# Where two rungs both certify, they agree to about 1e-3 on a $2.6M objective.
-# See docs/reproduction-notes.md.
+# Defaults come first, because where they converge they are the most *accurate*
+# rung -- MaxVio around 1e-10. The homogeneous/NumericFocus rungs exist for the
+# runs where defaults stall short of optimality, which is most single-run solves;
+# they certify, but on some small models they certify a point that violates
+# feasibility, which is why they are fallbacks rather than the default.
+#
+#   rung 0 (Gurobi defaults)                converges on ~15 of 40 sampled runs,
+#                                           and on the small deterministic models
+#   rung 1 (BarHomogeneous + NumericFocus)  the runs where defaults stall
+#   rung 2 (+ aggressive scaling)           a handful more
+#   rung 3 (NumericFocus alone)             last resort
+#
+# See docs/reproduction-notes.md sections 4 and 12.
 solver:
   name: gurobi
   seed: 0
   output_flag: 0
   threads: 0                   # 0 = let Gurobi choose
   parameter_ladder:
+    - {}
     - {BarHomogeneous: 1, NumericFocus: 3}
     - {BarHomogeneous: 1, NumericFocus: 3, ScaleFlag: 2}
     - {NumericFocus: 3}
@@ -171,26 +201,38 @@ solver:
 # of magnitude between them, and every figure below sits in the gap.
 tolerances:
   # Largest observed difference between a scenario profit mean reproduced here
-  # and the published one: $0.75, over seven of the eight site-scenario
+  # and the published one: $0.73, over seven of the eight site-scenario
   # combinations. The eighth is the expected-value case below.
+  #
+  # The reproduced means are now valid LOWER bounds: `model._repair` clips the
+  # solver's point back inside the feasible region, so what is reported is
+  # achievable and the true optimum sits at or above it. That is why the
+  # residuals are mostly negative where they used to be positive -- the sign
+  # changed, the magnitude did not.
   scenario_mean_abs_dollars: 2.0
-  # A value-of-information figure is a difference of two scenario means. Their
-  # errors turn out to be correlated -- same solver, same instance -- so this is
-  # no worse in practice than a single mean: $0.81 observed, on EVPI.
+  # A value-of-information figure is a difference of two scenario means, so it can
+  # carry twice the error: $1.05 observed, on EVKW at Equally Probable.
   value_of_information_abs_dollars: 2.0
   # The one deviation, and it is a property of the INSTANCE rather than of this
   # implementation. The expected-value first stage solves a deterministic problem
   # whose objective is flat in the capacities: at Dry Most Likely, capacities
-  # 0.08% apart differ by $0.43 there and earn $20.35 apart over the 4,000
-  # realised runs. So a freely re-solved expected-value scenario may land that far
-  # from the published one without anything being wrong.
+  # 0.08% apart differ by $0.43 there and earn $24 apart over the 4,000 realised
+  # runs. So a freely re-solved expected-value scenario may land that far from the
+  # published one without anything being wrong. Observed: 23.99.
+  #
+  # Set at 40 rather than snugly above 23.99 because the quantity being bounded is
+  # a known-degenerate one whose value depends on where a solver lands on a flat
+  # ridge -- a different machine or Gurobi version will land elsewhere. A real
+  # defect here (the wrong rain path, a mis-specified scenario) moves VSS by
+  # hundreds, so 40 still sits far below anything this check exists to catch.
   #
   # A wide bound is only honest next to a narrow one. Solved at the capacities
   # the published run used -- reference/published_first_stage.csv -- that same
-  # scenario reproduces to $0.36, and tests/test_reproduces_paper.py asserts THAT
-  # at value_of_information_abs_dollars. The narrow check is what stops this wide
-  # one from hiding a defect in the second stage.
-  expected_value_first_stage_sensitivity_dollars: 25.0
+  # scenario reproduces VSS to $0.50 at Dry Most Likely and $0.27 at Equally
+  # Probable, and tests/test_reproduces_paper.py asserts THAT at
+  # value_of_information_abs_dollars. The narrow check is what stops this wide one
+  # from hiding a defect in the second stage.
+  expected_value_first_stage_sensitivity_dollars: 40.0
   # The identity EVPI = EVKW + EVKC is arithmetic, not a solve, and holds to
   # floating point.
   identity_rel: 1.0e-12

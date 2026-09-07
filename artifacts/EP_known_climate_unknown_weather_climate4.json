@@ -1,0 +1,39 @@
+{
+  "blocks": [
+    {
+      "precip_cm": 26.67,
+      "run_years": 1247
+    },
+    {
+      "precip_cm": 53.34,
+      "run_years": 4961
+    },
+    {
+      "precip_cm": 80.01,
+      "run_years": 11180
+    },
+    {
+      "precip_cm": 106.68,
+      "run_years": 7612
+    }
+  ],
+  "coefficients": {
+    "alt_elc_kwh_per_kw": 1944.0,
+    "alt_water_kwh_per_cm": 33021.412137057094,
+    "cost_alt_elc_per_kw": 1500,
+    "cost_alt_water_per_cm": 28950.375546080984,
+    "cost_irrigation_water_per_cm": 1361.9960629921259,
+    "cost_utility_elc_per_kwh": 0.08,
+    "crop_price_per_tonne": 200,
+    "hectares": 200,
+    "irrigation_kwh_per_cm": 5283.425941929134,
+    "max_irrigation_cm": 7.62,
+    "yield_a0": -3.7470000000000003,
+    "yield_a1": 0.20140000000000002,
+    "yield_a2": -0.0014
+  },
+  "description": "FEWS farm model, collapsed. One weighted block per distinct precipitation value. See scripts/verify_solution.py for the constraints, written out in full.",
+  "fixed_first_stage": null,
+  "n_runs": 1000,
+  "years": 25
+}

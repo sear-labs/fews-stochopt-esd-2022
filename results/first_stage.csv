@@ -1,9 +1,9 @@
 site,label,scenario,alt_water_cap_cm,alt_elc_cap_kW,published_alt_water_cap_cm,published_alt_elc_cap_kW
-EP,Equally Probable,Perfect Information,6.998288126185161,127.95439963977535,,
-EP,Equally Probable,"Known Climate, Unknown Weather",6.680869013281014,124.12021218926645,,
-EP,Equally Probable,Stochastic,5.445671438744856,94.41645386527712,,
+EP,Equally Probable,Perfect Information,6.9982754965884615,127.95407287692264,,
+EP,Equally Probable,"Known Climate, Unknown Weather",6.681679464883701,124.1335703934382,,
+EP,Equally Probable,Stochastic,5.445671289638949,94.4212893407496,,
 EP,Equally Probable,Expected Value,5.445694703189333,94.34584654264702,5.445670612732769,94.34376384684164
-DML,Dry Most Likely,Perfect Information,11.367133243240627,208.23199018455097,,
-DML,Dry Most Likely,"Known Climate, Unknown Weather",11.429784973297528,208.91332749384833,,
-DML,Dry Most Likely,Stochastic,10.95760893836017,206.83918600252844,,
-DML,Dry Most Likely,Expected Value,11.854334070167138,222.0710548027696,11.844907090764613,221.91113690195056
+DML,Dry Most Likely,Perfect Information,11.367151908899853,208.2322378233871,,
+DML,Dry Most Likely,"Known Climate, Unknown Weather",11.428164705610683,208.88566238409402,,
+DML,Dry Most Likely,Stochastic,10.958637777282355,206.85666108288427,,
+DML,Dry Most Likely,Expected Value,11.856390116977174,222.10619613921503,11.844907090764613,221.91113690195056

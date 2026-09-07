@@ -20,10 +20,16 @@ python scripts/run_all.py
 pytest
 ```
 
-**Seven of the eight published scenario means come back within $0.76**, on figures of $1.9M–$2.4M.
-The eighth is $20.35 out, for a reason that is located rather than tolerated — see *The one figure
-that does not reproduce*. A cold run takes about seven minutes; solved scenarios are cached with a
-digest of everything that could change them, so a second run takes seconds.
+**Seven of the eight published scenario means come back within $0.73**, on figures of $1.9M–$2.4M,
+and they are **lower bounds rather than estimates** — every solver point is clipped back inside the
+feasible region before it is read, so each figure is achievable in the model. The eighth is $24 out,
+for a reason that is located rather than tolerated — see *The one figure that does not reproduce*.
+A cold run takes about eight minutes; solved scenarios are cached with a digest of everything that
+could change them, so a second run takes seconds.
+
+**You can check the result without a solver and without a licence.** `artifacts/` ships twelve
+frozen instances with their solutions, and `python scripts/verify_solution.py` confirms feasibility,
+the objective and near-optimality from arithmetic alone, in half a second, with only numpy.
 
 This required a Gurobi licence. The academic one this was verified on is node-locked and expires
 2026-12-04, so the suite cannot run in CI as it stands. The *per-run* solves are 178 variables and
@@ -38,9 +44,9 @@ assumed. Against what `scripts/run_all.py` now produces:
 | Climate regime | | EVKW | EVPI | VSS | EVKC |
 |---|---|---|---|---|---|
 | Equally Probable | paper | $10,396.32 | **$108,725.10** | $0.49 | $98,328.78 |
-| | reproduced | 10,396.68 | **108,725.92** | 0.37 | 98,329.24 |
+| | reproduced | 10,395.27 | **108,724.48** | 0.34 | 98,329.22 |
 | Dry Most Likely | paper | $11,740.03 | $76,606.01 | $940.90 | $64,865.98 |
-| | reproduced | 11,740.34 | 76,606.81 | 961.20 | 64,866.47 |
+| | reproduced | 11,739.31 | 76,605.57 | 964.89 | 64,866.26 |
 
 **EVKC is now produced.** It was in the paper and never in the pipeline output. It is
 `KnownClimate − Stochastic`, which is not a guess: applied to the published Table 5 it gives
@@ -82,13 +88,13 @@ solution. That observation is why one model replaced eight notebooks and eleven 
 
 ## The one figure that does not reproduce
 
-Dry Most Likely / Expected Value comes back $20.35 low. The expected-value farm invests against a
+Dry Most Likely / Expected Value comes back $24.05 low. The expected-value farm invests against a
 single deterministic precipitation path, and **that problem's objective is flat in the capacities**:
 two answers 0.08% apart differ by $0.43 there, and by $20 in the profit they go on to earn across the
 4,000 realised weather runs.
 
 Re-solving the second stage at the capacities the published run actually used — which survive as two
-literals in `FM Traditional DML.Rmd` — reproduces that mean to **$0.36**, like the other seven. So
+literals in `FM Traditional DML.Rmd` — reproduces VSS to **$0.50**, against $24 for the freely re-solved figure. So
 the discrepancy is entirely the first stage, and the tests assert the pinned version tightly. That
 narrow check is what stops the wide tolerance on the free solve from hiding a real defect.
 
@@ -112,11 +118,14 @@ recorded anywhere.
 
 ## What was found along the way
 
-- **The published run used solutions Gurobi had not certified.** On default settings the barrier
-  stalls short of its optimality tolerance on this model and returns status 13, SUBOPTIMAL — 27 of
-  40 sampled runs. The original code never reads `m.Status`. `config.yaml` now carries a ladder of
-  solver settings and `model.py` refuses anything that is not OPTIMAL; 1.5% of solves need a
-  fallback rung.
+- **The published run used solutions Gurobi had not certified** — on default settings the barrier
+  stalls and returns status 13 on 25 of 40 sampled runs, and the original code never reads
+  `m.Status`. **But `OPTIMAL` is not feasibility either**: Gurobi returns points violating its own
+  tolerance by 2,000× while reporting status 2. The artifact verifier caught that within minutes of
+  existing, and it reversed a conclusion this README previously stated — the residual on the
+  Perfect Information rows was largely *our own* solver rung overshooting the yield curve by ~$1 per
+  run, not the published run's. Every point is now clipped back inside the feasible region.
+  See `docs/reproduction-notes.md` §12.
 - **`trans_matrix.csv` was needed only to regenerate the inputs**, which ship. It is now estimated
   from those inputs and committed under `reference/reconstructed/`, with the two limits stated:
   it is an estimate, and two rows per site are unidentified because no run ever visits those states.

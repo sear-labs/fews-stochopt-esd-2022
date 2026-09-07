@@ -14,37 +14,44 @@ Measured on 2026-09-06: Gurobi 13.0.2, Python 3.13, Windows 11, academic licence
 `scripts/run_all.py` solves all four scenarios at both sites from the committed
 precipitation inputs and aggregates them. Against `reference/simstatstrad.csv`:
 
-| Site | Scenario | Published mean profit | Reproduced | Difference | Relative |
-|---|---|---:|---:|---:|---:|
-| Equally Probable | Perfect Information | 2,355,663.1032 | 2,355,663.7950 | +0.6918 | 2.9e-07 |
-| Equally Probable | Known Climate | 2,345,266.7851 | 2,345,267.1180 | +0.3329 | 1.4e-07 |
-| Equally Probable | Stochastic | 2,246,937.9615 | 2,246,937.8797 | −0.0818 | 3.6e-08 |
-| Equally Probable | Expected Value | 2,246,937.4728 | 2,246,937.5072 | +0.0344 | 1.5e-08 |
-| Dry Most Likely | Perfect Information | 1,975,827.2395 | 1,975,827.9917 | +0.7523 | 3.8e-07 |
-| Dry Most Likely | Known Climate | 1,964,087.2089 | 1,964,087.6475 | +0.4386 | 2.2e-07 |
-| Dry Most Likely | Stochastic | 1,899,221.2314 | 1,899,221.1807 | −0.0506 | 2.7e-08 |
-| **Dry Most Likely** | **Expected Value** | **1,898,280.3314** | **1,898,259.9822** | **−20.3492** | **1.1e-05** |
+| Site | Scenario | Published mean profit | Reproduced | Difference |
+|---|---|---:|---:|---:|
+| Equally Probable | Perfect Information | 2,355,663.1032 | 2,355,662.3753 | −0.7279 |
+| Equally Probable | Known Climate | 2,345,266.7851 | 2,345,267.1068 | +0.3217 |
+| Equally Probable | Stochastic | 2,246,937.9615 | 2,246,937.8910 | −0.0705 |
+| Equally Probable | Expected Value | 2,246,937.4728 | 2,246,937.5497 | +0.0769 |
+| Dry Most Likely | Perfect Information | 1,975,827.2395 | 1,975,826.7392 | −0.5002 |
+| Dry Most Likely | Known Climate | 1,964,087.2089 | 1,964,087.4288 | +0.2199 |
+| Dry Most Likely | Stochastic | 1,899,221.2314 | 1,899,221.1646 | −0.0668 |
+| **Dry Most Likely** | **Expected Value** | **1,898,280.3314** | **1,898,256.2783** | **−24.0531** |
 
-**Seven of eight within $0.76.** The eighth is section 3.
+**Seven of eight within $0.73.** The eighth is section 3.
+
+These are **lower bounds, not estimates.** `model._repair` clips each solver
+point back inside the feasible region before anything reads it, so every figure
+above is achievable and the model's true optimum sits at or above it. That is why
+most residuals are now negative where an earlier version of this table had them
+positive: the sign changed because the claim changed, not because the model did.
+See section 12.
 
 And the value-of-information table, against `reference/solnvalues.csv`:
 
 | Site | Quantity | Published | Reproduced | Difference |
 |---|---|---:|---:|---:|
-| Equally Probable | EVKW | 10,396.3181 | 10,396.6769 | +0.3588 |
-| Equally Probable | EVPI | 108,725.1417 | 108,725.9153 | +0.7736 |
-| Equally Probable | EVKC | 98,328.8236 † | 98,329.2383 | +0.4147 |
-| Equally Probable | VSS | 0.4887 | 0.3725 | −0.1162 |
-| Dry Most Likely | EVKW | 11,740.0306 | 11,740.3443 | +0.3137 |
-| Dry Most Likely | EVPI | 76,606.0081 | 76,606.8110 | +0.8029 |
-| Dry Most Likely | EVKC | 64,865.9775 † | 64,866.4667 | +0.4892 |
-| Dry Most Likely | VSS | 940.8999 | 961.1985 | +20.2986 |
+| Equally Probable | EVKW | 10,396.3181 | 10,395.2685 | −1.0496 |
+| Equally Probable | EVPI | 108,725.1417 | 108,724.4843 | −0.6574 |
+| Equally Probable | EVKC | 98,328.8236 † | 98,329.2158 | +0.3922 |
+| Equally Probable | VSS | 0.4887 | 0.3413 | −0.1474 |
+| Dry Most Likely | EVKW | 11,740.0306 | 11,739.3104 | −0.7201 |
+| Dry Most Likely | EVPI | 76,606.0081 | 76,605.5746 | −0.4335 |
+| Dry Most Likely | EVKC | 64,865.9775 † | 64,866.2642 | +0.2867 |
+| Dry Most Likely | VSS | 940.8999 | 964.8863 | +23.9864 |
 
 † EVKC was never in the pipeline output. These are derived from Table 5 as
 `KnownClimate − Stochastic`; see section 2.
 
-**So `scenario_mean_abs_dollars` is 2.0** against a worst observed 0.75, and
-**`value_of_information_abs_dollars` is 2.0** against a worst observed 0.80. Both
+**So `scenario_mean_abs_dollars` is 2.0** against a worst observed 0.73, and
+**`value_of_information_abs_dollars` is 2.0** against a worst observed 1.05. Both
 sit two to three orders of magnitude below anything a real defect would produce: a
 mis-sliced climate block moves EVPI by thousands, as the `--runs 200` smoke run
 shows (EVPI 107,055 against 108,725).
@@ -98,12 +105,13 @@ earned across the realised weather.
 
 The decisive check: re-solve the *second* stage at the published capacities.
 
-| Site | Published EV mean | At published first stage | Difference |
+| Site | Published VSS | VSS at the published first stage | Difference |
 |---|---:|---:|---:|
-| Equally Probable | 2,246,937.4728 | 2,246,937.5220 | +0.0492 |
-| Dry Most Likely | 1,898,280.3314 | 1,898,280.6947 | +0.3633 |
+| Equally Probable | 0.4887 | 0.2167 | −0.2720 |
+| Dry Most Likely | 940.8999 | 940.3978 | −0.5021 |
 
-**Both within half a dollar.** The second stage is correct; the entire discrepancy
+**Both within about half a dollar**, against a freely re-solved figure that is
+$24 out at Dry Most Likely. The second stage is correct; the entire discrepancy
 is which point on a flat ridge the first-stage solve happened to land on.
 
 That is why `config.yaml` carries two tolerances rather than one wide one.
@@ -262,10 +270,26 @@ climate probabilities are encoded — `iters * 4 * prob` runs per climate:
 | Equally Probable (0.25 each) | runs 1–1000 | 1001–2000 | 2001–3000 | 3001–4000 |
 | Dry Most Likely (.60/.25/.10/.05) | 1–2400 | 2401–3400 | 3401–3800 | 3801–4000 |
 
-Confirmed against `run_c1 = list(range(2400))` and its siblings in
-`FM MI DML All Climates.Rmd`, and checked at runtime by
-`data.py::_check_blocks`, which refuses to load a file whose block sizes and
-declared probabilities disagree.
+Confirmed three ways. Against `run_c1 = list(range(2400))` and its siblings in
+`FM MI DML All Climates.Rmd`. At runtime by `data.py::_check_blocks`, which
+refuses to load a file whose block sizes and declared probabilities disagree.
+And -- found later, on a prompt from the session reproducing the SAV paper --
+**by the line that wrote the file, which survives commented out** at
+`FM Traditional EP.Rmd:38`:
+
+```r
+#write.csv(precips_c0_tbl, '~/Coding/Python/Farm Model/precips_c0_EP.csv')
+```
+
+`precips_c0_tbl` is the `rbind` of the four per-climate tables with the runs
+renumbered 1..4000. So this is not an inference about how the shipped file was
+built; it is the statement that built it.
+
+> **Check what is commented out, not only what is absent.** A dead line is a
+> saved configuration nobody labelled. That corollary came from the SAV session,
+> which recovered its entire ten-scenario grid from commented-out lines in a data
+> file, and applying it here turned up both this provenance and a second,
+> disabled irrigation-cost parameterisation now recorded in `config.yaml`.
 
 The two regimes therefore use the **same four climates**; only the mixture
 differs. `test_the_two_sites_draw_from_the_same_climates` asserts that each
@@ -405,3 +429,105 @@ Two consequences:
 If this is built, it is a second implementation of the same model and Part 4
 applies: one assertion comparing the collapsed and full solves, at a tolerance
 this table already measures.
+
+---
+
+## 12. Gurobi reports OPTIMAL on points outside its own tolerance
+
+**Found by the artifact verifier, minutes after it first existed**, and it
+reversed a conclusion this document previously stated.
+
+`scripts/verify_solution.py` checks a shipped solution against the constraints
+with no solver. The first artifact exported, `EP_expected_value`, came back
+**INFEASIBLE**: the water balance was violated by 2.06e-03. Gurobi had returned
+that point with **status 2, OPTIMAL** — and its own `MaxVio` agreed with the
+verifier at 2.063e-03, two thousand times the `FeasibilityTol` of 1e-06 it
+promises.
+
+Three defects came out of chasing it, all in this repository rather than in the
+published run.
+
+### 12.1 Status is not feasibility
+
+`model._optimize` checked `m.Status == OPTIMAL` and nothing else. That is the
+original code's mistake — not reading the status at all — moved one level in.
+
+### 12.2 The ladder's parameters accumulated
+
+`m.reset()` clears the solution, not the settings. So rung 3 ran with rung 1's
+`BarHomogeneous` still set, and two rungs reported identical results because they
+were the same solve. `m.resetParams()` now runs before each rung, and the ladder
+tests what it names.
+
+### 12.3 The residual was ours, not theirs
+
+Section 4 attributed the +$0.69 residual on the Perfect Information rows to the
+published run's uncertified solutions. **That was wrong.** Measured over 120 runs
+at Equally Probable, the yield-curve overshoot converted to dollars:
+
+| Solver rung | Certified | Overshoot, $ per run |
+|---|---:|---:|
+| Gurobi defaults | 39 / 120 | **+0.009** (max +0.42) |
+| `BarHomogeneous 1, NumericFocus 3` | 120 / 120 | **+1.030** (max +1.39, never below 0) |
+
+The rung this repository had chosen inflated every run by about a dollar, always
+upward, which is the size and sign of the residual it was being used to explain.
+The published run, on defaults, carries almost none of it.
+
+### The fix, and what it does not fix
+
+**Gating on `MaxVio` was tried and is wrong.** An absolute tolerance is the wrong
+instrument for a model whose quantities run from 0.08 to 2,000,000: at 1e-06 it
+rejected 87 of 91 solves whose *relative* violation was around 4e-10.
+
+`model._repair` clips instead — `water` to what is available, then `crop_yield`
+to the curve. Both clips only relax the constraints they are not about, so the
+result is feasible by construction and the reported value is a valid lower bound.
+Across the full run the clip removes **$11,846 over 8,016 solves, about $1.48
+each**, or 7e-7 of a $2M profit.
+
+What it fixes is the *kind* of claim: every number in section 1 is now achievable
+in the model rather than a point just outside it. What it does not fix is the
+*magnitude* of the residual, which is about the same and has changed sign. Saying
+otherwise would be claiming an accuracy improvement that was not measured.
+
+### The ladder is reordered as a result
+
+Gurobi's defaults now come first, because where they converge they are the most
+accurate rung. They converge on about a third of single-run solves, so **68% of
+solves fall through to a fallback** — designed behaviour, not a symptom, and the
+test that used to police a 10% fallback rate was rewritten rather than retuned.
+The last rung stays unused, which is the headroom
+`test_the_solver_ladder_never_runs_out_of_rungs` protects.
+
+---
+
+## 13. What came from the SAV session, and what went the other way
+
+Compared notes with the session reproducing Jones and Leibowicz (2019), which hit
+the same shape of problem — a published configuration that was never saved.
+
+**Taken from them:**
+
+- **"Check what is commented out, not only what is absent."** They recovered
+  their entire ten-scenario grid from commented-out lines in a data file.
+  Applying it here found the `write.csv` line that produced the shipped
+  precipitation input (section 7) and a second, disabled irrigation-cost
+  parameterisation now recorded in `config.yaml`.
+- **The ship-the-artifact pattern breaks at about 2M nonzeros**, where an MPS
+  passes GitHub's 100 MB limit at roughly 50 bytes per nonzero. Their model is
+  43.6M nonzeros and 34× over; the artifacts here are 164 KB across twelve
+  models. Worth knowing before starting rather than after.
+- **The free `pip install gurobipy` licence caps at 2,000 variables** — their
+  measurement (1,500 accepted, 2,500 refused), not ours. It could not be measured
+  on this machine: a full academic licence is installed and forcing the fallback
+  makes Gurobi error rather than degrade. Recorded as their finding.
+
+**Sent to them:** that widening a tolerance until the solver reports OPTIMAL buys
+the status rather than the convergence, and that a stalling barrier's error is
+signed rather than scattered.
+
+**Not adopted from `lithium-optsc-energies-2024`:** its "this repository is
+frozen" line, which Part 0 of the standard argues against for paper repos — the
+version DOI is already the frozen artifact, and freezing the branch costs errata
+and the contributor credit a pull request carries.
