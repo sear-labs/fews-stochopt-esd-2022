@@ -29,7 +29,6 @@ import re
 import sys
 from pathlib import Path
 
-import gurobipy as gp
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -41,7 +40,7 @@ sys.path.insert(0, str(ROOT / "src"))
 # --continue-on-collection-errors that aborts the entire suite. A reader
 # without a licence then sees no results at all rather than the stages they
 # can run. Measured in a real clone with gurobipy blocked.
-pytest.importorskip("gurobipy", reason="these tests build and solve models")
+gp = pytest.importorskip("gurobipy", reason="these tests build and solve models")
 
 from fews_stochopt import collapsed  # noqa: E402
 from fews_stochopt.config import load_config  # noqa: E402
