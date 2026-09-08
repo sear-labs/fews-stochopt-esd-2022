@@ -14,6 +14,20 @@ is to say what the paper did, not to be right.
 Hashes are over raw bytes, and the manifest says so: a hash quoted without its
 normalisation is not evidence, and on Windows a CRLF-normalised hash of the same
 file differs by one byte per line.
+
+**When a file first enters `archive/`, renormalise before freezing.** Git applies
+`.gitattributes` at the moment a blob is written, so a file committed *before* it
+was covered by `archive/** -text` carries line endings that a fresh clone will not
+reproduce -- and the manifest, built from the working tree, then rejects every
+clone. The sequence is:
+
+    git add --renormalize -- archive
+    rm -rf archive && git checkout -- archive     # what a clone will actually get
+    python scripts/freeze_archive.py
+
+Learned by moving one file in and watching a clean clone fail. `--check` compares
+against the working tree, so it cannot see this on the machine that froze it; the
+clean-clone run is what catches it, and that is why there is one.
 """
 from __future__ import annotations
 
