@@ -105,6 +105,7 @@ measurements.
 | That comparison can actually see the rendered table | `test_the_notebook_comparison_can_see_the_table` |
 | ...and reads every output channel, `image/png` included | `test_the_comparison_reads_every_output_channel` |
 | No cell is captured only as an opaque object repr | `test_no_cell_is_captured_only_as_an_object_repr` |
+| The solver-free test modules stay importable without a solver | `test_the_licence_free_test_modules_still_import_without_a_solver` |
 | The archive must never change | `test_the_archive_is_frozen` |
 | No maintained code in a second language | `test_no_maintained_code_is_in_another_language` |
 | The verification notebook must not need a solver | `test_the_verification_notebook_needs_no_solver` |

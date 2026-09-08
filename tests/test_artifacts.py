@@ -697,3 +697,48 @@ def test_the_committed_figures_are_what_the_script_draws(pipeline_run):
         for p, data in before.items():
             p.write_bytes(data)
         raise
+
+
+# Test modules whose subject needs no solver. Every test in them reads committed
+# CSVs with numpy and pandas. They are named here because a single module-level
+# import of `analysis` -- which reaches `aggregate`, then `model`, then gurobipy
+# -- makes a whole file uncollectable, and pytest reports that as a collection
+# error before running anything, not as a skip.
+LICENCE_FREE_TEST_MODULES = (
+    "test_markov_reconstruction.py",
+    "test_dependencies_declared.py",
+    "test_archive_and_one_language.py",
+)
+
+
+@pytest.mark.parametrize("module", LICENCE_FREE_TEST_MODULES)
+def test_the_licence_free_test_modules_still_import_without_a_solver(module):
+    """A reader without a licence must be able to run the tests that apply to them.
+
+    **Measured on a simulated licence-free machine -- gurobipy blocked in every
+    process, subprocesses included, and the gitignored solve cache moved aside,
+    which is what a fresh clone actually looks like.** Three test modules failed
+    to *collect*. Two of them import `model` or `collapsed` and legitimately need
+    a solver. The third was `test_markov_reconstruction.py`, which is pure numpy
+    and pandas over committed CSVs -- and it had acquired a module-level
+    `from fews_stochopt import analysis` earlier in this same session, added for
+    one assertion, which made all eight of its tests uncollectable.
+
+    Nothing noticed because the suite had never been run without a licence. That
+    is the gap this file's other tests simulate one import at a time; this is the
+    same claim at module granularity.
+    """
+    path = Path(__file__).resolve().parent / module
+    assert path.exists(), f"{module} does not exist; update the list"
+    proc = _run_without_gurobipy(
+        "import importlib.util, sys\n"
+        f"spec = importlib.util.spec_from_file_location('probe_mod', r'{path}')\n"
+        "mod = importlib.util.module_from_spec(spec)\n"
+        "sys.modules['probe_mod'] = mod\n"
+        "spec.loader.exec_module(mod)\n"
+    )
+    assert proc.returncode == 0, (
+        f"{module} cannot be imported without a solver, so pytest reports a "
+        f"collection error and every test in it is lost to a reader without a "
+        f"licence\n--- stderr ---\n{proc.stderr[-1500:]}"
+    )

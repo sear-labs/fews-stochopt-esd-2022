@@ -31,7 +31,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from fews_stochopt import analysis, markov  # noqa: E402
+from fews_stochopt import markov  # noqa: E402
 from fews_stochopt.config import load_config  # noqa: E402
 from fews_stochopt.data import load_precipitation  # noqa: E402
 from fews_stochopt.markov import pooled_reconstruct, reconstruct  # noqa: E402
@@ -154,6 +154,14 @@ def test_a_fresh_sample_has_the_committed_distribution():
     nine of them -- loose enough never to flake, tight enough that a generator
     drawing from the wrong distribution cannot pass.
     """
+    # Imported here, not at module scope. `analysis` reaches `aggregate`, which
+    # imports `model`, which imports gurobipy -- so a module-level import makes
+    # this whole file uncollectable without a licence, and every test in it is
+    # otherwise pure numpy and pandas over committed CSVs. Measured: it was a
+    # module-level import until running the suite on a simulated licence-free
+    # machine showed three modules failing to collect, this one needlessly.
+    from fews_stochopt import analysis
+
     cfg = load_config()
     fresh = {s: markov.simulate(cfg, s, iters=200) for s in cfg.sites}
     table = analysis.precipitation_table(cfg, fresh)

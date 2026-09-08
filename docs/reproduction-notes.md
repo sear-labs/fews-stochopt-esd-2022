@@ -1187,3 +1187,57 @@ rather than the larger thing I first claimed.
 
 Three claims in this section were checked by injection and one of the three was
 wrong. That ratio is the argument for the procedure.
+
+## 23. What a reader without a licence can actually check
+
+Every licence-free claim in this repository had been tested by blocking one
+import at a time. The SAV session closed its last gap and then said the thing
+that made this worth doing: **a verification that does not travel with the
+artifact is weaker than one that does**, and the gap is invisible unless stated.
+
+So the whole suite was run the way a fresh clone meets it: `gurobipy` blocked in
+**every** process via a `sitecustomize` on `PYTHONPATH` -- proven to reach
+subprocesses first, because the obvious version did not -- and the gitignored
+solve cache in `results/EP`, `results/DML` moved aside, since a cloner has
+neither.
+
+    46 passed, 3 failed, 20 errors, and 3 modules that would not COLLECT
+
+The 20 errors are the pipeline tests, which need a solver and a cache: expected,
+and already covered by the documented CI exemption. The collection errors were
+not expected.
+
+### A collection error is not a skip
+
+Two of the three modules import `model` or `collapsed` and legitimately need a
+solver. **The third was `test_markov_reconstruction.py`, which is pure numpy and
+pandas over committed CSVs, and every one of its eight tests was lost.**
+
+It had acquired a module-level `from fews_stochopt import analysis` earlier in
+this same session -- added by me, for one assertion in one test -- and `analysis`
+reaches `aggregate`, then `model`, then `gurobipy`. So a licence-free reader lost
+eight tests that had nothing to do with a solver, and **pytest reports that as a
+collection error before running anything at all**, not as a skip. Without
+`--continue-on-collection-errors` the entire suite aborts: a reader without a
+licence sees no results whatsoever, not a partial run.
+
+Fixed by importing `analysis` inside the one test that uses it. Seven of the
+eight now pass licence-free; the eighth genuinely uses `analysis` and does not.
+`test_the_licence_free_test_modules_still_import_without_a_solver` names the
+modules whose subject needs no solver and imports each with gurobipy blocked --
+watched to fail by restoring the module-level import.
+
+### The wider point, which is the `aggregate` coupling again
+
+This is the third consequence of one four-line import: four advertised public
+names behind a licence, `make_figures.py` unable to run, and now an entire test
+module uncollectable. Each was found separately, each looked minor alone, and
+none would have been found by reading the import graph -- the first two needed
+block-and-run, and this one needed running the whole suite the way a stranger
+does.
+
+**Nothing here has still ever run on a machine that genuinely lacks a Gurobi
+licence.** A `sitecustomize` blocker is a faithful simulation of one import
+failing, and this section is what that simulation is worth: it found something
+real three times. It is still not the same fact, and the distinction stays
+recorded rather than quietly rounded up.
