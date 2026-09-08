@@ -1,0 +1,157 @@
+---
+title: "Farm Model Solution Data Analysis"
+author: "Erick Jones"
+date: "2/17/2021"
+output:
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
+---
+
+```{r global_options, include=FALSE}
+#DO NOT EDIT THIS CHUNK OR ANYTHING ABOVE IT!
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F, tidy=T, tidy.opts=list(width.cutoff=50))
+```
+
+
+## Libraries
+
+```{r, echo = FALSE}
+library(tidyverse)
+library(reticulate)
+library(markovchain)
+library(diagram)
+library(gridExtra)
+library(grid)
+set.seed(12345)
+```
+
+
+## Get Data for Dataframes
+
+```{r}
+
+```
+
+
+
+## Run Average Dataframe
+
+```{r}
+
+scenario_yearly_avg <- tibble(sim = c('S1','DC-PI','DC-OH'), 
+       profit_MM = c(mean(profit_c0$profit), mean(profit_c1$profit), mean(profit_c01$profit) ),
+       crop_yield_tonne = c(mean(crop_yield_c0$crop_yield), mean(crop_yield_c1$crop_yield), mean(crop_yield_c01$crop_yield) ),
+       precip_cm = c(mean(precips_c0), mean(precips_c1), mean(precips_c1) ),
+       alt_water_cap_cm = c(water_invest_c0, water_invest_c1, water_invest_c0),
+       alt_elc_cap_kW = c(elc_invest_c0, elc_invest_c1, elc_invest_c0),       
+       water_cm = c(mean(water_c0), mean(water_c1), mean(water_c01) ),
+       elc_prod_MWh = c(mean(elc_c0), mean(elc_c1), mean(elc_c01) )  ) %>% 
+  mutate(crop_yield_tonne = crop_yield_tonne * py$ha) %>%
+  mutate(elc_prod_MWh = elc_prod_MWh / 1000) %>%
+  mutate(profit_MM = profit_MM / 1000000)
+
+
+
+alt_water_c0 <- py$alt_water_c0
+alt_elc_c0 <- py$alt_elc_c0
+objective_c0 <- scenario_yearly_avg[1,2] * 1000000
+
+
+
+scenario_yearly_avg$sim <- ordered(scenario_yearly_avg$sim, levels = c('S1','DC-PI','DC-OH'))
+
+
+scenario_yearly_avg
+
+```
+
+```{r}
+scenario_yearly_avg <- scenario_yearly_avg %>% mutate(elc_prod_MWh = solar_prod_MWh + util_elc_MWh) %>% 
+  mutate(water_cm = alt_water_cm + irrigation_cm + precip_cm)
+
+scenario_realized_yearly_avg <- scenario_realized_yearly_avg %>% mutate(elc_prod_MWh = solar_prod_MWh + util_elc_MWh) %>% 
+  mutate(water_cm = alt_water_cm + irrigation_cm + precip_cm)
+
+scenario_yearly_avg$sim <- ordered(scenario_yearly_avg$sim, levels = c('SS','DC-DS','DMC-DS','MC-DS','WC-DS'))
+
+scenario_realized_yearly_avg$sim <- ordered(scenario_realized_yearly_avg$sim, levels = c('SS','DC-RS','DMC-RS','MC-RS','WC-RS'))
+
+scenario_yearly_avg
+scenario_realized_yearly_avg
+
+```
+
+## Yearly Dataframe
+
+
+```{r}
+stoch_df <- tibble(Year = seq(1,25), 
+                   crop_yield = crop_yield_c0 %>% group_by(year) %>% summarize(crop_yield = mean(crop_yield))  %>% select(crop_yield) %>% pull(crop_yield), 
+                   alt_water = alt_water_c0 %>% group_by(year) %>% summarize(water_depth = mean(water_depth))  %>% select(water_depth) %>% pull(water_depth),
+                   alt_elc = alt_elc_c0 %>% group_by(year) %>% summarize(elc_prod = mean(elc_prod)  %>% select(elc_prod) %>% pull(elc_prod)), 
+                   irrigation_water = irrigation_water_c0 %>% group_by(year) %>% summarize(water_depth = mean(water_depth))  %>% select(water_depth) %>% pull(water_depth),  
+                   utility_elc = utility_elc_c0 %>% group_by(year) %>% summarize(elc_prod = mean(elc_prod)) %>% select(elc_prod) %>% pull(elc_prod), 
+                   total_water = water_c0 %>% group_by(year) %>% summarize(water_depth = mean(water_depth)) %>% select(water_depth) %>% pull(water_depth),   
+                   total_elc = elc_c0 %>% group_by(year) %>% summarize(elc_prod = mean(elc_prod)) %>% select(elc_prod) %>% pull(elc_prod),
+                   
+                   precip = precips_c0_tbl %>% group_by(year) %>% summarize(precip = mean(precip)) %>% select(precip) %>% pull(precip),
+                   scenario = 'Stage 1') %>% 
+  mutate_if(is.numeric, funs(round(.,2)))
+
+
+
+
+
+c1_df <- tibble(Year = seq(1,25),
+                   crop_yield = crop_yield_c1 %>% group_by(year) %>% summarize(crop_yield = mean(crop_yield))  %>% select(crop_yield) %>% pull(crop_yield), 
+                   alt_water = alt_water_c1 %>% group_by(year) %>% summarize(water_depth = mean(water_depth))  %>% select(water_depth) %>% pull(water_depth),
+                   alt_elc = alt_elc_c1 %>% group_by(year) %>% summarize(elc_prod = mean(elc_prod)  %>% select(elc_prod) %>% pull(elc_prod)), 
+                   irrigation_water = irrigation_water_c1 %>% group_by(year) %>% summarize(water_depth = mean(water_depth))  %>% select(water_depth) %>% pull(water_depth),  
+                   utility_elc = utility_elc_c1 %>% group_by(year) %>% summarize(elc_prod = mean(elc_prod)) %>% select(elc_prod) %>% pull(elc_prod), 
+                   total_water = water_c1 %>% group_by(year) %>% summarize(water_depth = mean(water_depth)) %>% select(water_depth) %>% pull(water_depth),   
+                   total_elc = elc_c1 %>% group_by(year) %>% summarize(elc_prod = mean(elc_prod)) %>% select(elc_prod) %>% pull(elc_prod),
+                   
+                   precip = precips_c1_tbl %>% group_by(year) %>% summarize(precip = mean(precip)) %>% select(precip) %>% pull(precip),
+                scenario = 'Dry_Climate') %>% 
+  mutate_if(is.numeric, funs(round(.,2)))
+
+
+
+c01_df <- tibble(Year = seq(1,25), 
+                   crop_yield = crop_yield_c01 %>% group_by(year) %>% summarize(crop_yield = mean(crop_yield))  %>% select(crop_yield) %>% pull(crop_yield), 
+                   alt_water = alt_water_c01 %>% group_by(year) %>% summarize(water_depth = mean(water_depth))  %>% select(water_depth) %>% pull(water_depth),
+                   alt_elc = alt_elc_c01 %>% group_by(year) %>% summarize(elc_prod = mean(elc_prod)  %>% select(elc_prod) %>% pull(elc_prod)), 
+                   irrigation_water = irrigation_water_c01 %>% group_by(year) %>% summarize(water_depth = mean(water_depth))  %>% select(water_depth) %>% pull(water_depth),  
+                   utility_elc = utility_elc_c01 %>% group_by(year) %>% summarize(elc_prod = mean(elc_prod)) %>% select(elc_prod) %>% pull(elc_prod), 
+                   total_water = water_c01 %>% group_by(year) %>% summarize(water_depth = mean(water_depth)) %>% select(water_depth) %>% pull(water_depth),   
+                   total_elc = elc_c01 %>% group_by(year) %>% summarize(elc_prod = mean(elc_prod)) %>% select(elc_prod) %>% pull(elc_prod),
+                   
+                   precip = precips_c01_tbl %>% group_by(year) %>% summarize(precip = mean(precip)) %>% select(precip) %>% pull(precip),
+                 scenario = 'Dry_Climate_Realized') %>% mutate_if(is.numeric, funs(round(.,2)))
+
+
+
+
+
+stochvclimate1_df <- rbind(stoch_df,c1_df,c01_df)
+
+
+stochvclimate1_df
+
+
+
+
+
+```
+
+
+```
+
+
+```{r}
+
+save.image(file = "MI-EP.RData")
+
+```

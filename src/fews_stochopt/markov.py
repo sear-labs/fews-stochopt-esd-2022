@@ -7,7 +7,7 @@ repository was carved out of the original archive, and nothing in the R sources
 creates it -- every one of them reads it.
 
 What it is *for* is generating the precipitation draws. Those draws are committed
-(`stage1-python/precips_c0_{EP,DML}.csv`), so nothing about reproducing the
+(`data/raw/precips_c0_{EP,DML}.csv`), so nothing about reproducing the
 paper's table needs the matrix. What needs it is re-running the generation step,
 which is the only part of the pipeline the committed inputs do not cover.
 
@@ -32,9 +32,11 @@ original is worse than a missing file:
 
 The reconstruction is therefore useful for one thing: making the generation step
 runnable again. It is not the published input, and
-`reference/trans_matrix_reconstructed.csv` is named so nobody mistakes it for one.
+`reference/reconstructed/` is named so nobody mistakes it for one.
 """
 from __future__ import annotations
+
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -206,3 +208,94 @@ def write_reconstruction(cfg: Config, site: str, out_dir) -> dict[str, str]:
     pooled.to_csv(written["pooled"])
     pooled_provenance.to_csv(written["pooled_provenance"], index=False)
     return {k: str(v) for k, v in written.items()}
+
+
+# ---------------------------------------------------------------------------
+# Generation. Ported from stage2-r/markov_chain.Rmd, which is archived verbatim
+# under archive/stage2-r/ and is no longer maintained.
+# ---------------------------------------------------------------------------
+
+def simulate(
+    cfg: Config,
+    site: str,
+    seed: int = 12345,
+    iters: int = 1000,
+    matrix: pd.DataFrame | None = None,
+) -> pd.DataFrame:
+    """Draw a fresh precipitation sample, the way the original R did.
+
+    **This does not reproduce the committed draws and cannot.** The original set
+    `set.seed(12345)` but its sample depended on RNG state accumulated through
+    earlier chunks, so the exact sequence is unrecoverable. What is checkable is
+    that a fresh sample has the same distribution, which
+    `analysis.compare_precipitation` does.
+
+    The output goes to `results/regenerated/`, never over
+    `data/raw/precips_c0_*.csv`. An input a later stage can overwrite is not an
+    input.
+
+    The R used `markovchain::rmarkovchain`; this is the same walk in numpy, which
+    drops two dependencies from a step that is now reproducible. It also stays
+    correct if the matrix ever stops being row-homogeneous, which the estimate
+    says it currently is.
+    """
+    s = cfg.site(site)
+    if matrix is None:
+        path = (
+            Path(__file__).resolve().parents[2]
+            / "reference" / "reconstructed" / f"trans_matrix_{site}.csv"
+        )
+        if not path.exists():
+            raise FileNotFoundError(
+                f"{path} is missing. Run `python scripts/reconstruct_markov.py` "
+                f"first -- the original transition matrix was lost before this "
+                f"repository was split out and is estimated from the committed draws."
+            )
+        matrix = pd.read_csv(path, index_col=0)
+
+    rng = np.random.default_rng(seed)
+    levels = np.array([cfg.weather_states[w] for w in STATE_NAMES])
+    n_climates = len(s.climate_blocks)
+
+    blocks = []
+    for k in range(n_climates):
+        block = matrix.to_numpy()[k * 5 : (k + 1) * 5, k * 5 : (k + 1) * 5]
+        if not np.allclose(block.sum(axis=1), 1.0, atol=1e-9):
+            raise ValueError(f"{site} climate {k + 1}: transition rows do not sum to 1")
+        blocks.append(block)
+
+    # The climate mixture IS the site: FM {EP,DML} MC.Rmd draws
+    # `iters * 4 * probability` runs from each climate, concatenates them, then
+    # renumbers 1..4000. Reproduced exactly, because the run index encodes the
+    # climate and everything downstream depends on that.
+    counts = [round(p * iters * n_climates) for p in s.climate_probabilities]
+    if sum(counts) != iters * n_climates:
+        raise ValueError(
+            f"{site}: climate counts {counts} sum to {sum(counts)}, not "
+            f"{iters * n_climates}"
+        )
+
+    draws = []
+    for block, n in zip(blocks, counts):
+        # Start from the chain's own stationary distribution rather than a fixed
+        # state, which is what a memoryless chain implies and avoids a burn-in.
+        start_p = block.sum(axis=0) / block.sum()
+        for _ in range(n):
+            state = rng.choice(5, p=start_p)
+            row = np.empty(cfg.years, dtype=int)
+            for y in range(cfg.years):
+                state = rng.choice(5, p=block[state])
+                row[y] = state
+            draws.append(row)
+
+    states = np.array(draws)
+    # Rounded to two decimals, reproducing the original's string round-trip:
+    # `gsub('w2', as.character(w2p), ...)` prints the shortest form within 15
+    # significant digits, so the committed files hold exactly 26.67 while the
+    # unrounded product is 26.669999999999998. Without the round-trip a
+    # comparison by value finds no matches at all.
+    precip = np.round(levels[states], 2)
+
+    runs = np.repeat(np.arange(1, len(states) + 1), cfg.years)
+    years = np.tile(np.arange(1, cfg.years + 1), len(states))
+    return pd.DataFrame({"run": runs, "year": years, "precip": precip.reshape(-1)})

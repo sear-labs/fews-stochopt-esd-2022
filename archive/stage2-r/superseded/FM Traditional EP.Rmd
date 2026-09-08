@@ -1,0 +1,334 @@
+---
+title: "Farm Model (Py and More)"
+author: "Erick Jones"
+date: "2/17/2021"
+output:
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
+---
+
+```{r global_options, include=FALSE}
+#DO NOT EDIT THIS CHUNK OR ANYTHING ABOVE IT!
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F, tidy=T, tidy.opts=list(width.cutoff=50))
+```
+
+
+## Libraries
+
+```{r, echo = FALSE}
+library(tidyverse)
+library(reticulate)
+library(markovchain)
+library(diagram)
+library(gridExtra)
+library(grid)
+set.seed(12345)
+```
+# Read Markov Chain Data
+
+```{r}
+load("MI-EP.Rdata")
+
+precips_c0_tbl
+
+precips_c0_tbl %>% summarize_all(mean)
+
+#write.csv(precips_c0_tbl, '~/Coding/Python/Farm Model/precips_c0_EP.csv')
+```
+
+
+
+# Perfect Information
+```{r}
+profit_pi <- read.csv('csvs/EP/profit_pi.csv') %>% filter(run != 0)
+crop_yield_pi <- read.csv('csvs/EP/crop_yield_pi.csv') %>% filter(run != 0)
+water_pi <- read.csv('csvs/EP/water_pi.csv') %>% filter(run != 0)
+alt_water_pi <- read.csv('csvs/EP/alt_water_pi.csv') %>% filter(run != 0)
+irrigation_water_pi <- read.csv('csvs/EP/irrigation_water_pi.csv') %>% filter(run != 0)
+elc_pi <- read.csv('csvs/EP/elc_pi.csv') %>% filter(run != 0)
+utility_elc_pi <- read.csv('csvs/EP/utility_elc_pi.csv') %>% filter(run != 0)
+alt_elc_pi <- read.csv('csvs/EP/alt_elc_pi.csv') %>% filter(run != 0)
+
+
+water_invest_pi <- read.csv('csvs/EP/invest_water_pi.csv')
+elc_invest_pi <- read.csv('csvs/EP/invest_elc_pi.csv')
+
+```
+
+
+# Expected Value
+
+```{r}
+profit_ev <- read.csv('csvs/EP/profit_ev.csv') %>% filter(run != 0)
+crop_yield_ev <- read.csv('csvs/EP/crop_yield_ev.csv') %>% filter(run != 0)
+water_ev <- read.csv('csvs/EP/water_ev.csv') %>% filter(run != 0)
+alt_water_ev <- read.csv('csvs/EP/alt_water_ev.csv') %>% filter(run != 0)
+irrigation_water_ev <- read.csv('csvs/EP/irrigation_water_ev.csv') %>% filter(run != 0)
+elc_ev <- read.csv('csvs/EP/elc_ev.csv') %>% filter(run != 0)
+utility_elc_ev <- read.csv('csvs/EP/utility_elc_ev.csv') %>% filter(run != 0)
+alt_elc_ev <- read.csv('csvs/EP/alt_elc_ev.csv') %>% filter(run != 0)
+
+
+water_invest_ev <- 5.445670612732769
+elc_invest_ev <- 94.34376384684164
+```
+
+# Known Climate Unknown Weather
+```{r}
+profit_kcuw <- rbind(profit_c1,profit_c2,profit_c3, profit_c4)
+crop_yield_kcuw <- rbind(crop_yield_c1,crop_yield_c2,crop_yield_c3, crop_yield_c4)
+water_invest_kcuw <- c(water_invest_c1, water_invest_c2, water_invest_c3, water_invest_c4)
+elc_invest_kcuw <- c(elc_invest_c1, elc_invest_c2, elc_invest_c3, elc_invest_c4)
+water_kcuw <- rbind(water_c1, water_c2, water_c3, water_c4)
+elc_kcuw <- rbind(elc_c1, elc_c2, elc_c3, elc_c4)
+```
+# Stochastic
+
+```{r}
+profit_stoch <- profit_c0
+crop_yield_stoch <- crop_yield_c0
+water_invest_stoch <- water_invest_c0
+elc_invest_stoch <- elc_invest_c0
+water_stoch <- water_c0
+elc_stoch <- elc_c0
+```
+
+
+
+
+
+
+
+
+```{r}
+# Profit Stat PI
+
+
+profit_pi_mean <- mean(profit_pi$profit)
+profit_pi_sd <- sd(profit_pi$profit)
+profit_pi_t <- -qt(0.025, df = (nrow(profit_pi)-1) )
+profit_pi_se <- profit_pi_sd / sqrt((nrow(profit_pi)-1))
+profit_pi_h <- profit_pi_t * profit_pi_se
+
+profit_pi_mean
+profit_pi_sd
+profit_pi_t
+profit_pi_se
+profit_pi_h
+
+# Crop Yield Stat
+
+crop_yield_pi_mean <- mean(crop_yield_pi$crop_yield)
+crop_yield_pi_sd <- sd(crop_yield_pi$crop_yield)
+crop_yield_pi_t <- -qt(0.025, df = (nrow(crop_yield_pi)-1) )
+crop_yield_pi_se <- crop_yield_pi_sd / sqrt((nrow(crop_yield_pi)-1))
+crop_yield_pi_h <- crop_yield_pi_t * crop_yield_pi_se
+
+crop_yield_pi_mean
+crop_yield_pi_sd
+crop_yield_pi_t
+crop_yield_pi_se
+crop_yield_pi_h
+
+
+
+
+```
+```{r}
+# Profit Stat KCUW
+
+
+profit_kcuw_mean <- mean(profit_kcuw$profit)
+profit_kcuw_sd <- sd(profit_kcuw$profit)
+profit_kcuw_t <- -qt(0.025, df = (nrow(profit_kcuw)-1) )
+profit_kcuw_se <- profit_kcuw_sd / sqrt((nrow(profit_kcuw)-1))
+profit_kcuw_h <- profit_kcuw_t * profit_kcuw_se
+
+profit_kcuw_mean
+profit_kcuw_sd
+profit_kcuw_t
+profit_kcuw_se
+profit_kcuw_h
+
+# Crop Yield Stat
+
+crop_yield_kcuw_mean <- mean(crop_yield_kcuw$crop_yield)
+crop_yield_kcuw_sd <- sd(crop_yield_kcuw$crop_yield)
+crop_yield_kcuw_t <- -qt(0.025, df = (nrow(crop_yield_kcuw)-1) )
+crop_yield_kcuw_se <- crop_yield_kcuw_sd / sqrt((nrow(crop_yield_kcuw)-1))
+crop_yield_kcuw_h <- crop_yield_kcuw_t * crop_yield_kcuw_se
+
+crop_yield_kcuw_mean
+crop_yield_kcuw_sd
+crop_yield_kcuw_t
+crop_yield_kcuw_se
+crop_yield_kcuw_h
+
+
+
+
+
+```
+
+```{r}
+# Profit Stat Stochastic
+
+
+profit_stoch_mean <- mean(profit_stoch$profit)
+profit_stoch_sd <- sd(profit_stoch$profit)
+profit_stoch_t <- -qt(0.025, df = (nrow(profit_stoch)-1) )
+profit_stoch_se <- profit_stoch_sd / sqrt((nrow(profit_stoch)-1))
+profit_stoch_h <- profit_stoch_t * profit_stoch_se
+
+profit_stoch_mean
+profit_stoch_sd
+profit_stoch_t
+profit_stoch_se
+profit_stoch_h
+
+# Crop Yield Stat
+
+crop_yield_stoch_mean <- mean(crop_yield_stoch$crop_yield)
+crop_yield_stoch_sd <- sd(crop_yield_stoch$crop_yield)
+crop_yield_stoch_t <- -qt(0.025, df = (nrow(crop_yield_stoch)-1) )
+crop_yield_stoch_se <- crop_yield_stoch_sd / sqrt((nrow(crop_yield_stoch)-1))
+crop_yield_stoch_h <- crop_yield_stoch_t * crop_yield_stoch_se
+
+crop_yield_stoch_mean
+crop_yield_stoch_sd
+crop_yield_stoch_t
+crop_yield_stoch_se
+crop_yield_stoch_h
+
+
+
+
+
+```
+
+
+
+```{r}
+# Profit Stat EV
+
+profit_ev_mean <- mean(profit_ev$profit)
+profit_ev_sd <- sd(profit_ev$profit)
+profit_ev_t <- -qt(0.025, df = (nrow(profit_ev)-1) )
+profit_ev_se <- profit_ev_sd / sqrt((nrow(profit_ev)-1))
+profit_ev_h <- profit_ev_t * profit_ev_se
+
+profit_ev_mean
+profit_ev_sd
+profit_ev_t
+profit_ev_se
+profit_ev_h
+
+# Crop Yield Stat
+
+crop_yield_ev_mean <- mean(crop_yield_ev$crop_yield)
+crop_yield_ev_sd <- sd(crop_yield_ev$crop_yield)
+crop_yield_ev_t <- -qt(0.025, df = (nrow(crop_yield_ev)-1) )
+crop_yield_ev_se <- crop_yield_ev_sd / sqrt((nrow(crop_yield_ev)-1))
+crop_yield_ev_h <- crop_yield_ev_t * crop_yield_ev_se
+
+crop_yield_ev_mean
+crop_yield_ev_sd
+crop_yield_ev_t
+crop_yield_ev_se
+crop_yield_ev_h
+
+
+
+
+```
+
+
+# Putting Together Dataframes
+
+## Objective Functions and Figures
+
+```{r}
+scenario_yearly_avg_trad <- tibble(sim = c('Perfect Information', 'Known Climate, Unknown Weather', 'Stochastic', 'Expected Value' ), 
+# Profit                    
+       profit_MM = c(mean(profit_pi$profit), mean(profit_kcuw$profit), mean(profit_stoch$profit), mean(profit_ev$profit) ),
+#Crop Yield
+       crop_yield_tonne = c(mean(crop_yield_pi$crop_yield), mean(crop_yield_kcuw$crop_yield), mean(crop_yield_stoch$crop_yield) , mean(crop_yield_ev$crop_yield)),
+#Precipitation
+       precip_cm = c(mean(precips_c0), mean(precips_c0), mean(precips_c0), mean(precips_c0) ),
+# Water investment
+       alt_water_cap_cm = c(mean(water_invest_pi$invest_water), mean(water_invest_kcuw), water_invest_stoch, water_invest_ev),
+# Electricity Investment
+       alt_elc_cap_kW = c(mean(elc_invest_pi$invest_elc), mean(elc_invest_kcuw), elc_invest_stoch, elc_invest_ev),       
+# Total Water Use
+       water_cm = c(mean(water_pi$water_depth), mean(water_kcuw$water_depth), mean(water_stoch$water_depth), mean(water_ev$water_depth) ),
+# Total Electricity Use
+       elc_prod_MWh = c(mean(elc_pi$elc_prod), mean(elc_kcuw$elc_prod), mean(elc_stoch$elc_prod), mean(elc_ev$elc_prod) )  ) %>% 
+# Unit Conversions
+  mutate(crop_yield_tonne = crop_yield_tonne * 200) %>%
+  mutate(elc_prod_MWh = elc_prod_MWh / 1000) %>%
+  mutate(profit_MM = profit_MM / 1000000)
+
+
+scenario_yearly_avg_trad$sim <- ordered(scenario_yearly_avg_trad$sim, levels = c('Perfect Information', 'Known Climate, Unknown Weather', 'Stochastic', 'Expected Value'))
+
+
+```
+
+
+```{r}
+# Sim Stats Data Frame
+
+sim_stats_trad <- tibble(sim = c('Perfect Information', 'Known Climate, Unknown Weather', 'Stochastic', 'Expected Value'  ),
+                    
+                    profit_mean = c(mean(profit_pi$profit), mean(profit_kcuw$profit), mean(profit_stoch$profit), mean(profit_ev$profit) ),
+                    
+                    profit_sd = c(sd(profit_pi$profit), sd(profit_kcuw$profit), sd(profit_stoch$profit), sd(profit_ev$profit) ),
+                    
+                    profit_t = c(profit_pi_t, profit_kcuw_t, profit_stoch_t, profit_ev_t),
+                    
+                    profit_se = c(profit_pi_se, profit_kcuw_se, profit_stoch_se, profit_ev_se),
+                    
+                    profit_h = c(profit_pi_h, profit_kcuw_h, profit_stoch_h, profit_ev_h),
+                    
+                    crop_yield_mean = c(mean(crop_yield_pi$crop_yield), mean(crop_yield_kcuw$crop_yield), mean(crop_yield_stoch$crop_yield), mean(crop_yield_ev$crop_yield) ),
+                    
+                    crop_yield_sd = c(sd(crop_yield_pi$crop_yield), sd(crop_yield_kcuw$crop_yield), sd(crop_yield_stoch$crop_yield), sd(crop_yield_ev$crop_yield) ),
+                    
+                    crop_yield_t = c(crop_yield_pi_t, crop_yield_kcuw_t, crop_yield_stoch_t, crop_yield_ev_t),
+                    
+                    crop_yield_se = c(crop_yield_pi_se, crop_yield_kcuw_se, crop_yield_stoch_se, crop_yield_ev_se),
+                    
+                    crop_yield_h = c(crop_yield_pi_h, crop_yield_kcuw_h, crop_yield_stoch_h, crop_yield_ev_h) )
+                    
+                    
+sim_stats_trad$sim <- ordered(sim_stats_trad$sim, levels = c('Perfect Information', 'Known Climate, Unknown Weather', 'Stochastic', 'Expected Value'  ))
+
+
+
+
+
+
+
+
+
+value_of_solns_ep <- tibble(Climate_Probability = c('Equally Likely'), 
+       Value_of_Known_Weather = as.numeric(scenario_yearly_avg_trad[1,2] - scenario_yearly_avg_trad[2,2]) * 1000000 , 
+       Value_of_Perfect_Information = as.numeric(scenario_yearly_avg_trad[1,2] - scenario_yearly_avg_trad[3,2]) * 1000000, 
+       Value_of_Stochastic_Solution = as.numeric(scenario_yearly_avg_trad[3,2] - scenario_yearly_avg_trad[4,2]) * 1000000)
+```
+
+
+```{r}
+parameters
+scenario_yearly_avg_trad
+sim_stats_trad
+value_of_solns_ep
+```
+
+
+```{r}
+save.image(file = "MI-EP.RData")
+```
+

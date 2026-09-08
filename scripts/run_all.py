@@ -3,7 +3,7 @@
     python scripts/run_all.py                # full reproduction, both sites
     python scripts/run_all.py --force        # ignore cached scenario output
     python scripts/run_all.py --runs 200     # fast smoke run; NOT the paper
-    python scripts/run_all.py --reports      # also render the R reports
+    python scripts/run_all.py --figures      # also regenerate figures/generated/
 
 Stage 1 solves the four scenarios at each of the two sites with Gurobi and writes
 per-run output to `results/<site>/`. Stage 2 aggregates that into
@@ -17,7 +17,6 @@ is that a tolerance written in two places is where a correction fails to reach.
 from __future__ import annotations
 
 import argparse
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -28,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import pandas as pd  # noqa: E402
 
+from fews_stochopt import analysis  # noqa: E402
 from fews_stochopt.aggregate import (  # noqa: E402
     SCENARIOS,
     scenario_averages,
@@ -57,9 +57,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         "--sites", nargs="*", default=None, help="sites to run (default: all)"
     )
     p.add_argument(
-        "--reports",
+        "--no-regenerate",
         action="store_true",
-        help="also render stage2-r/farm_report.Rmd for each site (needs R)",
+        help="skip redrawing the precipitation sample (a few seconds)",
+    )
+    p.add_argument(
+        "--figures",
+        action="store_true",
+        help="also regenerate figures/generated/ from the cleaned output",
     )
     p.add_argument("--quiet", action="store_true")
     return p.parse_args(argv)
@@ -96,6 +101,20 @@ def main(argv: list[str] | None = None) -> int:
         averages = scenario_averages(cfg, site, by_scenario, precip)
         averages.to_csv(RESULTS / site / "scenario_averages.csv", index=False)
 
+    # Stage 7: the cleaned output every figure and analysis reads. The per-run
+    # detail written above is RAW output -- 135 MB, gitignored. This is the
+    # aggregate of it, tidy and long, and small enough to commit.
+    log("stage 7     cleaned output")
+    regenerated = None
+    if not args.no_regenerate:
+        from fews_stochopt import markov
+        regenerated = {s_: markov.simulate(cfg, s_) for s_ in results}
+        out = RESULTS / "regenerated"
+        out.mkdir(parents=True, exist_ok=True)
+        for s_, frame in regenerated.items():
+            frame.to_csv(out / f"precips_c0_{s_}_regenerated.csv", index=False)
+    analysis.write_all(cfg, results, regenerated=regenerated, log=log)
+
     first_stage_table(cfg, results).to_csv(RESULTS / "first_stage.csv", index=False)
     diagnostic = expected_value_diagnostic(
         cfg, results, n_runs=args.runs, force=args.force, log=log
@@ -111,10 +130,18 @@ def main(argv: list[str] | None = None) -> int:
     log(f"      {RESULTS / 'first_stage.csv'}")
     log(f"      {RESULTS / 'expected_value_diagnostic.csv'}")
 
-    if args.reports:
-        rc = render_reports(cfg, sites=args.sites, log=log)
-        if rc != 0:
-            return rc
+    if args.figures:
+        rc = subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "make_figures.py")],
+            cwd=str(ROOT), capture_output=True, text=True,
+        )
+        if rc.stdout:
+            log(rc.stdout.rstrip())
+        if rc.stderr:
+            print(rc.stderr.rstrip(), file=sys.stderr)
+        if rc.returncode != 0:
+            return rc.returncode
+
     return 0
 
 
@@ -195,47 +222,6 @@ def expected_value_diagnostic(cfg, results, n_runs=None, force=False, log=print)
             }
         )
     return pd.DataFrame(rows)
-
-
-def render_reports(cfg, sites=None, log=print) -> int:
-    """Render `stage2-r/farm_report.Rmd` once per site.
-
-    One parameterised report replaces the eleven copy-pasted ones. It reads what
-    stage 1 wrote, so it cannot disagree with the table above about which run
-    produced which number.
-    """
-    script = ROOT / "stage2-r" / "render_reports.R"
-    sites = sites if sites is not None else list(cfg.sites)
-
-    rscript = shutil.which("Rscript")
-    if rscript is None:
-        # An explanation, not a FileNotFoundError. The tables are already written
-        # at this point, so this is a missing extra rather than a failed run.
-        print(
-            "\nRscript is not on PATH, so the R reports were not rendered.\n"
-            "The tables in results/ are complete without them. To render:\n"
-            "    Rscript -e 'install.packages(c(\"rmarkdown\",\"ggplot2\",\"dplyr\",\"tidyr\",\"readr\"))'\n"
-            f"    Rscript {script.relative_to(ROOT)}",
-            file=sys.stderr,
-        )
-        return 0
-
-    log(f"\nstage 2r    rendering {script.name} for {', '.join(sites)}")
-    proc = subprocess.run(
-        [rscript, str(script), *sites],
-        cwd=str(ROOT),
-        capture_output=True,
-        text=True,
-    )
-    # Print BOTH streams and the return code. Printing only stdout is how a
-    # failing script looks like one that did nothing -- Part 6, and it cost a day.
-    if proc.stdout:
-        log(proc.stdout.rstrip())
-    if proc.stderr:
-        print(proc.stderr.rstrip(), file=sys.stderr)
-    if proc.returncode != 0:
-        print(f"render_reports.R exited {proc.returncode}", file=sys.stderr)
-    return proc.returncode
 
 
 if __name__ == "__main__":

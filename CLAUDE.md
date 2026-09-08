@@ -20,8 +20,31 @@ summarise it: a partial restatement reads as complete and stops the search.
 
 ## Archetype and the four axes
 
-**Archetype A**, batch analysis pipeline. `config.yaml`, `src/fews_stochopt/`,
-`scripts/run_all.py`, `results/`, `tests/`.
+**Archetype P** — a published result whose code is being replaced. Archetype A plus a
+preserved original and the machinery that keeps the two honest. Adopted 2026-09-08
+(code-standard amendment 6).
+
+**The rule, applied here:** everything that produced the published result is in `archive/`,
+verbatim and frozen; exactly one implementation is maintained and it is Python. That
+applies on **both sides** — porting the model to Python while leaving the analysis in R
+would only move the barrier from the model to the figures, so the 674 lines of R went too.
+
+The nine stages, and which are empty here:
+
+| stage | here |
+|---|---|
+| input raw | `data/raw/precips_c0_*.csv`, committed |
+| clean-up code | **empty** — the raw input is already open plain-text |
+| cleaned data | **empty** — same files; nothing to clean |
+| model files | `archive/` (original) and `src/fews_stochopt/` (maintained) |
+| raw output | `results/<site>/*.csv`, 135 MB, gitignored |
+| clean-up output code | `src/fews_stochopt/analysis.py` |
+| cleaned output | `results/clean/`, 90 KB, tidy and long, **committed** |
+| analysis code | `analysis.py` and `aggregate.py`, `.py` |
+| figures | `scripts/make_figures.py` |
+
+**A stage being empty is a finding, not an omission.** Two of the nine do not exist here
+because the original's input needed no conversion.
 
 | Axis | Answer |
 |---|---|
@@ -63,12 +86,19 @@ measurements.
 | Standard errors divide by `sqrt(n-1)`, reproducing the original | the R report and `aggregate._summary`, both commented |
 | `profit` carries a lower bound of zero, as in the original | `test_profit_non_negativity_never_binds` |
 | `reference/reconstructed/` is an estimate; two rows per site are unidentified | `test_unidentified_rows_are_recorded_not_invented` |
+| The archive must never change | `test_the_archive_is_frozen` |
+| No maintained code in a second language | `test_no_maintained_code_is_in_another_language` |
+| The verification notebook must not need a solver | `test_the_verification_notebook_needs_no_solver` |
 
 ## Exemptions from the invariants
 
-- **Invariant 5, generated files.** Three documented exceptions, listed in the README:
-  the precipitation inputs, `reference/`, and the headline `results/*.csv`. The 68 MB of
-  per-run scenario CSVs are gitignored.
+- **Invariant 5, generated files.** Five documented exceptions, listed in the README: the
+  precipitation inputs, `reference/`, the headline `results/*.csv`, `results/clean/` and
+  `figures/generated/`. The 135 MB of per-run raw output is gitignored.
+- **Archetype P's ~10 MB comfort boundary on committed cleaned output.** The tidy per-run
+  detail would be 135 MB. The boundary is met by committing the right *layer* — the
+  per-(site, scenario, year) aggregate at 90 KB — rather than by compressing the wrong one.
+  Worth saying because "compress or subset" is not the only escape.
 - **Invariant 6, CI on a clean machine.** Not possible as things stand: Gurobi's licence
   here is academic and node-locked, expiring 2026-12-04. The per-run solves are 178
   variables and fit the size-limited licence that ships with `pip install gurobipy`; the
@@ -82,13 +112,24 @@ measurements.
 
 ## Where the numbers come from
 
-`stage1-python/` and `stage2-r/superseded/` are **history, not code**. They are what the
-published run did and they no longer run — `DataFrame.append` was removed in pandas 2.0,
-and the R reports carry paths to a machine layout that is gone. Do not repair them; the
-model lives in `src/fews_stochopt/`.
+`archive/` is **history, not code**. It is what the published run did, and it no longer runs
+— `DataFrame.append` was removed in pandas 2.0, and the superseded R carries paths to a
+machine layout that is gone. **Do not repair anything in there**: a correction goes into
+`src/fews_stochopt/` and the divergence is recorded in `docs/reproduction-notes.md`. The
+freeze test will stop you anyway.
 
-`stage1-python/FEWS_Farm_model.py` is an earlier, different model — one period, two crops,
-binary decisions. It is not this paper's deterministic core, whatever its name suggests.
+`archive/stage1-python/FEWS_Farm_model.py` is an earlier, different model — one period, two
+crops, binary decisions. It is not this paper's deterministic core, whatever its name
+suggests.
+
+**One deviation from the adopted text, recorded rather than silently taken.** Archetype P
+says to read the primal residual and *scale it by the largest constraint-matrix
+coefficient*. This repository records that scaled residual per solve
+(`scaled_violation_before_repair`) but does not gate on it: `model._repair` clips the point
+back inside the feasible region instead, which removes the violation rather than accepting a
+small one. Gating on a scaled threshold was tried and rejected — see
+`docs/reproduction-notes.md` §12. That was raised in review before the amendment merged and
+is worth re-petitioning if it recurs elsewhere.
 
 ## Working here alongside other sessions
 

@@ -3,7 +3,7 @@
     python scripts/reconstruct_markov.py            # write reference/reconstructed/
     python scripts/reconstruct_markov.py --check     # verify the committed copy
 
-`trans_matrix.csv` is read by `stage2-r/markov_chain.Rmd` and by both
+`trans_matrix.csv` is read by `archive/stage2-r/markov_chain.Rmd` and by both
 `FM * MC.Rmd` reports, and exists nowhere. It is estimated here from the
 committed precipitation draws, which is possible because precipitation takes only
 five distinct values, so the state sequence is recoverable exactly.

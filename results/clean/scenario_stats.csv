@@ -1,0 +1,81 @@
+site,label,scenario,variable,value
+EP,Equally Probable,Perfect Information,profit_mean,2355662.3752840697
+EP,Equally Probable,Perfect Information,profit_sd,635132.5464936846
+EP,Equally Probable,Perfect Information,profit_t,1.9605573771860274
+EP,Equally Probable,Perfect Information,profit_se,10043.582841444648
+EP,Equally Probable,Perfect Information,profit_h,19691.020433173308
+EP,Equally Probable,Perfect Information,crop_yield_mean,2.8661801330840704
+EP,Equally Probable,Perfect Information,crop_yield_sd,0.9092099709326656
+EP,Equally Probable,Perfect Information,crop_yield_t,1.9599877077718446
+EP,Equally Probable,Perfect Information,crop_yield_se,0.0028751887554624273
+EP,Equally Probable,Perfect Information,crop_yield_h,0.0056353346182301855
+EP,Equally Probable,"Known Climate, Unknown Weather",profit_mean,2345267.106809929
+EP,Equally Probable,"Known Climate, Unknown Weather",profit_sd,640490.7140009397
+EP,Equally Probable,"Known Climate, Unknown Weather",profit_t,1.9605573771860274
+EP,Equally Probable,"Known Climate, Unknown Weather",profit_se,10128.313500477232
+EP,Equally Probable,"Known Climate, Unknown Weather",profit_h,19857.139751813473
+EP,Equally Probable,"Known Climate, Unknown Weather",crop_yield_mean,2.835512019364352
+EP,Equally Probable,"Known Climate, Unknown Weather",crop_yield_sd,0.9641327213495537
+EP,Equally Probable,"Known Climate, Unknown Weather",crop_yield_t,1.9599877077718446
+EP,Equally Probable,"Known Climate, Unknown Weather",crop_yield_se,0.003048870610552203
+EP,Equally Probable,"Known Climate, Unknown Weather",crop_yield_h,0.005975748919269157
+EP,Equally Probable,Stochastic,profit_mean,2246937.8910066006
+EP,Equally Probable,Stochastic,profit_sd,616445.6677889815
+EP,Equally Probable,Stochastic,profit_t,1.9605573771860274
+EP,Equally Probable,Stochastic,profit_se,9748.080406000521
+EP,Equally Probable,Stochastic,profit_h,19111.670953386885
+EP,Equally Probable,Stochastic,crop_yield_mean,2.6743240661796137
+EP,Equally Probable,Stochastic,crop_yield_sd,1.1137549922239367
+EP,Equally Probable,Stochastic,crop_yield_t,1.9599877077718446
+EP,Equally Probable,Stochastic,crop_yield_se,0.0035220201409554923
+EP,Equally Probable,Stochastic,crop_yield_h,0.006903116182797624
+EP,Equally Probable,Expected Value,profit_mean,2246937.549733705
+EP,Equally Probable,Expected Value,profit_sd,616515.6954052532
+EP,Equally Probable,Expected Value,profit_t,1.9605573771860274
+EP,Equally Probable,Expected Value,profit_se,9749.187778263362
+EP,Equally Probable,Expected Value,profit_h,19113.84202024609
+EP,Equally Probable,Expected Value,crop_yield_mean,2.674035382429658
+EP,Equally Probable,Expected Value,crop_yield_sd,1.11359647771772
+EP,Equally Probable,Expected Value,crop_yield_t,1.9599877077718446
+EP,Equally Probable,Expected Value,crop_yield_se,0.003521518871567318
+EP,Equally Probable,Expected Value,crop_yield_h,0.00690213370095852
+DML,Dry Most Likely,Perfect Information,profit_mean,1975826.739203914
+DML,Dry Most Likely,Perfect Information,profit_sd,490655.20344320766
+DML,Dry Most Likely,Perfect Information,profit_t,1.9605573771860274
+DML,Dry Most Likely,Perfect Information,profit_se,7758.909867826674
+DML,Dry Most Likely,Perfect Information,profit_h,15211.78798028905
+DML,Dry Most Likely,Perfect Information,crop_yield_mean,2.770853861858719
+DML,Dry Most Likely,Perfect Information,crop_yield_sd,0.8399566082483448
+DML,Dry Most Likely,Perfect Information,crop_yield_t,1.9599877077718446
+DML,Dry Most Likely,Perfect Information,crop_yield_se,0.0026561892987542403
+DML,Dry Most Likely,Perfect Information,crop_yield_h,0.0052060983750734265
+DML,Dry Most Likely,"Known Climate, Unknown Weather",profit_mean,1964087.428797973
+DML,Dry Most Likely,"Known Climate, Unknown Weather",profit_sd,489984.2453753546
+DML,Dry Most Likely,"Known Climate, Unknown Weather",profit_t,1.9605573771860274
+DML,Dry Most Likely,"Known Climate, Unknown Weather",profit_se,7748.2997629362535
+DML,Dry Most Likely,"Known Climate, Unknown Weather",profit_h,15190.986260873418
+DML,Dry Most Likely,"Known Climate, Unknown Weather",crop_yield_mean,2.7567736738479196
+DML,Dry Most Likely,"Known Climate, Unknown Weather",crop_yield_sd,0.8662707961120065
+DML,Dry Most Likely,"Known Climate, Unknown Weather",crop_yield_t,1.9599877077718446
+DML,Dry Most Likely,"Known Climate, Unknown Weather",crop_yield_se,0.002739402483247934
+DML,Dry Most Likely,"Known Climate, Unknown Weather",crop_yield_h,0.005369195193805617
+DML,Dry Most Likely,Stochastic,profit_mean,1899221.1645801894
+DML,Dry Most Likely,Stochastic,profit_sd,424366.85599311744
+DML,Dry Most Likely,Stochastic,profit_t,1.9605573771860274
+DML,Dry Most Likely,Stochastic,profit_se,6710.668028051789
+DML,Dry Most Likely,Stochastic,profit_h,13156.649708243347
+DML,Dry Most Likely,Stochastic,crop_yield_mean,2.6657065049329045
+DML,Dry Most Likely,Stochastic,crop_yield_sd,0.9293640451605785
+DML,Dry Most Likely,Stochastic,crop_yield_t,1.9599877077718446
+DML,Dry Most Likely,Stochastic,crop_yield_se,0.002938921852821015
+DML,Dry Most Likely,Stochastic,crop_yield_h,0.005760250705631243
+DML,Dry Most Likely,Expected Value,profit_mean,1898256.2782976374
+DML,Dry Most Likely,Expected Value,profit_sd,407823.2604523399
+DML,Dry Most Likely,Expected Value,profit_t,1.9605573771860274
+DML,Dry Most Likely,Expected Value,profit_se,6449.058111780862
+DML,Dry Most Likely,Expected Value,profit_h,12643.748456953363
+DML,Dry Most Likely,Expected Value,crop_yield_mean,2.7136061043958413
+DML,Dry Most Likely,Expected Value,crop_yield_sd,0.8942883882221901
+DML,Dry Most Likely,Expected Value,crop_yield_t,1.9599877077718446
+DML,Dry Most Likely,Expected Value,crop_yield_se,0.0028280023318700285
+DML,Dry Most Likely,Expected Value,crop_yield_h,0.005542849808015368

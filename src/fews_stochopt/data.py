@@ -1,6 +1,6 @@
 """Reading the committed precipitation scenarios, and slicing them by climate.
 
-The two files `stage1-python/precips_c0_{EP,DML}.csv` hold 4,000 Monte Carlo
+The two files `data/raw/precips_c0_{EP,DML}.csv` hold 4,000 Monte Carlo
 draws of 25 years each. They are *inputs* to the optimisation, generated once by
 `stage2-r/FM {EP,DML} MC.Rmd`, and they are committed -- the documented exception
 to the rule that generated files stay out of git.

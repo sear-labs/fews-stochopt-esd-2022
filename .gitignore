@@ -5,12 +5,11 @@ csvs/
 *.RData
 *.rdata
 
-# The precipitation scenarios are INPUTS to stage 1, not its outputs. They are
-# generated -- 100,000 Monte Carlo draws each, by stage2-r/markov_chain.Rmd --
-# yet nothing runs without them, so they ship as a documented exception.
-# stage2-r/markov_chain.Rmd writes a fresh sample to results/regenerated/ and
-# never over these: an input a later stage can overwrite is not an input.
-!stage1-python/precips_c0_*.csv
+# The precipitation scenarios live in data/raw/ and are the INPUT OF RECORD.
+# They are generated -- 100,000 Monte Carlo draws each -- yet nothing runs
+# without them, so they ship as a documented exception. `markov.simulate` writes
+# a fresh sample to results/regenerated/ and never over these: an input a later
+# stage can overwrite is not an input.
 
 # --- results ---
 # Everything under results/ is regenerated, EXCEPT the headline tables. Those
@@ -23,9 +22,14 @@ results/**
 !results/first_stage.csv
 !results/expected_value_diagnostic.csv
 
+# Stage 7, cleaned output: tidy, long, and what every figure and analysis reads.
+# Committed because without it nothing works from a clean clone. 90 KB, against
+# 135 MB of per-run RAW output above.
+!results/clean/
+!results/clean/**
+
 # Rendered reports are ~1 MB each and regenerate in seconds; the tables above
 # carry every number in them.
-results/reports/
 results/regenerated/
 
 # --- Jupyter autosaves. These put a 76.8 MiB and a 24.1 MiB blob into the

@@ -641,3 +641,81 @@ to be exactly 0.005 — half of the last printed digit. `reference/solnvalues.cs
 here carries fifteen significant figures, so this repository is not exposed, but
 the failure mode is worth naming: a rounded file can both hide a real
 disagreement and manufacture a fake one.
+
+
+---
+
+## 16. Adopting Archetype P
+
+The code standard's amendment 6 merged on 2026-09-08 and this repository was
+restructured onto it. The rule:
+
+> Everything that produced the published result is preserved verbatim. Exactly
+> one implementation is maintained, and it is Python.
+
+**It applies on both sides of the pipeline**, and that is the half this
+repository had missed. The model was already Python; the analysis was 674 lines
+of R. Porting one and not the other does not reduce the languages a reader needs
+-- it moves the barrier from the model to the figures.
+
+    farm_report.Rmd   312 lines  ->  src/fews_stochopt/analysis.py + scripts/make_figures.py
+    markov_chain.Rmd  276 lines  ->  fews_stochopt.markov.simulate
+    render_reports.R   86 lines  ->  no longer needed
+
+The R is in `archive/`, verbatim, frozen by `scripts/freeze_archive.py --check`
+over a sha256 manifest of raw bytes.
+
+### What the port had to reproduce, and how it was checked
+
+`markov_chain.Rmd` generates the precipitation scenarios, so it is stages 1-3
+rather than stage 8, and its acceptance test is distributional rather than visual.
+The original's exact draws cannot be recovered -- `set.seed(12345)` was set but
+the sample depended on RNG state accumulated through earlier chunks. So the port
+is checked against the committed input by state share: **largest difference
+0.0014**, against the 0.01 the R version itself asserted.
+
+Two details had to be reproduced rather than improved:
+
+- **The two-decimal round-trip.** The R converted states to numbers through
+  `gsub('w2', as.character(w2p), ...)`, and `as.character` prints the shortest
+  form within 15 significant digits -- so the committed files hold exactly 26.67
+  while the unrounded product is 26.669999999999998. Without the round-trip a
+  comparison by value finds no matches at all.
+- **The concatenate-then-renumber layout**, which is what makes a run's index
+  encode its climate.
+
+### Two defects the move surfaced
+
+- **`core.autocrlf=true` breaks a raw-bytes freeze.** Restoring one archived file
+  with `git checkout` rewrote its line endings, the manifest rejected it, and the
+  same would have happened on every clean clone. `.gitattributes` now marks
+  `archive/** -text`, because "verbatim" has to mean bytes.
+- **`resetParams()` restores Gurobi's defaults, not the environment's**, so the
+  `OutputFlag=0` from `config.yaml` was lost and every solve printed its barrier
+  log. Cosmetic -- `Seed` and `Threads` were already at their defaults -- but it
+  had flooded a full run's output.
+
+### The 10 MB boundary, met by committing a different layer
+
+Archetype P commits cleaned output and notes that this "assumes it stays small...
+around 10 MB". The tidy per-run detail here is **135 MB**. The resolution is not
+to compress or subset: the per-run detail is *raw* output, and what everything
+actually reads is the per-(site, scenario, year) aggregate, which is **90 KB**.
+Committing the right layer keeps the repository working from a clean clone
+without straining the boundary. Reported back to the standard as a case its
+"compress or subset" escape does not cover.
+
+### One deviation, recorded
+
+Archetype P says to read the primal residual and **scale it by the largest
+constraint-matrix coefficient**. This repository records that figure per solve --
+`scaled_violation_before_repair` in each scenario's `.meta.json` -- but does not
+gate on it. `model._repair` clips the point back inside the feasible region
+instead, which removes the violation rather than accepting a small one, and the
+reported values are then valid lower bounds.
+
+Gating on a threshold was tried and rejected: at 1e-8 scaled by the objective it
+would have permitted about $1,300 of error on quantities asserted to $2. That was
+raised in review before the amendment merged; the evidence cited for the scaling
+(87 of 91 solves wrongly rejected by an absolute gate) supports "an absolute gate
+is wrong" and does not extend to the remedy. Worth re-petitioning if it recurs.

@@ -1,0 +1,11 @@
+site,label,precip_cm,committed_share,regenerated_share
+EP,Equally Probable,8.89,0.1123,0.1124
+EP,Equally Probable,26.67,0.25141,0.25122
+EP,Equally Probable,53.34,0.29777,0.29693
+EP,Equally Probable,80.01,0.20022,0.19979
+EP,Equally Probable,106.68,0.1383,0.13966
+DML,Dry Most Likely,8.89,0.15296,0.15334
+DML,Dry Most Likely,26.67,0.38255,0.38239
+DML,Dry Most Likely,53.34,0.31872,0.31728
+DML,Dry Most Likely,80.01,0.09795,0.09895
+DML,Dry Most Likely,106.68,0.04782,0.04804

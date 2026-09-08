@@ -8,12 +8,14 @@ likely to reuse -- with unstated terms. This file states them, by path:
 
     reference/**                    published values, transcribed capacities,
                                     and the reconstructed transition matrix
-    stage1-python/precips_c0_*.csv  the committed precipitation scenarios
+    data/raw/precips_c0_*.csv       the committed precipitation scenarios
+    results/clean/**                the cleaned output
+    artifacts/**                    the frozen instances and their solutions
     results/*.csv                   the reproduced tables
     figures/**                      the published result figures
 
-Everything else in this repository, including all Python and R source, is
-covered by `LICENSE` (MIT).
+Everything else, including all Python source and the archived originals
+under `archive/`, is covered by `LICENSE` (MIT).
 
 TERMS
 -----

@@ -22,7 +22,9 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 ARTIFACTS = ROOT / "artifacts"
-WALKTHROUGH = ROOT / "notebooks" / "00_walkthrough.ipynb"
+VERIFICATION = ROOT / "notebooks" / "00_verification.ipynb"
+EXAMPLE = ROOT / "notebooks" / "01_example.ipynb"
+NOTEBOOKS = (VERIFICATION, EXAMPLE)
 
 
 def _run(script: str, *args):
@@ -89,50 +91,82 @@ def test_every_shipped_solution_is_feasible_and_priced_correctly():
     )
 
 
-def test_the_walkthrough_is_thin():
-    """Part 4: the walkthrough imports the package and holds no model logic.
-
-    A notebook that rebuilds the model is a second copy with nothing comparing
-    it to the first. This one may call the package and read files; it may not
-    define the model.
-    """
-    nb = json.loads(WALKTHROUGH.read_text(encoding="utf-8"))
-    code = "\n".join(
+def _code(path):
+    nb = json.loads(path.read_text(encoding="utf-8"))
+    return "\n".join(
         "".join(c["source"]) for c in nb["cells"] if c["cell_type"] == "code"
     )
-    assert code.strip(), "the walkthrough has no code cells"
+
+
+@pytest.mark.parametrize("path", NOTEBOOKS, ids=lambda p: p.name)
+def test_the_notebooks_are_thin(path):
+    """Part 4: they import the package and hold no model logic.
+
+    A notebook that rebuilds the model is a second copy with nothing comparing
+    it to the first. These may call the package and read files; they may not
+    define the model.
+    """
+    code = _code(path)
+    assert code.strip(), f"{path.name} has no code cells"
     for forbidden in ("addQConstr", "addConstrs(", "ModelSense", "setObjective"):
         assert forbidden not in code, (
-            f"the walkthrough builds a model: it contains `{forbidden}`. It must "
+            f"{path.name} builds a model: it contains `{forbidden}`. It must "
             f"call fews_stochopt instead."
         )
     assert "import fews_stochopt" in code or "from fews_stochopt" in code
 
 
-def test_the_walkthrough_shipped_executed_and_without_errors():
+def test_the_verification_notebook_needs_no_solver():
+    """Archetype P: the two notebooks make different claims, and this is the
+    stronger one. If it grew a `gurobipy` import, checking the paper would start
+    depending on being able to run it -- which is what splitting them prevents.
+    """
+    code = _code(VERIFICATION)
+    for forbidden in ("import gurobipy", "from gurobipy", "collapsed.solve",
+                      "solve_scenario", "run_all.py"):
+        assert forbidden not in code, (
+            f"00_verification.ipynb contains `{forbidden}`. It must claim the "
+            f"published result is correct WITHOUT needing a solver."
+        )
+    assert "verify_solution.py" in code, (
+        "00_verification.ipynb does not run the verifier, which is its whole claim"
+    )
+
+
+def test_the_example_notebook_actually_solves_something():
+    """And the weaker claim must actually be made, or the split is cosmetic."""
+    code = _code(EXAMPLE)
+    assert "collapsed.solve" in code, (
+        "01_example.ipynb never solves anything; it is not an example"
+    )
+    assert "import gurobipy" in code
+
+
+@pytest.mark.parametrize("path", NOTEBOOKS, ids=lambda p: p.name)
+def test_the_notebooks_shipped_executed_and_without_errors(path):
     """Rule 5's documented exception: a reader sees the outputs without running.
 
     Also checks no cell errored, which a committed notebook can easily do while
     still looking complete.
     """
-    nb = json.loads(WALKTHROUGH.read_text(encoding="utf-8"))
+    nb = json.loads(path.read_text(encoding="utf-8"))
     code_cells = [c for c in nb["cells"] if c["cell_type"] == "code"]
     executed = [c for c in code_cells if c.get("outputs")]
     assert len(executed) >= len(code_cells) - 1, (
         f"only {len(executed)} of {len(code_cells)} code cells carry output; "
-        f"the notebook was not shipped executed"
+        f"{path.name} was not shipped executed"
     )
     errors = [
         o for c in code_cells for o in c.get("outputs", [])
         if o.get("output_type") == "error"
     ]
-    assert not errors, f"the committed walkthrough contains {len(errors)} error output(s)"
+    assert not errors, f"{path.name} contains {len(errors)} error output(s)"
 
 
-def test_the_walkthrough_matches_its_builder():
-    proc = _run("build_walkthrough.py", "--check")
+def test_the_notebooks_match_their_builder():
+    proc = _run("build_notebooks.py", "--check")
     assert proc.returncode == 0, (
-        f"build_walkthrough.py --check exited {proc.returncode}\n"
+        f"build_notebooks.py --check exited {proc.returncode}\n"
         f"--- stdout ---\n{proc.stdout}\n--- stderr ---\n{proc.stderr}"
     )
 
@@ -149,7 +183,7 @@ def test_no_badge_points_at_a_private_repository(badge):
 
     **Delete this test in the same commit that makes the repository public.**
     """
-    for path in (ROOT / "README.md", WALKTHROUGH):
+    for path in (ROOT / "README.md", *NOTEBOOKS):
         assert badge not in path.read_text(encoding="utf-8"), (
             f"{path.name} carries a Colab badge while the repository is private. "
             f"Either make the repository public or remove the badge."

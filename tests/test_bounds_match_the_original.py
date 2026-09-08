@@ -51,10 +51,10 @@ POST_HOC = re.compile(r"\.(LB|UB)\s*=|setAttr\(\s*['\"](LB|UB)['\"]|\.(lb|ub)\s*
 # Globbing swept those in and made this suite report an upper bound the published
 # model does not have. That was the scan's error, not a finding.
 CANONICAL = (
-    "stage1-python/FarmModelStoch_EV_loop.ipynb",       # Expected Value scenario
-    "stage1-python/FarmModelStoch_PI_loop.ipynb",       # Perfect Information
-    "stage2-r/superseded/FM MI EP All Climates.Rmd",    # Stochastic + Known Climate, EP
-    "stage2-r/superseded/FM MI DML All Climates.Rmd",   # ... and DML
+    "archive/stage1-python/FarmModelStoch_EV_loop.ipynb",     # Expected Value
+    "archive/stage1-python/FarmModelStoch_PI_loop.ipynb",     # Perfect Information
+    "archive/stage2-r/superseded/FM MI EP All Climates.Rmd",  # Stochastic + Known Climate, EP
+    "archive/stage2-r/superseded/FM MI DML All Climates.Rmd", # ... and DML
 )
 
 
@@ -161,7 +161,8 @@ def test_the_shipped_lp_files_bound_only_irrigation():
 def test_no_shipped_model_has_an_integer_variable():
     """The canonical model is a pure QCP.
 
-    Two abandoned notebooks in `superseded/` declare integer `pick_c*` variables.
+    Two abandoned notebooks in `archive/stage1-python/superseded/` declare integer
+    `pick_c*` variables.
     If one of those formulations ever leaked into the port, the model would stop
     being convex and every claim about certified optimality would weaken.
     """

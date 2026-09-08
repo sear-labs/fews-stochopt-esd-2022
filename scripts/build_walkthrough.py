@@ -64,7 +64,7 @@ optional.""")
 On Colab, **clone the repository and install from that checkout.**
 `pip install git+https://…` is not enough and fails in a way that looks like a
 bug in the model: it installs the package but not `data/`, because the
-precipitation inputs live at the repository root and are not part of the wheel.
+precipitation inputs live in `data/raw/` and are not part of the wheel.
 The installed `config.py` then derives the repository root relative to
 site-packages and the first cell that loads data dies with a `FileNotFoundError`
 naming a directory that has nothing to do with the problem.""")

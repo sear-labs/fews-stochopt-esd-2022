@@ -9,6 +9,10 @@ uncertain precipitation. The model reports the classic stochastic-programming qu
 of known weather, the **expected value of perfect information**, and the **value of the stochastic
 solution**, under two climate regimes.
 
+**Archetype P** — a published result whose code is being replaced. One maintained implementation,
+in Python, on both sides of the pipeline; the original preserved verbatim in `archive/` and frozen
+by a test.
+
 ## Status: reproduced
 
 One command reproduces the paper's Tables 4 and 5 from source, and `pytest` checks the result
@@ -65,17 +69,27 @@ column, necessarily: EVKW agrees, so if EVPI is $0.04 high then EVKC must be too
 ## How the pipeline works
 
 ```
-config.yaml                every parameter, both sites, the solver ladder, the tolerances
+data/raw/                        the input of record: 4,000 weather draws per site
+config.yaml                      every parameter, both sites, the solver ladder, the tolerances
       |
-src/fews_stochopt/         one model, four scenarios, one aggregation
+src/fews_stochopt/               one model, four scenarios, one aggregation
+      |   model.py               the model as the original wrote it: 704,002 variables
+      |   collapsed.py           the same model at the size it is: 37 variables
+      |   analysis.py            stage 7: the cleaned output everything reads
       |
-scripts/run_all.py         stage 1 solves, stage 2 aggregates
+scripts/run_all.py               solve, aggregate, clean
       |
+      +-> results/<site>/              RAW output, per run and year. 135 MB, gitignored
+      +-> results/clean/               CLEANED output, tidy and long. 90 KB, COMMITTED
       +-> results/solnvalues.csv       Table 4, all four columns
       +-> results/simstatstrad.csv     Table 5
-      +-> results/<site>/              per-run output, with a provenance stamp
       |
-stage2-r/farm_report.Rmd   one parameterised report; figures, and the same table recomputed
+scripts/make_figures.py          stage 9: figures, from cleaned output only
+artifacts/                       12 frozen instances + solutions, 164 KB
+scripts/verify_solution.py       checks them with numpy alone — no solver, no licence
+notebooks/00_verification.ipynb  needs nothing   — the published result is correct
+notebooks/01_example.ipynb       needs a solver  — the implementation runs and behaves
+archive/                         the original gurobipy notebooks and R analysis, frozen
 ```
 
 The four scenarios differ **only in how the runs are grouped** when the investment decision is
@@ -84,7 +98,31 @@ overall for the stochastic solution, and a single deterministic path for the exp
 solution. That observation is why one model replaced eight notebooks and eleven R reports.
 
 `DML` and `EP` are the two case study sites. Everything the model needs is in
-`stage1-python/precips_c0_{DML,EP}.csv`.
+`data/raw/precips_c0_{DML,EP}.csv`.
+
+### Two implementations of the model, and why there are two
+
+`model.py` writes out every run and every year, as the notebooks did. `collapsed.py` observes that
+given the capacities nothing couples one run-year to another, and that precipitation takes only five
+values — so 100,000 second-stage blocks are 100,000 copies of five distinct problems.
+**704,002 variables become 37, and 40 seconds become 0.01.** It is exact, not a reduction, and
+`tests/test_collapsed_agrees.py` solves both and asserts they agree.
+
+It is worth having because 37 variables fit the licence that ships with `pip install gurobipy`, and
+704,002 do not.
+
+### Two notebooks, two claims, deliberately apart
+
+The verification notebook makes the reproduction claim and needs no solver. The example notebook
+demonstrates the code. Merging them would let the stronger claim borrow the weaker one's
+dependencies — a reader who only wants to check the paper should not be asked to install a solver.
+
+### The archive is frozen, and that is enforced
+
+`archive/` holds everything that produced the published result, verbatim. Archived is not deleted:
+it is the only evidence of what made the numbers. Archived is also not maintained: a correction goes
+into the Python and the divergence is recorded. `scripts/freeze_archive.py --check` fails if any
+archived byte changes, and `tests/test_archive_and_one_language.py` runs it.
 
 ## The one figure that does not reproduce
 
@@ -130,10 +168,11 @@ recorded anywhere.
   from those inputs and committed under `reference/reconstructed/`, with the two limits stated:
   it is an estimate, and two rows per site are unidentified because no run ever visits those states.
   The estimate shows the chain has no memory — within a climate, every transition row is the same.
-- **Eleven R reports became one.** `stage2-r/` was a 2 × 5 grid built by copy-paste plus two
+- **Eleven R reports became one, then became Python.** `stage2-r/` was a 2 × 5 grid built by copy-paste plus two
   combining files, carrying more than thirty absolute paths to a machine layout that no longer
   exists. `farm_report.Rmd` takes `params: {site, label, root}`; the originals are kept under
-  `stage2-r/superseded/` as the record of what the published run did.
+  `archive/stage2-r/superseded/` as the record of what the published run did. Under Archetype P the
+  parameterised R went to `archive/` too: the analysis is now `analysis.py` and `make_figures.py`.
 
 `docs/reproduction-notes.md` has the measurements behind every one of these, including the parameter
 sweeps that did *not* work.
@@ -141,32 +180,30 @@ sweeps that did *not* work.
 ## Running it
 
 ```bash
-pip install -e .                      # needs a Gurobi licence
-python scripts/run_all.py             # both sites, full sample
+pip install -e ".[dev]"
+python scripts/verify_solution.py     # check the published result: no solver, no licence
+python scripts/run_all.py             # solve both sites, full sample — needs Gurobi
+python scripts/run_all.py --figures   # and regenerate figures/generated/
 python scripts/run_all.py --runs 200  # smoke run; does NOT reproduce the paper
 python scripts/run_all.py --force     # ignore cached scenario solutions
-python scripts/run_all.py --reports   # also render the R reports
 pytest                                # the acceptance suite
 pytest -m pinned                      # just the pinned values; solves nothing
 ```
 
-The R stage needs `rmarkdown`, `ggplot2`, `dplyr`, `tidyr` and `readr`:
-
-```bash
-Rscript -e 'install.packages(c("rmarkdown","ggplot2","dplyr","tidyr","readr"))'
-Rscript stage2-r/render_reports.R
-```
-
-Without R, the `rstage` tests skip with a reason naming what is missing. They never report success
-over an environment that could not run them.
+**R is no longer needed for anything.** The analysis and figures are Python; the original R lives
+in `archive/` and is not maintained.
 
 ## What is committed, and why
 
 Generated files are gitignored, with three documented exceptions:
 
-- **`stage1-python/precips_c0_*.csv`** — generated, but they are *inputs* to the optimisation and
-  nothing runs without them. They are the input of record: `stage2-r/markov_chain.Rmd` writes a
+- **`data/raw/precips_c0_*.csv`** — generated, but they are *inputs* to the optimisation and
+  nothing runs without them. They are the input of record: `fews_stochopt.markov.simulate` writes a
   fresh sample to `results/regenerated/` and never over these.
+- **`results/clean/`** — the cleaned output, tidy and long, 90 KB. Committed because without it
+  nothing works from a clean clone. The 135 MB of per-run *raw* output beneath it is not: the
+  archetype's ~10 MB boundary is met by committing the right layer, not by compressing the wrong one.
+- **`figures/generated/`** — regenerated by `scripts/make_figures.py`, each with a text alternative.
 - **`reference/`** — the published values, the transcribed first-stage capacities, and the
   reconstructed transition matrix. Inputs to the checks, never outputs of the pipeline.
 - **`results/*.csv` and `figures/`** — the headline tables and the published figures, so a reader
@@ -176,15 +213,15 @@ Generated files are gitignored, with three documented exceptions:
 ## Which notebook is the model
 
 There were **eight notebooks with no canonical version** — `Original`, `-v0`, `v2`, `v3`, `Stoch`,
-`_EV_loop`, `_PI_loop`, `Untitled`. `stage1-python/` holds only the two that produced the paper's
-scenario outputs; the other six are in `stage1-python/superseded/`, kept so nobody rediscovers one
+`_EV_loop`, `_PI_loop`, `Untitled`. `archive/stage1-python/` holds them all — the two that produced
+the paper's scenario outputs, and six variants under `superseded/`, kept so nobody rediscovers one
 and mistakes it for the model. **They are not maintained and should not be run** — they use
 `DataFrame.append`, removed in pandas 2.0.
 
 The model they encode now lives in `src/fews_stochopt/model.py`, which is what `run_all.py` calls
 and what the tests check.
 
-`stage1-python/FEWS_Farm_model.py` is a **different, earlier model** — one period, two crops, binary
+`archive/stage1-python/FEWS_Farm_model.py` is a **different, earlier model** — one period, two crops, binary
 investment decisions, a different yield curve. It is not the deterministic core of the paper's
 model and is kept as history.
 
@@ -198,5 +235,5 @@ BibTeX: `author = {Jones, Jr., Erick C.}` — the suffix is the middle field.
 
 ## Licence
 
-MIT for the code — see `LICENSE`. The committed data under `reference/`, `stage1-python/*.csv` and
-`figures/` is CC-BY 4.0; see `LICENSE-DATA`.
+MIT for the code — see `LICENSE`. The committed data under `reference/`, `data/raw/`,
+`results/clean/`, `artifacts/` and `figures/` is CC-BY 4.0; see `LICENSE-DATA`.

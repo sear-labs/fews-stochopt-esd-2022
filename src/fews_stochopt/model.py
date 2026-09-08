@@ -138,6 +138,21 @@ def _optimize(m: gp.Model, cfg: Config) -> int:
     )
 
 
+def _max_coefficient(m: gp.Model) -> float:
+    """The largest absolute constraint-matrix coefficient, floored at 1.
+
+    Gurobi reports this as a model attribute, so it costs nothing even at
+    704,002 variables. Floored at 1 so the scaling can only ever make a residual
+    look *worse*, never better -- a scale below 1 would flatter the solution,
+    which is the wrong direction for a check.
+    """
+    try:
+        biggest = float(m.MaxCoeff)
+    except (AttributeError, gp.GurobiError):
+        return 1.0
+    return max(1.0, biggest)
+
+
 def _repair(
     cfg: Config,
     rain: dict[tuple[int, int], float],
@@ -281,6 +296,13 @@ def _solve_block(
             )
 
     rung = _optimize(m, cfg)
+    # Archetype P: a status is not a feasibility guarantee. Read the residual and
+    # scale it by the largest constraint-matrix coefficient, because an absolute
+    # threshold is wrong for a model whose coefficients span 0.08 to 33,021.
+    # Recorded rather than gated on: `_repair` below removes the violation
+    # outright, which is stronger than accepting a scaled one. This number is
+    # what that repair is worth, before it runs.
+    scaled_violation = m.MaxVio / _max_coefficient(m)
     # A model that presolved to nothing would report OPTIMAL over an empty set.
     if m.NumVars == 0 or m.NumQConstrs == 0:
         raise RuntimeError(
@@ -309,7 +331,7 @@ def _solve_block(
         if fixed_first_stage is None
         else (float(awc), float(aec))
     )
-    return profits, detail, caps, rung, repaired
+    return profits, detail, caps, rung, repaired, scaled_violation
 
 
 def _assemble(
@@ -373,13 +395,15 @@ def solve_scenario(
     t0 = time.perf_counter()
     rungs: list[int] = []
     repaired = 0.0
+    worst_scaled_violation = 0.0
 
     if scenario == PERFECT_INFORMATION:
         # Every run invests knowing its own weather: one group per run.
         blocks = []
         for r in all_runs:
-            p, d, c, rung, fixed = _solve_block(cfg, rain, [r], env)
+            p, d, c, rung, fixed, vio = _solve_block(cfg, rain, [r], env)
             repaired += fixed
+            worst_scaled_violation = max(worst_scaled_violation, vio)
             blocks.append(([r], p, d, c))
             rungs.append(rung)
 
@@ -387,33 +411,36 @@ def solve_scenario(
         # One investment per climate, taken over that climate's runs.
         blocks = []
         for runs in blocks_runs:
-            p, d, c, rung, fixed = _solve_block(cfg, rain, runs, env)
+            p, d, c, rung, fixed, vio = _solve_block(cfg, rain, runs, env)
             repaired += fixed
+            worst_scaled_violation = max(worst_scaled_violation, vio)
             blocks.append((runs, p, d, c))
             rungs.append(rung)
 
     elif scenario == STOCHASTIC:
-        p, d, c, rung, repaired = _solve_block(cfg, rain, all_runs, env)
+        p, d, c, rung, repaired, vio = _solve_block(cfg, rain, all_runs, env)
         blocks = [(all_runs, p, d, c)]
         rungs.append(rung)
 
     elif scenario == EXPECTED_VALUE:
         # Stage one: invest against the single deterministic precipitation path.
         ev_rain = expected_value_rain(cfg, site)
-        _, _, caps, rung, repaired = _solve_block(
+        _, _, caps, rung, repaired, vio = _solve_block(
             cfg, {(0, y): v for y, v in ev_rain.items()}, [0], env
         )
         rungs.append(rung)
         # Stage two: live with that investment through every realised run.
-        p, d, _, rung, fixed = _solve_block(cfg, rain, all_runs, env, fixed_first_stage=caps)
+        p, d, _, rung, fixed, vio = _solve_block(cfg, rain, all_runs, env, fixed_first_stage=caps)
         repaired += fixed
+        worst_scaled_violation = max(worst_scaled_violation, vio)
         blocks = [(all_runs, p, d, caps)]
         rungs.append(rung)
 
     elif scenario == EXPECTED_VALUE_PUBLISHED_FIRST_STAGE:
         caps = published_first_stage(site)
-        p, d, _, rung, fixed = _solve_block(cfg, rain, all_runs, env, fixed_first_stage=caps)
+        p, d, _, rung, fixed, vio = _solve_block(cfg, rain, all_runs, env, fixed_first_stage=caps)
         repaired += fixed
+        worst_scaled_violation = max(worst_scaled_violation, vio)
         blocks = [(all_runs, p, d, caps)]
         rungs.append(rung)
 
@@ -433,6 +460,11 @@ def solve_scenario(
         "worst_rung": float(max(rungs)),
         # Total dollars clipped off by _repair. One-sided, so it is a bias.
         "repaired_dollars": float(repaired),
+        # Primal residual scaled by the largest matrix coefficient, BEFORE
+        # the repair. Archetype P asks for this; the repair then removes it.
+        "scaled_violation_before_repair": float(
+            max(worst_scaled_violation, vio)
+        ),
     }
     del env
     return result

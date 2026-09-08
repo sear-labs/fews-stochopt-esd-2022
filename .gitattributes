@@ -1,0 +1,15 @@
+# `archive/` is the code that produced the published result, preserved verbatim.
+# "Verbatim" has to mean bytes, so git must not convert its line endings: with
+# core.autocrlf=true a checkout rewrites LF to CRLF, which changes the raw-bytes
+# hash and would fail scripts/freeze_archive.py --check on every clean clone.
+# Found exactly that way.
+archive/** -text
+
+# The frozen instances and solutions are compared by value, not by bytes, but
+# they are build outputs and diffing them line by line is never useful.
+artifacts/*.lp   -text
+artifacts/*.sol  -text linguist-generated
+artifacts/*.json -text linguist-generated
+
+# The committed precipitation inputs are the input of record. Leave them alone.
+data/raw/*.csv -text

@@ -21,6 +21,7 @@ dependencies = [
     "pandas>=2.0,<4",
     "scipy>=1.10,<2",
     "PyYAML>=6.0,<7",
+    "matplotlib>=3.7,<4",
     "tomli>=2.0,<3; python_version < '3.11'",
 ]
 

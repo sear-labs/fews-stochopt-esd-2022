@@ -1,0 +1,3221 @@
+---
+title: "Farm Model (Py and More)"
+author: "Erick Jones"
+date: "2/17/2021"
+output:
+  html_document:
+    toc: true
+    toc_float:
+      collapsed: false
+---
+
+```{r global_options, include=FALSE}
+#DO NOT EDIT THIS CHUNK OR ANYTHING ABOVE IT!
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE, fig.align = "center", warning = F, message = F, tidy=T, tidy.opts=list(width.cutoff=50))
+```
+
+
+## Libraries
+
+```{r, echo = FALSE}
+library(tidyverse)
+library(reticulate)
+library(markovchain)
+library(diagram)
+library(gridExtra)
+library(grid)
+set.seed(12345)
+```
+
+
+## Full Transition Matrix as One Big Markov Chain
+
+```{r}
+tmA <- read.csv('~/Coding/Data/Farm_Model/trans_matrix.csv', header = TRUE)
+tma <- tmA %>% as.matrix()
+tmA
+```
+## Creating Markov Chains for each Climate
+
+```{r}
+
+stateNames = c('w1', 'w2', 'w3', 'w4', 'w5')
+
+c1m <- tma[1:5,1:5]
+c2m <- tma[6:10,6:10]
+c3m <- tma[11:15,11:15]
+c4m <- tma[16:20,16:20]
+
+row.names(c1m) <- stateNames;colnames(c1m) <- stateNames
+row.names(c2m) <- stateNames;colnames(c2m) <- stateNames
+row.names(c3m) <- stateNames;colnames(c3m) <- stateNames
+row.names(c4m) <- stateNames;colnames(c4m) <- stateNames
+
+plotmat(c1m, 
+        lwd = 1, box.lwd = 2, 
+        cex.txt = 0.8, 
+        box.size = 0.1, 
+        box.type = "circle", 
+        box.prop = 0.5,
+        box.col = "light blue",
+        arr.length=.1,
+        arr.width=.1,
+        self.cex = .6,
+        self.shifty = -.01,
+        self.shiftx = .1,
+        main = "Climate 1 Markov Chain")
+
+c1mc <- new("markovchain", transitionMatrix=c1m, states = c('w1', 'w2', 'w3', 'w4', 'w5'),
+             name="climate1")
+
+c2mc <- new("markovchain", transitionMatrix=c2m, states = c('w1', 'w2', 'w3', 'w4', 'w5'),
+             name="climate2")
+
+c3mc <- new("markovchain", transitionMatrix=c3m, states = c('w1', 'w2', 'w3', 'w4', 'w5'),
+             name="climate3")
+
+c4mc <- new("markovchain", transitionMatrix=c4m, states = c('w1', 'w2', 'w3', 'w4', 'w5'),
+             name="climate4")
+
+
+```
+
+## Setting the Probabilities for Each Climate
+
+```{r}
+
+probc1 <- 0.25
+probc2 <- 0.25
+probc3 <- 0.25
+probc4 <- 0.25
+
+
+start <- runif(1)
+
+if(start < probc1){climate <- 'c1'}
+if(start >= probc1 & start < probc1+probc2){climate <- 'c2'}
+if(start >= probc1+probc2 & start < probc1+probc2+probc3){climate <- 'c3'}
+if(start >= probc1+probc2+probc3){ climate <- 'c4'}
+
+print('Climate is equal to:')
+climate
+
+
+
+```
+
+
+## Code for Markov Chain Sequence
+
+
+
+```{r}
+climate_realizations <- c()
+precips <- c()
+iters <- 1000
+year_length <- 25
+
+for(i in 1:iters){
+  
+start <- runif(1)
+
+if(start < probc1){climate <- 'c1'}
+if(start >= probc1 & start < probc1+probc2){climate <- 'c2'}
+if(start >= probc1+probc2 & start < probc1+probc2+probc3){climate <- 'c3'}
+if(start >= probc1+probc2+probc3){ climate <- 'c4'}
+
+climate_realizations <- c(climate_realizations,climate)
+
+if(climate == 'c1'){
+  seq <- rmarkovchain(n = year_length,object = c1mc)
+}
+
+if(climate == 'c2'){
+  seq <- rmarkovchain(n = year_length,object = c2mc)
+}
+
+if(climate == 'c3'){
+  seq <- rmarkovchain(n = year_length,object = c3mc)
+}
+
+if(climate == 'c4'){
+  seq <- rmarkovchain(n = year_length,object = c4mc)
+}
+
+precips <- c(precips,seq)
+
+}
+```
+
+#Organizing and Summarizing Climate Realizations and Precipcatiation Information
+
+```{r}
+cm_in <- 2.54 # 2.54
+rainfall_days_perc <- 0.70 # Use 75%
+
+w1p <- 5 *cm_in * rainfall_days_perc
+w2p <- 15 *cm_in * rainfall_days_perc
+w3p <- 30 *cm_in * rainfall_days_perc
+w4p <- 45 *cm_in * rainfall_days_perc
+w5p <- 60 *cm_in * rainfall_days_perc
+
+precips <- gsub('w1',as.character(w1p),precips)
+precips <- gsub('w2',as.character(w2p),precips)
+precips <- gsub('w3',as.character(w3p),precips)
+precips <- gsub('w4',as.character(w4p),precips)
+precips <- gsub('w5',as.character(w5p),precips)
+
+
+climate_realizations <- as.factor(climate_realizations)
+summary(climate_realizations)
+precips <- as.numeric(precips)
+summary(precips)
+
+precips_df <- matrix(precips, ncol = year_length , byrow = T)
+precips_df <- cbind(as.matrix(climate_realizations),precips_df)
+precips_df <- precips_df %>% as_tibble() %>% arrange(V1)
+precips <- precips_df %>% select(-V1) %>% t %>% as.vector %>% as.numeric
+
+
+
+
+```
+## Repeating for Other Scenarios
+
+```{r}
+# Climate 1 Scenario
+
+
+precips_c1 <- c()
+
+for(i in 1:iters){
+  
+seq <- rmarkovchain(n = year_length,object = c1mc)
+
+
+precips_c1 <- c(precips_c1,seq)
+
+}
+
+# Climate 2 Scenario
+
+
+precips_c2 <- c()
+
+for(i in 1:iters){
+  
+seq <- rmarkovchain(n = year_length,object = c2mc)
+
+
+precips_c2 <- c(precips_c2,seq)
+
+}
+
+# Climate 3 Scenario
+
+
+precips_c3 <- c()
+
+for(i in 1:iters){
+  
+seq <- rmarkovchain(n = year_length,object = c3mc)
+
+
+precips_c3 <- c(precips_c3,seq)
+
+}
+
+# Climate 4 Scenario
+
+
+precips_c4 <- c()
+
+for(i in 1:iters){
+  
+seq <- rmarkovchain(n = year_length,object = c4mc)
+
+
+precips_c4 <- c(precips_c4,seq)
+
+}
+
+
+
+
+```
+
+```{r}
+#Converting Climate 1 to Numbers
+
+precips_c1 <- gsub('w1',as.character(w1p),precips_c1)
+precips_c1 <- gsub('w2',as.character(w2p),precips_c1)
+precips_c1 <- gsub('w3',as.character(w3p),precips_c1)
+precips_c1 <- gsub('w4',as.character(w4p),precips_c1)
+precips_c1 <- gsub('w5',as.character(w5p),precips_c1)
+
+
+precips_c1 <- as.numeric(precips_c1)
+summary(precips_c1)
+
+precips_c1_df <- matrix(precips_c1, ncol = year_length , byrow = T)
+precips_c1_df <- precips_c1_df %>% as_tibble()
+precips_c1 <- precips_c1_df %>% t %>% as.vector %>% as.numeric
+
+#Converting Climate 2 to Numbers
+
+precips_c2 <- gsub('w1',as.character(w1p),precips_c2)
+precips_c2 <- gsub('w2',as.character(w2p),precips_c2)
+precips_c2 <- gsub('w3',as.character(w3p),precips_c2)
+precips_c2 <- gsub('w4',as.character(w4p),precips_c2)
+precips_c2 <- gsub('w5',as.character(w5p),precips_c2)
+
+
+precips_c2 <- as.numeric(precips_c2)
+summary(precips_c2)
+
+precips_c2_df <- matrix(precips_c2, ncol = year_length , byrow = T)
+precips_c2_df <- precips_c2_df %>% as_tibble()
+precips_c2 <- precips_c2_df %>% t %>% as.vector %>% as.numeric
+
+#Converting Climate 3 to Numbers
+
+precips_c3 <- gsub('w1',as.character(w1p),precips_c3)
+precips_c3 <- gsub('w2',as.character(w2p),precips_c3)
+precips_c3 <- gsub('w3',as.character(w3p),precips_c3)
+precips_c3 <- gsub('w4',as.character(w4p),precips_c3)
+precips_c3 <- gsub('w5',as.character(w5p),precips_c3)
+
+
+precips_c3 <- as.numeric(precips_c3)
+summary(precips_c3)
+
+precips_c3_df <- matrix(precips_c3, ncol = year_length , byrow = T)
+precips_c3_df <- precips_c3_df %>% as_tibble()
+precips_c3 <- precips_c3_df %>% t %>% as.vector %>% as.numeric
+
+#Converting Climate 4 to Numbers
+
+precips_c4 <- gsub('w1',as.character(w1p),precips_c4)
+precips_c4 <- gsub('w2',as.character(w2p),precips_c4)
+precips_c4 <- gsub('w3',as.character(w3p),precips_c4)
+precips_c4 <- gsub('w4',as.character(w4p),precips_c4)
+precips_c4 <- gsub('w5',as.character(w5p),precips_c4)
+
+
+precips_c4 <- as.numeric(precips_c4)
+summary(precips_c4)
+
+precips_c4_df <- matrix(precips_c4, ncol = year_length , byrow = T)
+precips_c4_df <- precips_c4_df %>% as_tibble()
+precips_c4 <- precips_c4_df %>% t %>% as.vector %>% as.numeric
+
+
+precips_c0 <- c(precips_c1,precips_c2,precips_c3,precips_c4)
+
+```
+
+
+## Python Packages and Problem Formulation Source
+
+```{python}
+#from gurobipy import *
+import gurobipy as gp
+import random
+random.seed(a=100)
+import matplotlib.pyplot as plt
+from matplotlib import colors
+from matplotlib import gridspec
+from matplotlib.ticker import PercentFormatter
+import numpy as np
+
+
+# Problem Source: https://www.gurobi.com/resource/solving-simple-stochastic-optimization-problems-with-gurobi/
+# Matplotlib documentation: https://matplotlib.org/tutorials/introductory/pyplot.html
+# Pandas documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/10min.html
+```
+
+## Parameters and Conversions
+```{python}
+# Conversions
+
+cm2_ha = 100000000 # 100,000,000 cm2 = 1 ha
+
+cm3_gal = 3785.41 # 3785.41 cm2 = 1 Gal
+
+m3_kGal = 3.785411784
+
+gal_acre_ft = 325851 # 1 acre ft = 325851 gallons
+
+acre_ha = 2.47105 # 1 hectare = 2.47105 acres
+
+cm_ft = 30.48 # 1 ft = 30.48 cm
+
+cm_in = 2.54
+
+lb_tonne = 2204.62
+
+# Hours in a Month
+hrs_month = 720
+
+#Days in Month
+days_month = 30
+
+#Growing Season Months
+gs_months = 9
+
+# Parameters
+
+ha = 200 # hectares average size of texas farms 411 acres rounded up, https://www.texasagriculture.gov/About/TexasAgStats.aspx#:~:text=For%2036%25%20of%20producers%20in,by%2012%20acres%20from%202012.
+
+price = 200 # $/ metric ton #https://www.indexmundi.com/commodities/?commodity=wheat
+
+#note $ /acre ranges from $7-85 / acre assuming only a few cm of depth similiar price to irrigation water 
+
+
+#Water production cost $0.40 / kGal convert to $ / cm
+cost_alt_water = 0.40 / 1000 / cm3_gal * cm2_ha * ha
+
+
+# 6.25 kWh / kGal > / Gal > / acre-ft > acre-cm > / ha-cm > kwh/cm
+alt_water_elc = 6.25 / 1000 * gal_acre_ft / cm_ft * acre_ha * ha
+
+
+
+
+
+
+
+# Irrigation Water Cost https://news.berkeley.edu/berkeley_blog/the-cost-of-irrigation-water-and-urban-farming/
+#  Given in $ / cm from: $ 40 / acre-ft / gal_acre_ft / cm3_gal * cm2_ha * ha 
+
+#cost_irrigation_water = 40 / gal_acre_ft / cm3_gal * cm2_ha * ha  # $ / cm 
+
+
+# $7 / ac- in convert to $ / cm
+cost_irrigation_water =  7 / cm_in * acre_ha * ha
+
+
+# 1 kWh / kGal
+irrigation_water_elc = 1 / 1000 * gal_acre_ft / cm_ft * acre_ha * ha
+
+
+salt_conc = 2 # deciSiemens / meter = dS/m
+
+salt_conc_water = 1 # deciSiemens / meter = dS/m
+
+precip = 20 * cm_in # 20 inches of rain
+
+
+ #  1.5 acre-ft / acre / yr halved for season https://www.nass.usda.gov/Publications/Highlights/2019/2017Census_Irrigation_and_WaterManagement.pdf
+ 
+irrigation_water_limit = 0.5
+
+max_irrigation_water = irrigation_water_limit * cm_ft 
+
+# $ / kW of capacity
+cost_alt_elc = 1500
+
+
+
+cost_utility_elc = 0.08
+
+
+
+#Renewable Energy
+
+# Capacity Factor Solar https://pv-magazine-usa.com/2018/07/03/texas-getting-315-mw-of-solar-power/
+
+cf_solar = 0.30
+
+# Fu, R., Feldman, D., Margolis, R., 2018. U.S. Solar Photovoltaic System Cost Benchmark: Q1 2018. Tech. rep., National Renewable Energy Laboratory, Golden, CO.
+
+solar_dollar_kW = 1500
+
+# wInd Costs https://www.energy.gov/sites/prod/files/2019/08/f65/2018%20Wind%20Technologies%20Market%20Report%20FINAL.pdf
+
+wind_dollar_kW = 840
+```
+## The Effect of Water on Profit and Crop Growth
+
+```{python}
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+alt_water = 0
+irrigation_water = 0
+water = np.array(range(100))+20
+
+
+# From Dinar et. al 1991 "Production functions relating crop yield, water quality and quantity, soil salinity and drainage volume"
+
+y1 = (-3.350 + 0.2064*water - 0.0014*water*water + 
+               3.555 * salt_conc_water + 2.326 * salt_conc_water*salt_conc_water 
+               -2.031 * salt_conc + 0.823 * salt_conc*salt_conc
+               -0.071 * water * salt_conc_water + 0.033 * water * salt_conc 
+               -2.754 * salt_conc_water * salt_conc)
+
+p1 = (y1*price*10 +
+              -alt_water * (ha*cm2_ha/cm3_gal) * cost_alt_water +
+              -irrigation_water * (ha*cm2_ha/cm3_gal) * cost_irrigation_water )
+
+fig, ax = plt.subplots()
+
+ax.plot(water,p1, label = 'Profit', color = 'red') # profit is red line
+ax.set_title('Profit and Yield by Water Depth')
+ax.set_xlabel('Water Depth (cm)')
+ax.set_ylabel('Profit ($/10 ha)')
+ax.set_ylim([-100,7200])
+ax.grid(True)
+ax.legend(loc = 'lower right')
+
+ax2 = ax.twinx()
+ax2.plot(water,y1*lb_tonne, label = 'Yield') # yield is blue line
+ax2.set_ylabel('Yield (tonnes/ha)')
+ax.set_ylim([-100,8500])
+ax2.legend()
+plt.show()
+
+
+
+
+```
+
+
+
+```{python}
+
+runs = (r.iters)
+runs = int(runs)
+run = list(range(runs))
+run = [x+1 for x in run]
+run_c0 = list(range(runs*4))
+run_c0 = [x+1 for x in run_c0]
+years = (r.year_length)
+years =int(years)
+year = list(range(years))
+year = [x+1 for x in year]
+len(run)
+len(year)
+precips = r.precips
+precips_c0 = r.precips_c0
+precips_c1 = r.precips_c1
+precips_c2 = r.precips_c2
+precips_c3 = r.precips_c3
+precips_c4 = r.precips_c4
+
+
+indicies = [(r,y) for r in run for y in year]
+indicies_c0 = [(r,y) for r in run_c0 for y in year]
+#indicies
+
+rain = {}
+rain_c1 = {}
+rain_c2 = {}
+rain_c3 = {}
+rain_c4 = {}
+
+for i in range(len(indicies)):
+    rain_c1[indicies[i]] = precips_c1[i]
+    rain_c2[indicies[i]] = precips_c2[i]
+    rain_c3[indicies[i]] = precips_c3[i]
+    rain_c4[indicies[i]] = precips_c4[i]
+    
+for i in range(len(indicies_c0)):
+    rain[indicies_c0[i]] = precips_c0[i]    
+
+
+#precips
+#rain
+len(indicies)
+samples = len(run)
+samples_c0 = len(run_c0)
+
+xs = list(range(len(year)))
+xs = [x+1 for x in xs]
+xs
+
+```
+```{python}
+# To help get tight bounds on variables later on
+
+maxrev  = max(p1*10*ha)
+minrev  = 0
+
+#Water peaks profit and yield at 73
+
+max_irrigation_water
+precip
+min(precips)
+```
+
+# Run with equal probablity of wet, dry, dry-moderate, and moderate climates
+
+
+```{python, include = F}
+
+
+import gurobipy as gp
+
+m = gp.Model()
+
+#m.params.NonConvex = 2 # Says its non convex but it is (FIXED quadratic constraints can't be equality)
+
+# Set to maximize
+m.ModelSense = -1
+
+# Add variables
+
+#First Stage Decision Variables Strategic Investment Decisions, pick what climate you are in which automatically picks how much alternative water to invest in
+
+alt_water_cap = m.addVar(name = 'alt_water_cap', lb = 0) # cm of depth
+alt_elc_cap = m.addVar(name = 'alt_elc_cap', lb = 0) # kW of depth
+
+
+#Second Stage Decision Variables Operational Decisions, Pick how much water to use and how much irrigation water to buy
+
+# Change these variables to be a function of option, climate, and season
+water = m.addVars(run_c0, year, lb = 0, name = 'water') # water used for crop, cm of depth
+irrigation_water = m.addVars(run_c0, year, lb = 0, ub = max_irrigation_water, name = 'irrigation_water') # cm of depth
+alt_water = m.addVars(run_c0, year, lb = 0, name = 'alt_water') # alt_water used for crop, cm of depth
+alt_elc = m.addVars(run_c0, year, lb = 0, name = 'alt_elc') # alt_elc to power water, kWh
+utility_elc = m.addVars(run_c0, year, lb = 0, name = 'util_elc') # util_elc to power water, kWh
+elc = m.addVars(run_c0, year, lb = 0, name = 'elc') # total elc to power water, kWh
+
+#Functions of the Above, also functions of option, climate, and season, 
+crop_yield = m.addVars(run_c0, year, lb = 0, name = 'yield') # tonne/ha
+profit = m.addVars(run_c0, obj = 1/samples_c0, name = 'profit') # $
+
+
+
+#Maybe add a new profit variable that is the sum of the profit based on climate for easy coefficients
+
+
+
+# Objective
+
+
+m.addConstrs( (profit[r] == crop_yield.sum(r,'*') * ha * price +
+              -alt_water_cap * cost_alt_water  +
+              -irrigation_water.sum(r,'*') * cost_irrigation_water +
+              -alt_elc_cap * cost_alt_elc +
+              -utility_elc.sum(r,'*') * cost_utility_elc
+              for r in run_c0)
+            ,name = 'profit_constr')
+
+# Water Equations
+
+m.addConstrs( (alt_water[r,y] <= alt_water_cap
+               for r in run_c0 for y in year)
+             ,name = 'water_cap' )
+ 
+
+m.addConstrs( (rain[r,y] + alt_water[r,y] + irrigation_water[r,y] >= water[r,y]
+              for r in run_c0 for y in year)
+             ,name = 'water' )
+             
+             
+#Energy for Alt Water Equations    
+
+m.addConstrs( alt_water[r,y] * alt_water_elc + irrigation_water[r,y] * irrigation_water_elc <= elc[r,y]
+               for r in run_c0 for y in year)
+             ,name = 'elc_water' )
+
+# Energy Capacity and Balance Equations
+
+m.addConstrs( (alt_elc[r,y] <= alt_elc_cap * cf_solar * hrs_month * gs_months
+               for r in run_c0 for y in year)
+             ,name = 'elc_cap' )
+
+
+
+
+m.addConstrs( alt_elc[r,y] + utility_elc[r,y] >= elc[r,y]
+               for r in run_c0 for y in year)
+             ,name = 'elc_balance' )
+
+
+
+
+
+for r in run_c0:
+    for y in year :
+            m.addQConstr( (crop_yield[r,y] <= -3.350 + 0.2064*water[r,y]  - 0.0014*water[r,y]*water[r,y]  + 
+               3.555 * salt_conc_water + 2.326 * salt_conc_water*salt_conc_water +
+               -2.031 * salt_conc + 0.823 * salt_conc*salt_conc +
+               -0.071 * water[r,y]  * salt_conc_water + 0.033 * water[r,y]  * salt_conc +
+               -2.754 * salt_conc_water * salt_conc
+               )
+               , name = 'crop_yield' )
+
+
+m.update();
+
+
+
+```
+
+```{python}
+m.optimize()
+obj = m.getObjective()
+alt_water_c0 = alt_water_cap.X
+alt_elc_c0 = alt_elc_cap.X
+print(obj.getValue())
+alt_water_c0
+alt_elc_c0
+
+
+
+```
+
+```{python}
+
+
+import numpy as np
+
+ycy = np.array(0)
+yp = np.array(0)
+yiw = np.array(0)
+yaw = np.array(0)
+yw = np.array(0)
+yue = np.array(0)
+yae = np.array(0)
+ye = np.array(0)
+yrain = np.array(0)
+
+for i in year:
+    ycy = np.append(ycy,np.mean([crop_yield[r,i].X for r in run_c0]))
+    yp = np.append(yp,[profit[r].X for r in run_c0])
+    yiw = np.append(yiw,np.mean([irrigation_water[r,i].X for r in run_c0]))
+    yaw = np.append(yaw,np.mean([alt_water[r,i].X for r in run_c0]))
+    yw = np.append(yw,np.mean([water[r,i].X for r in run_c0]))
+    yrain = np.append(yrain,np.mean([rain[r,i] for r in run_c0]))
+    yue = np.append(yue,np.mean([utility_elc[r,i].X for r in run_c0]))
+    yae = np.append(yae,np.mean([alt_elc[r,i].X for r in run_c0]))
+    ye = np.append(ye,np.mean([elc[r,i].X for r in run_c0]))
+    
+ycy = ycy[1:(len(year)+1)]
+yp = yp[1:(len(year)+1)]
+yiw = yiw[1:(len(year)+1)]
+yaw = yaw[1:(len(year)+1)]
+yw = yw[1:(len(year)+1)]
+yrain = yrain[1:(len(year)+1)]
+yue = yue[1:(len(year)+1)]
+yae = yae[1:(len(year)+1)]
+ye = ye[1:(len(year)+1)]
+
+
+ycy
+yp
+yiw
+yaw
+yw
+yrain
+yue
+yae
+ye
+
+
+
+```
+
+
+```{python}
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax = plt.subplots()
+
+ax.plot(xs,ycy, label = 'Crop Yield in Pounds', color = 'green') # profit is red line
+ax.plot(xs,yp/1000000, label = 'Profit', color = 'red') # profit is red line
+ax.set_title('Profit and Yield by Preciptation')
+ax.set_xlabel('Possible Outcome')
+ax.set_ylabel('Profit (MM $) & Yield (tonne)')
+ax.set_ylim([0,5])
+ax.set_xlim([1,25])
+ax.grid(True)
+ax.legend(loc = 'lower left')
+
+ax2 = ax.twinx()
+ax2.plot(xs,yiw/cm_ft, label = 'Irrigation Water', color = 'yellow') # irrigation is blue line
+ax2.plot(xs,yw/cm_ft, label = 'Water', color = 'blue') # water is green line
+ax2.plot(xs,yue/100000, label = 'Utility Electricity', color = 'grey') # irrigation is blue line
+ax2.plot(xs,ye/100000, label = 'Electricity', color = 'purple') # water is green line
+ax2.plot(xs,yrain/cm_ft, label = 'Precip', color = 'orange') # water is green line
+ax2.set_ylabel('Water (ft depth) / Electricity (100 MWh)')
+ax2.set_ylim([0,5])
+ax2.legend(loc='lower right')
+
+
+plt.show()
+```
+
+
+```{python}
+
+import numpy as np
+
+rcy = np.array(0)
+rp = np.array(0)
+riw = np.array(0)
+rw = np.array(0)
+rrain = np.array(0)
+
+for r in run_c0:
+    rcy = np.append(rcy,np.mean([crop_yield[r,y].X for y in year]))
+    rp = np.append(rp,[profit[r].X])
+    riw = np.append(riw,np.mean([irrigation_water[r,y].X for y in year]))
+    rw = np.append(rw,np.mean([water[r,y].X for y in year]))
+    rrain = np.append(rrain,np.mean([rain[r,y] for y in year]))
+    
+rcy = rcy[1:(len(run_c0)+1)]
+rp = rp[1:(len(run_c0)+1)]
+riw = riw[1:(len(run_c0)+1)]
+rw = rw[1:(len(run_c0)+1)]
+rrain = rrain[1:(len(run_c0)+1)]
+
+xr = list(range(len(run_c0)))
+
+
+
+```
+
+```{python}
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax = plt.subplots()
+
+ax.plot(xr,rcy*lb_tonne, label = 'Crop Yield in Pounds', color = 'green') # profit is red line
+ax.plot(xr,rp, label = 'Profit_C1 ($)', color = 'red') # profit is red line
+ax.set_title('Profit and Yield by Preciptation')
+ax.set_xlabel('Possible Outcome')
+ax.set_ylabel('Profit ($) & Yield (lbs)')
+ax.set_ylim([0,8000])
+ax.set_xlim([1,1000])
+ax.grid(True)
+ax.legend(loc = 'lower left')
+
+ax2 = ax.twinx()
+ax2.plot(xr,riw, label = 'Irrigation Water', color = 'yellow') # irrigation is blue line
+ax2.plot(xr,rw, label = 'Water', color = 'blue') # water is green line
+ax2.plot(xr,rrain, label = 'Precip', color = 'orange') # water is green line
+ax2.set_ylabel('Water (cm)')
+ax2.set_ylim([0,100])
+ax2.legend(loc='lower right')
+
+
+plt.show()
+```
+
+## Climate 1 Problem and Solution
+
+```{python, include = F}
+
+
+import gurobipy as gp
+
+m = gp.Model()
+
+#m.params.NonConvex = 2 # Says its non convex but it is (FIXED quadratic constraints can't be equality)
+
+# Set to maximize
+m.ModelSense = -1
+
+# Add variables
+
+#First Stage Decision Variables Strategic Investment Decisions, pick what climate you are in which automatically picks how much alternative water to invest in
+
+alt_water_cap = m.addVar(name = 'alt_water_cap', lb = 0) # cm of depth
+alt_elc_cap = m.addVar(name = 'alt_elc_cap', lb = 0) # kW of depth
+
+
+#Second Stage Decision Variables Operational Decisions, Pick how much water to use and how much irrigation water to buy
+
+# Change these variables to be a function of option, climate, and season
+water = m.addVars(run, year, lb = 0, name = 'water') # water used for crop, cm of depth
+irrigation_water = m.addVars(run, year, lb = 0, ub = max_irrigation_water, name = 'irrigation_water') # cm of depth
+alt_water = m.addVars(run, year, lb = 0, name = 'alt_water') # alt_water used for crop, cm of depth
+alt_elc = m.addVars(run, year, lb = 0, name = 'alt_elc') # alt_elc to power water, kWh
+utility_elc = m.addVars(run, year, lb = 0, name = 'util_elc') # util_elc to power water, kWh
+elc = m.addVars(run, year, lb = 0, name = 'elc') # total elc to power water, kWh
+
+#Functions of the Above, also functions of option, climate, and season, 
+crop_yield = m.addVars(run, year, lb = 0, name = 'yield') # tonne/ha
+profit = m.addVars(run, obj = 1/samples, name = 'profit') # $
+
+
+
+#Maybe add a new profit variable that is the sum of the profit based on climate for easy coefficients
+
+
+
+# Objective
+
+
+m.addConstrs( (profit[r] == crop_yield.sum(r,'*') * ha * price +
+              -alt_water_cap * cost_alt_water  +
+              -irrigation_water.sum(r,'*') * cost_irrigation_water +
+              -alt_elc_cap * cost_alt_elc +
+              -utility_elc.sum(r,'*') * cost_utility_elc
+              for r in run)
+            ,name = 'profit_constr')
+
+# Water Equations
+
+m.addConstrs( (alt_water[r,y] <= alt_water_cap
+               for r in run for y in year)
+             ,name = 'water_cap' )
+ 
+
+m.addConstrs( (rain_c1[r,y] + alt_water[r,y] + irrigation_water[r,y] >= water[r,y]
+              for r in run for y in year)
+             ,name = 'water' )
+             
+             
+#Energy for Alt Water Equations    
+
+m.addConstrs( alt_water[r,y] * alt_water_elc + irrigation_water[r,y] * irrigation_water_elc <= elc[r,y]
+               for r in run for y in year)
+             ,name = 'elc_water' )
+
+# Energy Capacity and Balance Equations
+
+m.addConstrs( (alt_elc[r,y] <= alt_elc_cap * cf_solar * hrs_month * gs_months
+               for r in run for y in year)
+             ,name = 'elc_cap' )
+
+
+
+
+m.addConstrs( alt_elc[r,y] + utility_elc[r,y] >= elc[r,y]
+               for r in run for y in year)
+             ,name = 'elc_balance' )
+
+
+
+
+
+for r in run:
+    for y in year :
+            m.addQConstr( (crop_yield[r,y] <= -3.350 + 0.2064*water[r,y]  - 0.0014*water[r,y]*water[r,y]  + 
+               3.555 * salt_conc_water + 2.326 * salt_conc_water*salt_conc_water +
+               -2.031 * salt_conc + 0.823 * salt_conc*salt_conc +
+               -0.071 * water[r,y]  * salt_conc_water + 0.033 * water[r,y]  * salt_conc +
+               -2.754 * salt_conc_water * salt_conc
+               )
+               , name = 'crop_yield' )
+
+
+m.update();
+
+
+
+```
+
+```{python}
+m.optimize()
+obj = m.getObjective()
+alt_water_c1 = alt_water_cap.X
+alt_elc_c1 = alt_elc_cap.X
+print(obj.getValue())
+alt_water_c1
+alt_elc_c1
+
+
+
+```
+
+```{python}
+
+
+import numpy as np
+
+ycyc1 = np.array(0)
+ypc1 = np.array(0)
+yiwc1 = np.array(0)
+yawc1 = np.array(0)
+ywc1 = np.array(0)
+yuec1 = np.array(0)
+yaec1 = np.array(0)
+yec1 = np.array(0)
+yrainc1 = np.array(0)
+
+for i in year:
+    ycyc1 = np.append(ycyc1,np.mean([crop_yield[r,i].X for r in run]))
+    ypc1 = np.append(ypc1,[profit[r].X for r in run])
+    yiwc1 = np.append(yiwc1,np.mean([irrigation_water[r,i].X for r in run]))
+    yawc1 = np.append(yawc1,np.mean([alt_water[r,i].X for r in run]))
+    ywc1 = np.append(ywc1,np.mean([water[r,i].X for r in run]))
+    yrainc1 = np.append(yrainc1,np.mean([rain_c1[r,i] for r in run]))
+    yuec1 = np.append(yuec1,np.mean([utility_elc[r,i].X for r in run]))
+    yaec1 = np.append(yaec1,np.mean([alt_elc[r,i].X for r in run]))
+    yec1 = np.append(yec1,np.mean([elc[r,i].X for r in run]))
+    
+ycyc1 = ycyc1[1:(len(year)+1)]
+ypc1 = ypc1[1:(len(year)+1)]
+yiwc1 = yiwc1[1:(len(year)+1)]
+yawc1 = yawc1[1:(len(year)+1)]
+ywc1 = ywc1[1:(len(year)+1)]
+yrainc1 = yrainc1[1:(len(year)+1)]
+yuec1 = yuec1[1:(len(year)+1)]
+yaec1 = yaec1[1:(len(year)+1)]
+yec1 = yec1[1:(len(year)+1)]
+
+
+ycyc1
+ypc1
+yiwc1
+yawc1
+ywc1
+yrainc1
+yuec1
+yaec1
+yec1
+
+
+
+```
+
+
+```{python}
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax = plt.subplots()
+
+ax.plot(xs,ycyc1, label = 'Crop Yield in Pounds', color = 'green') # profit is red line
+ax.plot(xs,ypc1/1000000, label = 'Profit', color = 'red') # profit is red line
+ax.set_title('Profit and Yield by Preciptation')
+ax.set_xlabel('Possible Outcome')
+ax.set_ylabel('Profit (MM $) & Yield (tonne)')
+ax.set_ylim([0,5])
+ax.set_xlim([1,25])
+ax.grid(True)
+ax.legend(loc = 'lower left')
+
+ax2 = ax.twinx()
+ax2.plot(xs,yiwc1/cm_ft, label = 'Irrigation Water', color = 'yellow') # irrigation is blue line
+ax2.plot(xs,ywc1/cm_ft, label = 'Water', color = 'blue') # water is green line
+ax2.plot(xs,yuec1/100000, label = 'Utility Electricity', color = 'grey') # irrigation is blue line
+ax2.plot(xs,yec1/100000, label = 'Electricity', color = 'purple') # water is green line
+ax2.plot(xs,yrainc1/cm_ft, label = 'Precip', color = 'orange') # water is green line
+ax2.set_ylabel('Water (ft depth) / Electricity (100 MWh)')
+ax2.set_ylim([0,5])
+ax2.legend(loc='lower right')
+
+
+plt.show()
+```
+
+
+
+
+## Climate 2 Problem and Solution
+
+```{python, include = F}
+
+
+import gurobipy as gp
+
+m = gp.Model()
+
+#m.params.NonConvex = 2 # Says its non convex but it is (FIXED quadratic constraints can't be equality)
+
+# Set to maximize
+m.ModelSense = -1
+
+# Add variables
+
+#First Stage Decision Variables Strategic Investment Decisions, pick what climate you are in which automatically picks how much alternative water to invest in
+
+alt_water_cap = m.addVar(name = 'alt_water_cap', lb = 0) # cm of depth
+alt_elc_cap = m.addVar(name = 'alt_elc_cap', lb = 0) # kW of depth
+
+
+#Second Stage Decision Variables Operational Decisions, Pick how much water to use and how much irrigation water to buy
+
+# Change these variables to be a function of option, climate, and season
+water = m.addVars(run, year, lb = 0, name = 'water') # water used for crop, cm of depth
+irrigation_water = m.addVars(run, year, lb = 0, ub = max_irrigation_water, name = 'irrigation_water') # cm of depth
+alt_water = m.addVars(run, year, lb = 0, name = 'alt_water') # alt_water used for crop, cm of depth
+alt_elc = m.addVars(run, year, lb = 0, name = 'alt_elc') # alt_elc to power water, kWh
+utility_elc = m.addVars(run, year, lb = 0, name = 'util_elc') # util_elc to power water, kWh
+elc = m.addVars(run, year, lb = 0, name = 'elc') # total elc to power water, kWh
+
+#Functions of the Above, also functions of option, climate, and season, 
+crop_yield = m.addVars(run, year, lb = 0, name = 'yield') # tonne/ha
+profit = m.addVars(run, obj = 1/samples, name = 'profit') # $
+
+
+
+#Maybe add a new profit variable that is the sum of the profit based on climate for easy coefficients
+
+
+
+# Objective
+
+
+m.addConstrs( (profit[r] == crop_yield.sum(r,'*') * ha * price +
+              -alt_water_cap * cost_alt_water  +
+              -irrigation_water.sum(r,'*') * cost_irrigation_water +
+              -alt_elc_cap * cost_alt_elc +
+              -utility_elc.sum(r,'*') * cost_utility_elc
+              for r in run)
+            ,name = 'profit_constr')
+
+# Water Equations
+
+m.addConstrs( (alt_water[r,y] <= alt_water_cap
+               for r in run for y in year)
+             ,name = 'water_cap' )
+ 
+
+m.addConstrs( (rain_c2[r,y] + alt_water[r,y] + irrigation_water[r,y] >= water[r,y]
+              for r in run for y in year)
+             ,name = 'water' )
+             
+             
+#Energy for Alt Water Equations    
+
+m.addConstrs( alt_water[r,y] * alt_water_elc + irrigation_water[r,y] * irrigation_water_elc <= elc[r,y]
+               for r in run for y in year)
+             ,name = 'elc_water' )
+
+# Energy Capacity and Balance Equations
+
+m.addConstrs( (alt_elc[r,y] <= alt_elc_cap * cf_solar * hrs_month * gs_months
+               for r in run for y in year)
+             ,name = 'elc_cap' )
+
+
+
+
+m.addConstrs( alt_elc[r,y] + utility_elc[r,y] >= elc[r,y]
+               for r in run for y in year)
+             ,name = 'elc_balance' )
+
+
+
+
+
+for r in run:
+    for y in year :
+            m.addQConstr( (crop_yield[r,y] <= -3.350 + 0.2064*water[r,y]  - 0.0014*water[r,y]*water[r,y]  + 
+               3.555 * salt_conc_water + 2.326 * salt_conc_water*salt_conc_water +
+               -2.031 * salt_conc + 0.823 * salt_conc*salt_conc +
+               -0.071 * water[r,y]  * salt_conc_water + 0.033 * water[r,y]  * salt_conc +
+               -2.754 * salt_conc_water * salt_conc
+               )
+               , name = 'crop_yield' )
+
+
+m.update();
+
+
+
+```
+
+```{python}
+m.optimize()
+obj = m.getObjective()
+alt_water_c2 = alt_water_cap.X
+alt_elc_c2 = alt_elc_cap.X
+print(obj.getValue())
+alt_water_c2
+alt_elc_c2
+
+
+
+```
+
+```{python}
+
+
+import numpy as np
+
+ycyc2 = np.array(0)
+ypc2 = np.array(0)
+yiwc2 = np.array(0)
+yawc2 = np.array(0)
+ywc2 = np.array(0)
+yuec2 = np.array(0)
+yaec2 = np.array(0)
+yec2 = np.array(0)
+yrainc2 = np.array(0)
+
+for i in year:
+    ycyc2 = np.append(ycyc2,np.mean([crop_yield[r,i].X for r in run]))
+    ypc2 = np.append(ypc2,[profit[r].X for r in run])
+    yiwc2 = np.append(yiwc2,np.mean([irrigation_water[r,i].X for r in run]))
+    yawc2 = np.append(yawc2,np.mean([alt_water[r,i].X for r in run]))
+    ywc2 = np.append(ywc2,np.mean([water[r,i].X for r in run]))
+    yrainc2 = np.append(yrainc2,np.mean([rain_c2[r,i] for r in run]))
+    yuec2 = np.append(yuec2,np.mean([utility_elc[r,i].X for r in run]))
+    yaec2 = np.append(yaec2,np.mean([alt_elc[r,i].X for r in run]))
+    yec2 = np.append(yec2,np.mean([elc[r,i].X for r in run]))
+    
+ycyc2 = ycyc2[1:(len(year)+1)]
+ypc2 = ypc2[1:(len(year)+1)]
+yiwc2 = yiwc2[1:(len(year)+1)]
+yawc2 = yawc2[1:(len(year)+1)]
+ywc2 = ywc2[1:(len(year)+1)]
+yrainc2 = yrainc2[1:(len(year)+1)]
+yuec2 = yuec2[1:(len(year)+1)]
+yaec2 = yaec2[1:(len(year)+1)]
+yec2 = yec2[1:(len(year)+1)]
+
+
+ycyc2
+ypc2
+yiwc2
+yawc2
+ywc2
+yrainc2
+yuec2
+yaec2
+yec2
+
+
+
+```
+
+
+```{python}
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax = plt.subplots()
+
+ax.plot(xs,ycyc2, label = 'Crop Yield in Pounds', color = 'green') # profit is red line
+ax.plot(xs,ypc2/1000000, label = 'Profit', color = 'red') # profit is red line
+ax.set_title('Profit and Yield by Preciptation')
+ax.set_xlabel('Possible Outcome')
+ax.set_ylabel('Profit (MM $) & Yield (tonne)')
+ax.set_ylim([0,5])
+ax.set_xlim([1,25])
+ax.grid(True)
+ax.legend(loc = 'lower left')
+
+ax2 = ax.twinx()
+ax2.plot(xs,yiwc2/cm_ft, label = 'Irrigation Water', color = 'yellow') # irrigation is blue line
+ax2.plot(xs,ywc2/cm_ft, label = 'Water', color = 'blue') # water is green line
+ax2.plot(xs,yuec2/100000, label = 'Utility Electricity', color = 'grey') # irrigation is blue line
+ax2.plot(xs,yec2/100000, label = 'Electricity', color = 'purple') # water is green line
+ax2.plot(xs,yrainc2/cm_ft, label = 'Precip', color = 'orange') # water is green line
+ax2.set_ylabel('Water (ft depth) / Electricity (100 MWh)')
+ax2.set_ylim([0,5])
+ax2.legend(loc='lower right')
+
+
+plt.show()
+```
+
+## Climate 3 Problem and Solution
+
+```{python, include = F}
+
+
+import gurobipy as gp
+
+m = gp.Model()
+
+#m.params.NonConvex = 2 # Says its non convex but it is (FIXED quadratic constraints can't be equality)
+
+# Set to maximize
+m.ModelSense = -1
+
+# Add variables
+
+#First Stage Decision Variables Strategic Investment Decisions, pick what climate you are in which automatically picks how much alternative water to invest in
+
+alt_water_cap = m.addVar(name = 'alt_water_cap', lb = 0) # cm of depth
+alt_elc_cap = m.addVar(name = 'alt_elc_cap', lb = 0) # kW of depth
+
+
+#Second Stage Decision Variables Operational Decisions, Pick how much water to use and how much irrigation water to buy
+
+# Change these variables to be a function of option, climate, and season
+water = m.addVars(run, year, lb = 0, name = 'water') # water used for crop, cm of depth
+irrigation_water = m.addVars(run, year, lb = 0, ub = max_irrigation_water, name = 'irrigation_water') # cm of depth
+alt_water = m.addVars(run, year, lb = 0, name = 'alt_water') # alt_water used for crop, cm of depth
+alt_elc = m.addVars(run, year, lb = 0, name = 'alt_elc') # alt_elc to power water, kWh
+utility_elc = m.addVars(run, year, lb = 0, name = 'util_elc') # util_elc to power water, kWh
+elc = m.addVars(run, year, lb = 0, name = 'elc') # total elc to power water, kWh
+
+#Functions of the Above, also functions of option, climate, and season, 
+crop_yield = m.addVars(run, year, lb = 0, name = 'yield') # tonne/ha
+profit = m.addVars(run, obj = 1/samples, name = 'profit') # $
+
+
+
+#Maybe add a new profit variable that is the sum of the profit based on climate for easy coefficients
+
+
+
+# Objective
+
+
+m.addConstrs( (profit[r] == crop_yield.sum(r,'*') * ha * price +
+              -alt_water_cap * cost_alt_water  +
+              -irrigation_water.sum(r,'*') * cost_irrigation_water +
+              -alt_elc_cap * cost_alt_elc +
+              -utility_elc.sum(r,'*') * cost_utility_elc
+              for r in run)
+            ,name = 'profit_constr')
+
+# Water Equations
+
+m.addConstrs( (alt_water[r,y] <= alt_water_cap
+               for r in run for y in year)
+             ,name = 'water_cap' )
+ 
+
+m.addConstrs( (rain_c3[r,y] + alt_water[r,y] + irrigation_water[r,y] >= water[r,y]
+              for r in run for y in year)
+             ,name = 'water' )
+             
+             
+#Energy for Alt Water Equations    
+
+m.addConstrs( alt_water[r,y] * alt_water_elc + irrigation_water[r,y] * irrigation_water_elc <= elc[r,y]
+               for r in run for y in year)
+             ,name = 'elc_water' )
+
+# Energy Capacity and Balance Equations
+
+m.addConstrs( (alt_elc[r,y] <= alt_elc_cap * cf_solar * hrs_month * gs_months
+               for r in run for y in year)
+             ,name = 'elc_cap' )
+
+
+
+
+m.addConstrs( alt_elc[r,y] + utility_elc[r,y] >= elc[r,y]
+               for r in run for y in year)
+             ,name = 'elc_balance' )
+
+
+
+
+
+for r in run:
+    for y in year :
+            m.addQConstr( (crop_yield[r,y] <= -3.350 + 0.2064*water[r,y]  - 0.0014*water[r,y]*water[r,y]  + 
+               3.555 * salt_conc_water + 2.326 * salt_conc_water*salt_conc_water +
+               -2.031 * salt_conc + 0.823 * salt_conc*salt_conc +
+               -0.071 * water[r,y]  * salt_conc_water + 0.033 * water[r,y]  * salt_conc +
+               -2.754 * salt_conc_water * salt_conc
+               )
+               , name = 'crop_yield' )
+
+
+m.update();
+
+
+
+```
+
+```{python}
+m.optimize()
+obj = m.getObjective()
+alt_water_c3 = alt_water_cap.X
+alt_elc_c3 = alt_elc_cap.X
+print(obj.getValue())
+alt_water_c3
+alt_elc_c3
+
+
+
+```
+
+```{python}
+
+
+import numpy as np
+
+ycyc3 = np.array(0)
+ypc3 = np.array(0)
+yiwc3 = np.array(0)
+yawc3 = np.array(0)
+ywc3 = np.array(0)
+yuec3 = np.array(0)
+yaec3 = np.array(0)
+yec3 = np.array(0)
+yrainc3 = np.array(0)
+
+for i in year:
+    ycyc3 = np.append(ycyc3,np.mean([crop_yield[r,i].X for r in run]))
+    ypc3 = np.append(ypc3,[profit[r].X for r in run])
+    yiwc3 = np.append(yiwc3,np.mean([irrigation_water[r,i].X for r in run]))
+    yawc3 = np.append(yawc3,np.mean([alt_water[r,i].X for r in run]))
+    ywc3 = np.append(ywc3,np.mean([water[r,i].X for r in run]))
+    yrainc3 = np.append(yrainc3,np.mean([rain_c3[r,i] for r in run]))
+    yuec3 = np.append(yuec3,np.mean([utility_elc[r,i].X for r in run]))
+    yaec3 = np.append(yaec3,np.mean([alt_elc[r,i].X for r in run]))
+    yec3 = np.append(yec3,np.mean([elc[r,i].X for r in run]))
+    
+ycyc3 = ycyc3[1:(len(year)+1)]
+ypc3 = ypc3[1:(len(year)+1)]
+yiwc3 = yiwc3[1:(len(year)+1)]
+yawc3 = yawc3[1:(len(year)+1)]
+ywc3 = ywc3[1:(len(year)+1)]
+yrainc3 = yrainc3[1:(len(year)+1)]
+yuec3 = yuec3[1:(len(year)+1)]
+yaec3 = yaec3[1:(len(year)+1)]
+yec3 = yec3[1:(len(year)+1)]
+
+
+ycyc3
+ypc3
+yiwc3
+yawc3
+ywc3
+yrainc3
+yuec3
+yaec3
+yec3
+
+
+
+```
+
+
+```{python}
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax = plt.subplots()
+
+ax.plot(xs,ycyc3, label = 'Crop Yield in Pounds', color = 'green') # profit is red line
+ax.plot(xs,ypc3/1000000, label = 'Profit', color = 'red') # profit is red line
+ax.set_title('Profit and Yield by Preciptation')
+ax.set_xlabel('Possible Outcome')
+ax.set_ylabel('Profit (MM $) & Yield (tonne)')
+ax.set_ylim([0,5])
+ax.set_xlim([1,25])
+ax.grid(True)
+ax.legend(loc = 'lower left')
+
+ax2 = ax.twinx()
+ax2.plot(xs,yiwc3/cm_ft, label = 'Irrigation Water', color = 'yellow') # irrigation is blue line
+ax2.plot(xs,ywc3/cm_ft, label = 'Water', color = 'blue') # water is green line
+ax2.plot(xs,yuec3/100000, label = 'Utility Electricity', color = 'grey') # irrigation is blue line
+ax2.plot(xs,yec3/100000, label = 'Electricity', color = 'purple') # water is green line
+ax2.plot(xs,yrainc3/cm_ft, label = 'Precip', color = 'orange') # water is green line
+ax2.set_ylabel('Water (ft depth) / Electricity (100 MWh)')
+ax2.set_ylim([0,5])
+ax2.legend(loc='lower right')
+
+
+plt.show()
+```
+
+## Climate 4 Problem and Solution
+
+```{python, include = F}
+
+
+import gurobipy as gp
+
+m = gp.Model()
+
+#m.params.NonConvex = 2 # Says its non convex but it is (FIXED quadratic constraints can't be equality)
+
+# Set to maximize
+m.ModelSense = -1
+
+# Add variables
+
+#First Stage Decision Variables Strategic Investment Decisions, pick what climate you are in which automatically picks how much alternative water to invest in
+
+alt_water_cap = m.addVar(name = 'alt_water_cap', lb = 0) # cm of depth
+alt_elc_cap = m.addVar(name = 'alt_elc_cap', lb = 0) # kW of depth
+
+
+#Second Stage Decision Variables Operational Decisions, Pick how much water to use and how much irrigation water to buy
+
+# Change these variables to be a function of option, climate, and season
+water = m.addVars(run, year, lb = 0, name = 'water') # water used for crop, cm of depth
+irrigation_water = m.addVars(run, year, lb = 0, ub = max_irrigation_water, name = 'irrigation_water') # cm of depth
+alt_water = m.addVars(run, year, lb = 0, name = 'alt_water') # alt_water used for crop, cm of depth
+alt_elc = m.addVars(run, year, lb = 0, name = 'alt_elc') # alt_elc to power water, kWh
+utility_elc = m.addVars(run, year, lb = 0, name = 'util_elc') # util_elc to power water, kWh
+elc = m.addVars(run, year, lb = 0, name = 'elc') # total elc to power water, kWh
+
+#Functions of the Above, also functions of option, climate, and season, 
+crop_yield = m.addVars(run, year, lb = 0, name = 'yield') # tonne/ha
+profit = m.addVars(run, obj = 1/samples, name = 'profit') # $
+
+
+
+#Maybe add a new profit variable that is the sum of the profit based on climate for easy coefficients
+
+
+
+# Objective
+
+
+m.addConstrs( (profit[r] == crop_yield.sum(r,'*') * ha * price +
+              -alt_water_cap * cost_alt_water  +
+              -irrigation_water.sum(r,'*') * cost_irrigation_water +
+              -alt_elc_cap * cost_alt_elc +
+              -utility_elc.sum(r,'*') * cost_utility_elc
+              for r in run)
+            ,name = 'profit_constr')
+
+# Water Equations
+
+m.addConstrs( (alt_water[r,y] <= alt_water_cap
+               for r in run for y in year)
+             ,name = 'water_cap' )
+ 
+
+m.addConstrs( (rain_c4[r,y] + alt_water[r,y] + irrigation_water[r,y] >= water[r,y]
+              for r in run for y in year)
+             ,name = 'water' )
+             
+             
+#Energy for Alt Water Equations    
+
+m.addConstrs( alt_water[r,y] * alt_water_elc + irrigation_water[r,y] * irrigation_water_elc <= elc[r,y]
+               for r in run for y in year)
+             ,name = 'elc_water' )
+
+# Energy Capacity and Balance Equations
+
+m.addConstrs( (alt_elc[r,y] <= alt_elc_cap * cf_solar * hrs_month * gs_months
+               for r in run for y in year)
+             ,name = 'elc_cap' )
+
+
+
+
+m.addConstrs( alt_elc[r,y] + utility_elc[r,y] >= elc[r,y]
+               for r in run for y in year)
+             ,name = 'elc_balance' )
+
+
+
+
+
+for r in run:
+    for y in year :
+            m.addQConstr( (crop_yield[r,y] <= -3.350 + 0.2064*water[r,y]  - 0.0014*water[r,y]*water[r,y]  + 
+               3.555 * salt_conc_water + 2.326 * salt_conc_water*salt_conc_water +
+               -2.031 * salt_conc + 0.823 * salt_conc*salt_conc +
+               -0.071 * water[r,y]  * salt_conc_water + 0.033 * water[r,y]  * salt_conc +
+               -2.754 * salt_conc_water * salt_conc
+               )
+               , name = 'crop_yield' )
+
+
+m.update();
+
+
+
+```
+
+```{python}
+m.optimize()
+obj = m.getObjective()
+alt_water_c4 = alt_water_cap.X
+alt_elc_c4 = alt_elc_cap.X
+print(obj.getValue())
+alt_water_c4
+alt_elc_c4
+
+
+
+```
+
+```{python}
+
+
+import numpy as np
+
+ycyc4 = np.array(0)
+ypc4 = np.array(0)
+yiwc4 = np.array(0)
+yawc4 = np.array(0)
+ywc4 = np.array(0)
+yuec4 = np.array(0)
+yaec4 = np.array(0)
+yec4 = np.array(0)
+yrainc4 = np.array(0)
+
+for i in year:
+    ycyc4 = np.append(ycyc4,np.mean([crop_yield[r,i].X for r in run]))
+    ypc4 = np.append(ypc4,[profit[r].X for r in run])
+    yiwc4 = np.append(yiwc4,np.mean([irrigation_water[r,i].X for r in run]))
+    yawc4 = np.append(yawc4,np.mean([alt_water[r,i].X for r in run]))
+    ywc4 = np.append(ywc4,np.mean([water[r,i].X for r in run]))
+    yrainc4 = np.append(yrainc4,np.mean([rain_c4[r,i] for r in run]))
+    yuec4 = np.append(yuec4,np.mean([utility_elc[r,i].X for r in run]))
+    yaec4 = np.append(yaec4,np.mean([alt_elc[r,i].X for r in run]))
+    yec4 = np.append(yec4,np.mean([elc[r,i].X for r in run]))
+    
+ycyc4 = ycyc4[1:(len(year)+1)]
+ypc4 = ypc4[1:(len(year)+1)]
+yiwc4 = yiwc4[1:(len(year)+1)]
+yawc4 = yawc4[1:(len(year)+1)]
+ywc4 = ywc4[1:(len(year)+1)]
+yrainc4 = yrainc4[1:(len(year)+1)]
+yuec4 = yuec4[1:(len(year)+1)]
+yaec4 = yaec4[1:(len(year)+1)]
+yec4 = yec4[1:(len(year)+1)]
+
+
+ycyc4
+ypc4
+yiwc4
+yawc4
+ywc4
+yrainc4
+yuec4
+yaec4
+yec4
+
+
+
+```
+
+
+```{python}
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax = plt.subplots()
+
+ax.plot(xs,ycyc4, label = 'Crop Yield in Pounds', color = 'green') # profit is red line
+ax.plot(xs,ypc4/1000000, label = 'Profit', color = 'red') # profit is red line
+ax.set_title('Profit and Yield by Preciptation')
+ax.set_xlabel('Possible Outcome')
+ax.set_ylabel('Profit (MM $) & Yield (tonne)')
+ax.set_ylim([0,5])
+ax.set_xlim([1,25])
+ax.grid(True)
+ax.legend(loc = 'lower left')
+
+ax2 = ax.twinx()
+ax2.plot(xs,yiwc4/cm_ft, label = 'Irrigation Water', color = 'yellow') # irrigation is blue line
+ax2.plot(xs,ywc4/cm_ft, label = 'Water', color = 'blue') # water is green line
+ax2.plot(xs,yuec4/100000, label = 'Utility Electricity', color = 'grey') # irrigation is blue line
+ax2.plot(xs,yec4/100000, label = 'Electricity', color = 'purple') # water is green line
+ax2.plot(xs,yrainc4/cm_ft, label = 'Precip', color = 'orange') # water is green line
+ax2.set_ylabel('Water (ft depth) / Electricity (100 MWh)')
+ax2.set_ylim([0,5])
+ax2.legend(loc='lower right')
+
+
+plt.show()
+```
+
+
+
+
+
+## C0 realized in Climate 1 Problem and Solution
+
+```{python, include = F}
+
+
+import gurobipy as gp
+
+m = gp.Model()
+
+#m.params.NonConvex = 2 # Says its non convex but it is (FIXED quadratic constraints can't be equality)
+
+# Set to maximize
+m.ModelSense = -1
+
+# Add variables
+
+#First Stage Decision Variables Strategic Investment Decisions, pick what climate you are in which automatically picks how much alternative water to invest in
+
+alt_water_cap = alt_water_c0
+alt_elc_cap = alt_elc_c0
+#alt_water_cap = m.addVar(name = 'alt_water_cap', lb = 0) # cm of depth
+#alt_elc_cap = m.addVar(name = 'alt_elc_cap', lb = 0) # kW of depth
+
+
+#Second Stage Decision Variables Operational Decisions, Pick how much water to use and how much irrigation water to buy
+
+# Change these variables to be a function of option, climate, and season
+water = m.addVars(run, year, lb = 0, name = 'water') # water used for crop, cm of depth
+irrigation_water = m.addVars(run, year, lb = 0, ub = max_irrigation_water, name = 'irrigation_water') # cm of depth
+alt_water = m.addVars(run, year, lb = 0, name = 'alt_water') # alt_water used for crop, cm of depth
+alt_elc = m.addVars(run, year, lb = 0, name = 'alt_elc') # alt_elc to power water, kWh
+utility_elc = m.addVars(run, year, lb = 0, name = 'util_elc') # util_elc to power water, kWh
+elc = m.addVars(run, year, lb = 0, name = 'elc') # total elc to power water, kWh
+
+#Functions of the Above, also functions of option, climate, and season, 
+crop_yield = m.addVars(run, year, lb = 0, name = 'yield') # tonne/ha
+profit = m.addVars(run, obj = 1/samples, name = 'profit') # $
+
+
+
+#Maybe add a new profit variable that is the sum of the profit based on climate for easy coefficients
+
+
+
+# Objective
+
+
+m.addConstrs( (profit[r] == crop_yield.sum(r,'*') * ha * price +
+              -alt_water_cap * cost_alt_water  +
+              -irrigation_water.sum(r,'*') * cost_irrigation_water +
+              -alt_elc_cap * cost_alt_elc +
+              -utility_elc.sum(r,'*') * cost_utility_elc
+              for r in run)
+            ,name = 'profit_constr')
+
+# Water Equations
+
+m.addConstrs( (alt_water[r,y] <= alt_water_cap
+               for r in run for y in year)
+             ,name = 'water_cap' )
+ 
+
+m.addConstrs( (rain_c1[r,y] + alt_water[r,y] + irrigation_water[r,y] >= water[r,y]
+              for r in run for y in year)
+             ,name = 'water' )
+             
+             
+#Energy for Alt Water Equations    
+
+m.addConstrs( alt_water[r,y] * alt_water_elc + irrigation_water[r,y] * irrigation_water_elc <= elc[r,y]
+               for r in run for y in year)
+             ,name = 'elc_water' )
+
+# Energy Capacity and Balance Equations
+
+m.addConstrs( (alt_elc[r,y] <= alt_elc_cap * cf_solar * hrs_month * gs_months
+               for r in run for y in year)
+             ,name = 'elc_cap' )
+
+
+
+
+m.addConstrs( alt_elc[r,y] + utility_elc[r,y] >= elc[r,y]
+               for r in run for y in year)
+             ,name = 'elc_balance' )
+
+
+
+
+
+for r in run:
+    for y in year :
+            m.addQConstr( (crop_yield[r,y] <= -3.350 + 0.2064*water[r,y]  - 0.0014*water[r,y]*water[r,y]  + 
+               3.555 * salt_conc_water + 2.326 * salt_conc_water*salt_conc_water +
+               -2.031 * salt_conc + 0.823 * salt_conc*salt_conc +
+               -0.071 * water[r,y]  * salt_conc_water + 0.033 * water[r,y]  * salt_conc +
+               -2.754 * salt_conc_water * salt_conc
+               )
+               , name = 'crop_yield' )
+
+
+m.update();
+
+
+
+```
+
+```{python}
+m.optimize()
+obj = m.getObjective()
+print(obj.getValue())
+
+
+
+
+```
+
+```{python}
+
+
+import numpy as np
+
+ycyc01 = np.array(0)
+ypc01 = np.array(0)
+yiwc01 = np.array(0)
+yawc01 = np.array(0)
+ywc01 = np.array(0)
+yuec01 = np.array(0)
+yaec01 = np.array(0)
+yec01 = np.array(0)
+yrainc01 = np.array(0)
+
+for i in year:
+    ycyc01 = np.append(ycyc01,np.mean([crop_yield[r,i].X for r in run]))
+    ypc01 = np.append(ypc01,[profit[r].X for r in run])
+    yiwc01 = np.append(yiwc01,np.mean([irrigation_water[r,i].X for r in run]))
+    yawc01 = np.append(yawc01,np.mean([alt_water[r,i].X for r in run]))
+    ywc01 = np.append(ywc01,np.mean([water[r,i].X for r in run]))
+    yrainc01 = np.append(yrainc01,np.mean([rain_c1[r,i] for r in run]))
+    yuec01 = np.append(yuec01,np.mean([utility_elc[r,i].X for r in run]))
+    yaec01 = np.append(yaec01,np.mean([alt_elc[r,i].X for r in run]))
+    yec01 = np.append(yec01,np.mean([elc[r,i].X for r in run]))
+    
+ycyc01 = ycyc01[1:(len(year)+1)]
+ypc01 = ypc01[1:(len(year)+1)]
+yiwc01 = yiwc01[1:(len(year)+1)]
+yawc01 = yawc01[1:(len(year)+1)]
+ywc01 = ywc01[1:(len(year)+1)]
+yrainc01 = yrainc01[1:(len(year)+1)]
+yuec01 = yuec01[1:(len(year)+1)]
+yaec01 = yaec01[1:(len(year)+1)]
+yec01 = yec01[1:(len(year)+1)]
+
+
+ycyc01
+ypc01
+yiwc01
+yawc01
+ywc01
+yrainc01
+yuec01
+yaec01
+yec01
+
+
+
+```
+
+
+```{python}
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax = plt.subplots()
+
+ax.plot(xs,ycyc01, label = 'Crop Yield in Pounds', color = 'green') # profit is red line
+ax.plot(xs,ypc01/1000000, label = 'Profit', color = 'red') # profit is red line
+ax.set_title('Profit and Yield by Preciptation')
+ax.set_xlabel('Possible Outcome')
+ax.set_ylabel('Profit (MM $) & Yield (tonne)')
+ax.set_ylim([0,5])
+ax.set_xlim([1,25])
+ax.grid(True)
+ax.legend(loc = 'lower left')
+
+ax2 = ax.twinx()
+ax2.plot(xs,yiwc01/cm_ft, label = 'Irrigation Water', color = 'yellow') # irrigation is blue line
+ax2.plot(xs,ywc01/cm_ft, label = 'Water', color = 'blue') # water is green line
+ax2.plot(xs,yuec01/100000, label = 'Utility Electricity', color = 'grey') # irrigation is blue line
+ax2.plot(xs,yec01/100000, label = 'Electricity', color = 'purple') # water is green line
+ax2.plot(xs,yrainc1/cm_ft, label = 'Precip', color = 'orange') # water is green line
+ax2.set_ylabel('Water (ft depth) / Electricity (100 MWh)')
+ax2.set_ylim([0,5])
+ax2.legend(loc='lower right')
+
+
+plt.show()
+```
+
+## C0 realized in Climate 2 Problem and Solution
+
+```{python, include = F}
+
+
+import gurobipy as gp
+
+m = gp.Model()
+
+#m.params.NonConvex = 2 # Says its non convex but it is (FIXED quadratic constraints can't be equality)
+
+# Set to maximize
+m.ModelSense = -1
+
+# Add variables
+
+#First Stage Decision Variables Strategic Investment Decisions, pick what climate you are in which automatically picks how much alternative water to invest in
+
+alt_water_cap = alt_water_c0
+alt_elc_cap = alt_elc_c0
+#alt_water_cap = m.addVar(name = 'alt_water_cap', lb = 0) # cm of depth
+#alt_elc_cap = m.addVar(name = 'alt_elc_cap', lb = 0) # kW of depth
+
+
+#Second Stage Decision Variables Operational Decisions, Pick how much water to use and how much irrigation water to buy
+
+# Change these variables to be a function of option, climate, and season
+water = m.addVars(run, year, lb = 0, name = 'water') # water used for crop, cm of depth
+irrigation_water = m.addVars(run, year, lb = 0, ub = max_irrigation_water, name = 'irrigation_water') # cm of depth
+alt_water = m.addVars(run, year, lb = 0, name = 'alt_water') # alt_water used for crop, cm of depth
+alt_elc = m.addVars(run, year, lb = 0, name = 'alt_elc') # alt_elc to power water, kWh
+utility_elc = m.addVars(run, year, lb = 0, name = 'util_elc') # util_elc to power water, kWh
+elc = m.addVars(run, year, lb = 0, name = 'elc') # total elc to power water, kWh
+
+#Functions of the Above, also functions of option, climate, and season, 
+crop_yield = m.addVars(run, year, lb = 0, name = 'yield') # tonne/ha
+profit = m.addVars(run, obj = 1/samples, name = 'profit') # $
+
+
+
+#Maybe add a new profit variable that is the sum of the profit based on climate for easy coefficients
+
+
+
+# Objective
+
+
+m.addConstrs( (profit[r] == crop_yield.sum(r,'*') * ha * price +
+              -alt_water_cap * cost_alt_water  +
+              -irrigation_water.sum(r,'*') * cost_irrigation_water +
+              -alt_elc_cap * cost_alt_elc +
+              -utility_elc.sum(r,'*') * cost_utility_elc
+              for r in run)
+            ,name = 'profit_constr')
+
+# Water Equations
+
+m.addConstrs( (alt_water[r,y] <= alt_water_cap
+               for r in run for y in year)
+             ,name = 'water_cap' )
+ 
+
+m.addConstrs( (rain_c2[r,y] + alt_water[r,y] + irrigation_water[r,y] >= water[r,y]
+              for r in run for y in year)
+             ,name = 'water' )
+             
+             
+#Energy for Alt Water Equations    
+
+m.addConstrs( alt_water[r,y] * alt_water_elc + irrigation_water[r,y] * irrigation_water_elc <= elc[r,y]
+               for r in run for y in year)
+             ,name = 'elc_water' )
+
+# Energy Capacity and Balance Equations
+
+m.addConstrs( (alt_elc[r,y] <= alt_elc_cap * cf_solar * hrs_month * gs_months
+               for r in run for y in year)
+             ,name = 'elc_cap' )
+
+
+
+
+m.addConstrs( alt_elc[r,y] + utility_elc[r,y] >= elc[r,y]
+               for r in run for y in year)
+             ,name = 'elc_balance' )
+
+
+
+
+
+for r in run:
+    for y in year :
+            m.addQConstr( (crop_yield[r,y] <= -3.350 + 0.2064*water[r,y]  - 0.0014*water[r,y]*water[r,y]  + 
+               3.555 * salt_conc_water + 2.326 * salt_conc_water*salt_conc_water +
+               -2.031 * salt_conc + 0.823 * salt_conc*salt_conc +
+               -0.071 * water[r,y]  * salt_conc_water + 0.033 * water[r,y]  * salt_conc +
+               -2.754 * salt_conc_water * salt_conc
+               )
+               , name = 'crop_yield' )
+
+
+m.update();
+
+
+
+```
+
+```{python}
+m.optimize()
+obj = m.getObjective()
+print(obj.getValue())
+
+
+
+
+```
+
+```{python}
+
+
+import numpy as np
+
+ycyc02 = np.array(0)
+ypc02 = np.array(0)
+yiwc02 = np.array(0)
+yawc02 = np.array(0)
+ywc02 = np.array(0)
+yuec02 = np.array(0)
+yaec02 = np.array(0)
+yec02 = np.array(0)
+yrainc02 = np.array(0)
+
+for i in year:
+    ycyc02 = np.append(ycyc02,np.mean([crop_yield[r,i].X for r in run]))
+    ypc02 = np.append(ypc02,[profit[r].X for r in run])
+    yiwc02 = np.append(yiwc02,np.mean([irrigation_water[r,i].X for r in run]))
+    yawc02 = np.append(yawc02,np.mean([alt_water[r,i].X for r in run]))
+    ywc02 = np.append(ywc02,np.mean([water[r,i].X for r in run]))
+    yrainc02 = np.append(yrainc02,np.mean([rain_c2[r,i] for r in run]))
+    yuec02 = np.append(yuec02,np.mean([utility_elc[r,i].X for r in run]))
+    yaec02 = np.append(yaec02,np.mean([alt_elc[r,i].X for r in run]))
+    yec02 = np.append(yec02,np.mean([elc[r,i].X for r in run]))
+    
+ycyc02 = ycyc02[1:(len(year)+1)]
+ypc02 = ypc02[1:(len(year)+1)]
+yiwc02 = yiwc02[1:(len(year)+1)]
+yawc02 = yawc02[1:(len(year)+1)]
+ywc02 = ywc02[1:(len(year)+1)]
+yrainc02 = yrainc02[1:(len(year)+1)]
+yuec02 = yuec02[1:(len(year)+1)]
+yaec02 = yaec02[1:(len(year)+1)]
+yec02 = yec02[1:(len(year)+1)]
+
+
+ycyc02
+ypc02
+yiwc02
+yawc02
+ywc02
+yrainc02
+yuec02
+yaec02
+yec02
+
+
+
+```
+
+
+```{python}
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax = plt.subplots()
+
+ax.plot(xs,ycyc02, label = 'Crop Yield in Pounds', color = 'green') # profit is red line
+ax.plot(xs,ypc02/1000000, label = 'Profit', color = 'red') # profit is red line
+ax.set_title('Profit and Yield by Preciptation')
+ax.set_xlabel('Possible Outcome')
+ax.set_ylabel('Profit (MM $) & Yield (tonne)')
+ax.set_ylim([0,5])
+ax.set_xlim([1,25])
+ax.grid(True)
+ax.legend(loc = 'lower left')
+
+ax2 = ax.twinx()
+ax2.plot(xs,yiwc02/cm_ft, label = 'Irrigation Water', color = 'yellow') # irrigation is blue line
+ax2.plot(xs,ywc02/cm_ft, label = 'Water', color = 'blue') # water is green line
+ax2.plot(xs,yuec02/100000, label = 'Utility Electricity', color = 'grey') # irrigation is blue line
+ax2.plot(xs,yec02/100000, label = 'Electricity', color = 'purple') # water is green line
+ax2.plot(xs,yrainc2/cm_ft, label = 'Precip', color = 'orange') # water is green line
+ax2.set_ylabel('Water (ft depth) / Electricity (100 MWh)')
+ax2.set_ylim([0,5])
+ax2.legend(loc='lower right')
+
+
+plt.show()
+```
+
+## C0 realized in Climate 3 Problem and Solution
+
+```{python, include = F}
+
+
+import gurobipy as gp
+
+m = gp.Model()
+
+#m.params.NonConvex = 2 # Says its non convex but it is (FIXED quadratic constraints can't be equality)
+
+# Set to maximize
+m.ModelSense = -1
+
+# Add variables
+
+#First Stage Decision Variables Strategic Investment Decisions, pick what climate you are in which automatically picks how much alternative water to invest in
+
+alt_water_cap = alt_water_c0
+alt_elc_cap = alt_elc_c0
+#alt_water_cap = m.addVar(name = 'alt_water_cap', lb = 0) # cm of depth
+#alt_elc_cap = m.addVar(name = 'alt_elc_cap', lb = 0) # kW of depth
+
+
+#Second Stage Decision Variables Operational Decisions, Pick how much water to use and how much irrigation water to buy
+
+# Change these variables to be a function of option, climate, and season
+water = m.addVars(run, year, lb = 0, name = 'water') # water used for crop, cm of depth
+irrigation_water = m.addVars(run, year, lb = 0, ub = max_irrigation_water, name = 'irrigation_water') # cm of depth
+alt_water = m.addVars(run, year, lb = 0, name = 'alt_water') # alt_water used for crop, cm of depth
+alt_elc = m.addVars(run, year, lb = 0, name = 'alt_elc') # alt_elc to power water, kWh
+utility_elc = m.addVars(run, year, lb = 0, name = 'util_elc') # util_elc to power water, kWh
+elc = m.addVars(run, year, lb = 0, name = 'elc') # total elc to power water, kWh
+
+#Functions of the Above, also functions of option, climate, and season, 
+crop_yield = m.addVars(run, year, lb = 0, name = 'yield') # tonne/ha
+profit = m.addVars(run, obj = 1/samples, name = 'profit') # $
+
+
+
+#Maybe add a new profit variable that is the sum of the profit based on climate for easy coefficients
+
+
+
+# Objective
+
+
+m.addConstrs( (profit[r] == crop_yield.sum(r,'*') * ha * price +
+              -alt_water_cap * cost_alt_water  +
+              -irrigation_water.sum(r,'*') * cost_irrigation_water +
+              -alt_elc_cap * cost_alt_elc +
+              -utility_elc.sum(r,'*') * cost_utility_elc
+              for r in run)
+            ,name = 'profit_constr')
+
+# Water Equations
+
+m.addConstrs( (alt_water[r,y] <= alt_water_cap
+               for r in run for y in year)
+             ,name = 'water_cap' )
+ 
+
+m.addConstrs( (rain_c3[r,y] + alt_water[r,y] + irrigation_water[r,y] >= water[r,y]
+              for r in run for y in year)
+             ,name = 'water' )
+             
+             
+#Energy for Alt Water Equations    
+
+m.addConstrs( alt_water[r,y] * alt_water_elc + irrigation_water[r,y] * irrigation_water_elc <= elc[r,y]
+               for r in run for y in year)
+             ,name = 'elc_water' )
+
+# Energy Capacity and Balance Equations
+
+m.addConstrs( (alt_elc[r,y] <= alt_elc_cap * cf_solar * hrs_month * gs_months
+               for r in run for y in year)
+             ,name = 'elc_cap' )
+
+
+
+
+m.addConstrs( alt_elc[r,y] + utility_elc[r,y] >= elc[r,y]
+               for r in run for y in year)
+             ,name = 'elc_balance' )
+
+
+
+
+
+for r in run:
+    for y in year :
+            m.addQConstr( (crop_yield[r,y] <= -3.350 + 0.2064*water[r,y]  - 0.0014*water[r,y]*water[r,y]  + 
+               3.555 * salt_conc_water + 2.326 * salt_conc_water*salt_conc_water +
+               -2.031 * salt_conc + 0.823 * salt_conc*salt_conc +
+               -0.071 * water[r,y]  * salt_conc_water + 0.033 * water[r,y]  * salt_conc +
+               -2.754 * salt_conc_water * salt_conc
+               )
+               , name = 'crop_yield' )
+
+
+m.update();
+
+
+
+```
+
+```{python}
+m.optimize()
+obj = m.getObjective()
+print(obj.getValue())
+
+
+
+
+```
+
+```{python}
+
+
+import numpy as np
+
+ycyc03 = np.array(0)
+ypc03 = np.array(0)
+yiwc03 = np.array(0)
+yawc03 = np.array(0)
+ywc03 = np.array(0)
+yuec03 = np.array(0)
+yaec03 = np.array(0)
+yec03 = np.array(0)
+yrainc03 = np.array(0)
+
+for i in year:
+    ycyc03 = np.append(ycyc03,np.mean([crop_yield[r,i].X for r in run]))
+    ypc03 = np.append(ypc03,[profit[r].X for r in run])
+    yiwc03 = np.append(yiwc03,np.mean([irrigation_water[r,i].X for r in run]))
+    yawc03 = np.append(yawc03,np.mean([alt_water[r,i].X for r in run]))
+    ywc03 = np.append(ywc03,np.mean([water[r,i].X for r in run]))
+    yrainc03 = np.append(yrainc03,np.mean([rain_c3[r,i] for r in run]))
+    yuec03 = np.append(yuec03,np.mean([utility_elc[r,i].X for r in run]))
+    yaec03 = np.append(yaec03,np.mean([alt_elc[r,i].X for r in run]))
+    yec03 = np.append(yec03,np.mean([elc[r,i].X for r in run]))
+    
+ycyc03 = ycyc03[1:(len(year)+1)]
+ypc03 = ypc03[1:(len(year)+1)]
+yiwc03 = yiwc03[1:(len(year)+1)]
+yawc03 = yawc03[1:(len(year)+1)]
+ywc03 = ywc03[1:(len(year)+1)]
+yrainc03 = yrainc03[1:(len(year)+1)]
+yuec03 = yuec03[1:(len(year)+1)]
+yaec03 = yaec03[1:(len(year)+1)]
+yec03 = yec03[1:(len(year)+1)]
+
+
+ycyc03
+ypc03
+yiwc03
+yawc03
+ywc03
+yrainc03
+yuec03
+yaec03
+yec03
+
+
+
+```
+
+
+```{python}
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax = plt.subplots()
+
+ax.plot(xs,ycyc03, label = 'Crop Yield in Pounds', color = 'green') # profit is red line
+ax.plot(xs,ypc03/1000000, label = 'Profit', color = 'red') # profit is red line
+ax.set_title('Profit and Yield by Preciptation')
+ax.set_xlabel('Possible Outcome')
+ax.set_ylabel('Profit (MM $) & Yield (tonne)')
+ax.set_ylim([0,5])
+ax.set_xlim([1,25])
+ax.grid(True)
+ax.legend(loc = 'lower left')
+
+ax2 = ax.twinx()
+ax2.plot(xs,yiwc03/cm_ft, label = 'Irrigation Water', color = 'yellow') # irrigation is blue line
+ax2.plot(xs,ywc03/cm_ft, label = 'Water', color = 'blue') # water is green line
+ax2.plot(xs,yuec03/100000, label = 'Utility Electricity', color = 'grey') # irrigation is blue line
+ax2.plot(xs,yec03/100000, label = 'Electricity', color = 'purple') # water is green line
+ax2.plot(xs,yrainc3/cm_ft, label = 'Precip', color = 'orange') # water is green line
+ax2.set_ylabel('Water (ft depth) / Electricity (100 MWh)')
+ax2.set_ylim([0,5])
+ax2.legend(loc='lower right')
+
+
+plt.show()
+```
+
+
+## C0 realized in Climate 4 Problem and Solution
+
+```{python, include = F}
+
+
+import gurobipy as gp
+
+m = gp.Model()
+
+#m.params.NonConvex = 2 # Says its non convex but it is (FIXED quadratic constraints can't be equality)
+
+# Set to maximize
+m.ModelSense = -1
+
+# Add variables
+
+#First Stage Decision Variables Strategic Investment Decisions, pick what climate you are in which automatically picks how much alternative water to invest in
+
+alt_water_cap = alt_water_c0
+alt_elc_cap = alt_elc_c0
+#alt_water_cap = m.addVar(name = 'alt_water_cap', lb = 0) # cm of depth
+#alt_elc_cap = m.addVar(name = 'alt_elc_cap', lb = 0) # kW of depth
+
+
+#Second Stage Decision Variables Operational Decisions, Pick how much water to use and how much irrigation water to buy
+
+# Change these variables to be a function of option, climate, and season
+water = m.addVars(run, year, lb = 0, name = 'water') # water used for crop, cm of depth
+irrigation_water = m.addVars(run, year, lb = 0, ub = max_irrigation_water, name = 'irrigation_water') # cm of depth
+alt_water = m.addVars(run, year, lb = 0, name = 'alt_water') # alt_water used for crop, cm of depth
+alt_elc = m.addVars(run, year, lb = 0, name = 'alt_elc') # alt_elc to power water, kWh
+utility_elc = m.addVars(run, year, lb = 0, name = 'util_elc') # util_elc to power water, kWh
+elc = m.addVars(run, year, lb = 0, name = 'elc') # total elc to power water, kWh
+
+#Functions of the Above, also functions of option, climate, and season, 
+crop_yield = m.addVars(run, year, lb = 0, name = 'yield') # tonne/ha
+profit = m.addVars(run, obj = 1/samples, name = 'profit') # $
+
+
+
+#Maybe add a new profit variable that is the sum of the profit based on climate for easy coefficients
+
+
+
+# Objective
+
+
+m.addConstrs( (profit[r] == crop_yield.sum(r,'*') * ha * price +
+              -alt_water_cap * cost_alt_water  +
+              -irrigation_water.sum(r,'*') * cost_irrigation_water +
+              -alt_elc_cap * cost_alt_elc +
+              -utility_elc.sum(r,'*') * cost_utility_elc
+              for r in run)
+            ,name = 'profit_constr')
+
+# Water Equations
+
+m.addConstrs( (alt_water[r,y] <= alt_water_cap
+               for r in run for y in year)
+             ,name = 'water_cap' )
+ 
+
+m.addConstrs( (rain_c4[r,y] + alt_water[r,y] + irrigation_water[r,y] >= water[r,y]
+              for r in run for y in year)
+             ,name = 'water' )
+             
+             
+#Energy for Alt Water Equations    
+
+m.addConstrs( alt_water[r,y] * alt_water_elc + irrigation_water[r,y] * irrigation_water_elc <= elc[r,y]
+               for r in run for y in year)
+             ,name = 'elc_water' )
+
+# Energy Capacity and Balance Equations
+
+m.addConstrs( (alt_elc[r,y] <= alt_elc_cap * cf_solar * hrs_month * gs_months
+               for r in run for y in year)
+             ,name = 'elc_cap' )
+
+
+
+
+m.addConstrs( alt_elc[r,y] + utility_elc[r,y] >= elc[r,y]
+               for r in run for y in year)
+             ,name = 'elc_balance' )
+
+
+
+
+
+for r in run:
+    for y in year :
+            m.addQConstr( (crop_yield[r,y] <= -3.350 + 0.2064*water[r,y]  - 0.0014*water[r,y]*water[r,y]  + 
+               3.555 * salt_conc_water + 2.326 * salt_conc_water*salt_conc_water +
+               -2.031 * salt_conc + 0.823 * salt_conc*salt_conc +
+               -0.071 * water[r,y]  * salt_conc_water + 0.033 * water[r,y]  * salt_conc +
+               -2.754 * salt_conc_water * salt_conc
+               )
+               , name = 'crop_yield' )
+
+
+m.update();
+
+
+
+```
+
+```{python}
+m.optimize()
+obj = m.getObjective()
+print(obj.getValue())
+
+
+
+
+```
+
+```{python}
+
+
+import numpy as np
+
+ycyc04 = np.array(0)
+ypc04 = np.array(0)
+yiwc04 = np.array(0)
+yawc04 = np.array(0)
+ywc04 = np.array(0)
+yuec04 = np.array(0)
+yaec04 = np.array(0)
+yec04 = np.array(0)
+yrainc04 = np.array(0)
+
+for i in year:
+    ycyc04 = np.append(ycyc04,np.mean([crop_yield[r,i].X for r in run]))
+    ypc04 = np.append(ypc04,[profit[r].X for r in run])
+    yiwc04 = np.append(yiwc04,np.mean([irrigation_water[r,i].X for r in run]))
+    yawc04 = np.append(yawc04,np.mean([alt_water[r,i].X for r in run]))
+    ywc04 = np.append(ywc04,np.mean([water[r,i].X for r in run]))
+    yrainc04 = np.append(yrainc04,np.mean([rain_c4[r,i] for r in run]))
+    yuec04 = np.append(yuec04,np.mean([utility_elc[r,i].X for r in run]))
+    yaec04 = np.append(yaec04,np.mean([alt_elc[r,i].X for r in run]))
+    yec04 = np.append(yec04,np.mean([elc[r,i].X for r in run]))
+    
+ycyc04 = ycyc04[1:(len(year)+1)]
+ypc04 = ypc04[1:(len(year)+1)]
+yiwc04 = yiwc04[1:(len(year)+1)]
+yawc04 = yawc04[1:(len(year)+1)]
+ywc04 = ywc04[1:(len(year)+1)]
+yrainc04 = yrainc04[1:(len(year)+1)]
+yuec04 = yuec04[1:(len(year)+1)]
+yaec04 = yaec04[1:(len(year)+1)]
+yec04 = yec04[1:(len(year)+1)]
+
+
+ycyc04
+ypc04
+yiwc04
+yawc04
+ywc04
+yrainc04
+yuec04
+yaec04
+yec04
+
+
+
+```
+
+
+```{python}
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+fig, ax = plt.subplots()
+
+ax.plot(xs,ycyc04, label = 'Crop Yield in Pounds', color = 'green') # profit is red line
+ax.plot(xs,ypc04/1000000, label = 'Profit', color = 'red') # profit is red line
+ax.set_title('Profit and Yield by Preciptation')
+ax.set_xlabel('Possible Outcome')
+ax.set_ylabel('Profit (MM $) & Yield (tonne)')
+ax.set_ylim([0,5])
+ax.set_xlim([1,25])
+ax.grid(True)
+ax.legend(loc = 'lower left')
+
+ax2 = ax.twinx()
+ax2.plot(xs,yiwc04/cm_ft, label = 'Irrigation Water', color = 'yellow') # irrigation is blue line
+ax2.plot(xs,ywc04/cm_ft, label = 'Water', color = 'blue') # water is green line
+ax2.plot(xs,yuec04/100000, label = 'Utility Electricity', color = 'grey') # irrigation is blue line
+ax2.plot(xs,yec04/100000, label = 'Electricity', color = 'purple') # water is green line
+ax2.plot(xs,yrainc4/cm_ft, label = 'Precip', color = 'orange') # water is green line
+ax2.set_ylabel('Water (ft depth) / Electricity (100 MWh)')
+ax2.set_ylim([0,5])
+ax2.legend(loc='lower right')
+
+
+plt.show()
+```
+
+
+
+# Python Scratch Work
+
+```{python}
+days_month = 30
+irrigation_water_elc
+yiw*irrigation_water_elc
+cf_solar * hrs_month * gs_months
+days_month * gs_months
+116*cf_solar * hrs_month * gs_months
+np.sum(yue) * cost_utility_elc
+116* cost_alt_elc
+samples
+print('cost alt water per cm')
+#Water production cost $0.40 / kGal convert to $ / cm cost_alt_water = 
+0.40 / 1000 / cm3_gal * cm2_ha * ha
+
+print('alt water kWh')
+# 6.25 kWh / kGal > / Gal > / acre-ft > acre-cm > / ha-cm #alt_water_elc = 
+6.25 / m3_kGal / 1000 * gal_acre_ft / cm_ft * acre_ha * ha
+
+
+
+
+
+
+
+# Irrigation Water Cost https://news.berkeley.edu/berkeley_blog/the-cost-of-irrigation-water-and-urban-farming/
+#  Given in $ / cm from: $ 40 / acre-ft / gal_acre_ft / cm3_gal * cm2_ha * ha 
+
+#cost_irrigation_water = 40 / gal_acre_ft / cm3_gal * cm2_ha * ha  # $ / cm 
+
+print('cost irrigation water per cm')
+# $7 / ac- in convert to $ / cm cost_irrigation_water = 
+ 7 / cm_in * acre_ha * ha
+
+
+# 1 kWh / kGal irrigation_water_elc =
+print('cost irrgiation water per kwh')
+ 1 / 1000 * gal_acre_ft / cm_ft * acre_ha * ha
+ 
+irrigation_water_limit * cm_ft / acre_ha
+#acre -ft / acre * cm_ft / acre_ha >> cm
+irrigation_water_limit
+max_irrigation_water
+```
+
+## Objective Functions and Figures
+
+```{r}
+
+
+scenario_yearly_avg <- tibble(sim = c('SS','DC-DS','DMC-DS','MC-DS','WC-DS'), 
+       profit_MM = c(mean(py$yp), mean(py$ypc1), mean(py$ypc2), mean(py$ypc3), mean(py$ypc4)),
+       crop_yield_tonne = c(mean(py$ycy), mean(py$ycyc1), mean(py$ycyc2), mean(py$ycyc3), mean(py$ycyc4) ),
+       alt_water_cap_cm = c(py$alt_water_c0, py$alt_water_c1, py$alt_water_c2, py$alt_water_c3, py$alt_water_c4),
+       alt_elc_cap_kW = c(py$alt_elc_c0, py$alt_elc_c1, py$alt_elc_c2, py$alt_elc_c3, py$alt_elc_c4),
+       irrigation_cm = c(mean(py$yiw), mean(py$yiwc1), mean(py$yiwc2), mean(py$yiwc3), mean(py$yiwc4) ),
+       alt_water_cm = c(mean(py$yaw), mean(py$yawc1), mean(py$yawc2), mean(py$yawc3), mean(py$yawc4) ),
+       solar_prod_MWh = c(mean(py$yae),mean(py$yaec1),mean(py$yaec2),mean(py$yaec3),mean(py$yaec4)),
+       util_elc_MWh = c(mean(py$yue),mean(py$yuec1),mean(py$yuec2),mean(py$yuec3),mean(py$yuec4)),
+       water_cm = c(mean(py$yw), mean(py$ywc1), mean(py$ywc2), mean(py$ywc3), mean(py$ywc4) ),
+       elc_prod_MWh = c(mean(py$ye),mean(py$yec1),mean(py$yec2),mean(py$yec3),mean(py$yec4)),       
+       precip_cm = c(mean(py$yrain), mean(py$yrainc1), mean(py$yrainc2), mean(py$yrainc3), mean(py$yrainc4) )       ) %>% 
+  mutate(crop_yield_tonne = crop_yield_tonne * py$ha) %>%
+  mutate(util_elc_MWh = round(util_elc_MWh / 1000,3)) %>%
+  mutate(solar_prod_MWh = solar_prod_MWh / 1000) %>%
+  mutate(elc_prod_MWh = elc_prod_MWh / 1000) %>%
+  mutate(profit_MM = profit_MM / 1000000)
+
+scenario_realized_yearly_avg <- tibble(sim = c('SS','DC-RS','DMC-RS','MC-RS','WC-RS'), 
+       profit_MM = c(mean(py$yp), mean(py$ypc01), mean(py$ypc02), mean(py$ypc03), mean(py$ypc04)),
+       Deficit_MM = c(mean(py$yp) - mean(py$yp), mean(py$yp) - mean(py$ypc01), mean(py$yp) - mean(py$ypc02), mean(py$yp) - mean(py$ypc03), mean(py$yp) - mean(py$ypc04)),
+       crop_yield_tonne = c(mean(py$ycy), mean(py$ycyc01), mean(py$ycyc02), mean(py$ycyc03), mean(py$ycyc04) ),
+       alt_water_cap_cm = py$alt_water_c0,
+       alt_elc_cap_kW = py$alt_elc_c0,
+       irrigation_cm = c(mean(py$yiw), mean(py$yiwc01), mean(py$yiwc02), mean(py$yiwc03), mean(py$yiwc04) ),
+       alt_water_cm = c(mean(py$yaw), mean(py$yawc01), mean(py$yawc02), mean(py$yawc03), mean(py$yawc04) ),
+       solar_prod_MWh = c(mean(py$yae),mean(py$yaec01),mean(py$yaec02),mean(py$yaec03),mean(py$yaec04)),
+       util_elc_MWh = c(mean(py$yue),mean(py$yuec01),mean(py$yuec02),mean(py$yuec03),mean(py$yuec04)),
+       water_cm = c(mean(py$yw), mean(py$ywc01), mean(py$ywc02), mean(py$ywc03), mean(py$ywc04) ),
+       elc_prod_MWh = c(mean(py$ye),mean(py$yec01),mean(py$yec02),mean(py$yec03),mean(py$yec04)),
+       precip_cm = c(mean(py$yrain), mean(py$yrainc01), mean(py$yrainc02), mean(py$yrainc03), mean(py$yrainc04) )       ) %>% 
+  mutate(crop_yield_tonne = crop_yield_tonne * py$ha) %>%
+  mutate(util_elc_MWh = round(util_elc_MWh / 1000,3)) %>%
+  mutate(solar_prod_MWh = solar_prod_MWh / 1000) %>%
+  mutate(elc_prod_MWh = elc_prod_MWh / 1000) %>%
+  mutate(profit_MM = profit_MM / 1000000) %>% 
+  mutate(Deficit_MM = round(Deficit_MM / 1000000,3))
+
+
+
+
+parameters <- tibble(Parameter = c('Size of Farm', 'Price of Wheat', 'Cost of Alternative Water', 'Cost of Irrigation Water', 'Alternative Water Energy Use', 'Irrigation Water Energy Use', 'Salt Concentration in Water', 'Salt Concentration in Soil', 'Irrigation Water Limit', 'Cost of Alternative Energy', 'Cost of Utility Electricity' ),
+                     Value = c(py$ha, py$price, py$cost_alt_water, py$cost_irrigation_water, py$alt_water_elc, py$irrigation_water_elc, py$salt_conc_water, py$salt_conc, py$irrigation_water_limit, py$cost_alt_elc, py$cost_utility_elc),
+                     Unit = c('hectares', '$ / tonne', '$ / cm', '$ / cm', 'kWh/cm', 'kWh/cm', 'dS/m', 'dS/m', 'acre-ft/acre/yr', '$ / kW installed', '$ / kWh') ) %>%
+  mutate(Value = round(Value,2))
+
+write.csv(parameters, 'parameters.csv')
+write.csv(scenario_realized_yearly_avg, 'scenario_realized.csv')
+write.csv(scenario_yearly_avg, 'scenariovclimate.csv')
+
+
+parameters
+scenario_yearly_avg
+scenario_realized_yearly_avg
+
+alt_water_c0 <- py$alt_water_c0
+alt_elc_c0 <- py$alt_elc_c0
+objective_c0 <- scenario_yearly_avg[1,2] * 1000000
+
+```
+
+```{r}
+scenario_yearly_avg <- scenario_yearly_avg %>% mutate(elc_prod_MWh = solar_prod_MWh + util_elc_MWh) %>% 
+  mutate(water_cm = alt_water_cm + irrigation_cm + precip_cm)
+
+scenario_realized_yearly_avg <- scenario_realized_yearly_avg %>% mutate(elc_prod_MWh = solar_prod_MWh + util_elc_MWh) %>% 
+  mutate(water_cm = alt_water_cm + irrigation_cm + precip_cm)
+
+scenario_yearly_avg$sim <- ordered(scenario_yearly_avg$sim, levels = c('SS','DC-DS','DMC-DS','MC-DS','WC-DS'))
+
+scenario_realized_yearly_avg$sim <- ordered(scenario_realized_yearly_avg$sim, levels = c('SS','DC-RS','DMC-RS','MC-RS','WC-RS'))
+
+scenario_yearly_avg
+scenario_realized_yearly_avg
+
+```
+
+## Graphs
+
+### Profit
+
+```{r}
+
+profitdetplot <- scenario_yearly_avg %>% 
+  ggplot() + 
+  geom_bar(aes(x = sim, y = profit_MM, fill = sim), stat = 'identity') +
+  geom_text(aes(x = sim, y = profit_MM, label=round(profit_MM,2)), vjust = -1, size=5)+
+  geom_point(aes(y = precip_cm/25, x = sim), size = 2, shape = 15) +
+  scale_y_continuous(sec.axis = sec_axis(~.*25, name = 'Precipitation (cm)'), limits = c(0,4))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'Expected Total Profit: MI-EP Stochastic vs. Deterministic scenarios', y = 'Profit ($ MM)', x = 'Scenarios', size = 8)+
+  scale_fill_brewer(palette = "Dark2")
+
+
+profitrealplot <- scenario_realized_yearly_avg %>% 
+  ggplot() + 
+  geom_bar(aes(x = sim, y = profit_MM, fill = sim), stat = 'identity') +
+  geom_text(aes(x = sim, y = profit_MM, label=round(profit_MM,2)), vjust = -1.5, size=5)+
+  geom_point(aes(y = precip_cm/25, x = sim), size = 2, shape = 15) +
+  scale_y_continuous(sec.axis = sec_axis(~.*25, name = 'Precipitation (cm)'), limits = c(0,4))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'Expected Total Profit: MI-EP Stochastic vs. Realized scenarios', y = 'Profit ($ MM)', x = 'Scenarios', size = 8)+
+  scale_fill_brewer(palette = "Dark2")
+
+profitdetplot
+profitrealplot
+```
+### Crop Yield
+
+```{r}
+
+cydetplot <- scenario_yearly_avg %>% 
+  ggplot() + 
+  geom_bar(aes(x = sim, y = crop_yield_tonne, fill = sim), stat = 'identity') +
+  geom_text(aes(x = sim, y = crop_yield_tonne, label=round(crop_yield_tonne,0)), vjust = -1, size=5)+
+  geom_point(aes(y = water_cm*8, x = sim), size = 2, shape = 17) +
+  scale_y_continuous(sec.axis = sec_axis(~./8, name = 'Water Depth (cm)'), limits = c(0,800))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'Average Annual Crop Yield: MI-EP Stochastic vs. Deterministic scenarios', y = 'Crop Yield (tonnes)', x = 'Scenarios', size = 8)+
+  scale_fill_brewer(palette = "Dark2")
+
+
+cyrealplot <- scenario_realized_yearly_avg %>% 
+  ggplot() + 
+  geom_bar(aes(x = sim, y = crop_yield_tonne, fill = sim), stat = 'identity') +
+  geom_text(aes(x = sim, y = crop_yield_tonne, label=round(crop_yield_tonne,0)), vjust = -1, size=5)+
+  geom_point(aes(y = water_cm*8, x = sim), size = 2, shape = 17) +
+  scale_y_continuous(sec.axis = sec_axis(~./8, name = 'Water Depth (cm)'), limits = c(0,800))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'Average Annual Crop Yield: MI-EP Stochastic vs. Realized scenarios', y = 'Crop Yield (tonnes)', x = 'Scenarios', size = 8)+
+  scale_fill_brewer(palette = "Dark2")
+
+cydetplot
+cyrealplot
+
+```
+
+#### Investments
+
+```{r}
+waterinvestplot <- scenario_yearly_avg %>% 
+  ggplot() + 
+  geom_bar(aes(x = sim, y = alt_water_cap_cm, fill = sim), stat = 'identity') +
+  geom_text(aes(x = sim, y = alt_water_cap_cm, label=round(alt_water_cap_cm,1)), vjust = -1, size=5)+
+  geom_point(aes(y = water_cm/2.5, x = sim), size = 2, shape = 17) +
+  scale_y_continuous(sec.axis = sec_axis(~.*2.5, name = 'Water Depth (cm)'), limits = c(0,40))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'Alternative Water Investment: MI-EP Stochastic vs. Deterministic Scenarios', y = 'Water Capacity (cm)', x = 'Scenarios', size = 8)+
+  scale_fill_brewer(palette = "Dark2")
+
+elcinvestplot <- scenario_yearly_avg %>% 
+    ggplot() + 
+  geom_bar(aes(x = sim, y = alt_elc_cap_kW, fill = sim), stat = 'identity') +
+  geom_text(aes(x = sim, y = alt_elc_cap_kW, label=round(alt_elc_cap_kW,0)), vjust = -1, size=5)+
+  geom_point(aes(y = elc_prod_MWh/2, x = sim), size = 2, shape = 17) +
+  scale_y_continuous(sec.axis = sec_axis(~.*2, name = 'Electricity Produced (MWh)'), limits = c(0,600))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'Alternative Electricity Investment: MI-EP Stochastic vs. Deterministic Scenarios', y = 'Water Capacity (cm)', x = 'Scenarios', size = 8)+
+  scale_fill_brewer(palette = "Dark2")
+
+waterinvestplot
+elcinvestplot
+```
+
+
+
+```{r}
+stoch_df <- tibble(Year = seq(1,25), crop_yield = py$ycy, alt_water = py$yaw, alt_elc = py$yae, irrigation_water = py$yiw, utility_elc = py$yue, total_water = py$yw, total_elc = py$ye, precip = py$yrain, scenario = 'Stochastic_Model') %>% mutate_if(is.numeric, funs(round(.,2)))
+
+c1_df <- tibble(Year = seq(1,25), crop_yield = py$ycyc1, alt_water = py$yawc1, alt_elc = py$yaec1, irrigation_water = py$yiwc1, utility_elc = py$yuec1, total_water = py$ywc1, total_elc = py$yec1, precip = py$yrainc1, scenario = 'Dry_Climate') %>% mutate_if(is.numeric, funs(round(.,2)))
+
+c2_df <- tibble(Year = seq(1,25), crop_yield = py$ycyc2, alt_water = py$yawc2, alt_elc = py$yaec2, irrigation_water = py$yiwc2, utility_elc = py$yuec2, total_water = py$ywc2, total_elc = py$yec2, precip = py$yrainc2, scenario = 'Dry_Moderate_Climate') %>% mutate_if(is.numeric, funs(round(.,2)))
+
+c3_df <- tibble(Year = seq(1,25), crop_yield = py$ycyc3, alt_water = py$yawc3, alt_elc = py$yaec3, irrigation_water = py$yiwc3, utility_elc = py$yuec3, total_water = py$ywc3, total_elc = py$yec3, precip = py$yrainc3, scenario = 'Moderate_Climate') %>% mutate_if(is.numeric, funs(round(.,2)))
+
+c4_df <- tibble(Year = seq(1,25), crop_yield = py$ycyc4, alt_water = py$yawc4, alt_elc = py$yaec4, irrigation_water = py$yiwc4, utility_elc = py$yuec4, total_water = py$ywc4, total_elc = py$yec4, precip = py$yrainc4, scenario = 'Wet_Climate') %>% mutate_if(is.numeric, funs(round(.,2)))
+
+c01_df <- tibble(Year = seq(1,25), crop_yield = py$ycyc01, alt_water = py$yawc01, alt_elc = py$yaec01, irrigation_water = py$yiwc01, utility_elc = py$yuec01, total_water = py$ywc01, total_elc = py$yec01, precip = py$yrainc01, scenario = 'Dry_Climate_Realized') %>% mutate_if(is.numeric, funs(round(.,2)))
+
+c02_df <- tibble(Year = seq(1,25), crop_yield = py$ycyc02, alt_water = py$yawc02, alt_elc = py$yaec02, irrigation_water = py$yiwc02, utility_elc = py$yuec02, total_water = py$ywc02, total_elc = py$yec02, precip = py$yrainc02, scenario = 'Dry_Moderate_Climate_Realized') %>% mutate_if(is.numeric, funs(round(.,2)))
+
+c03_df <- tibble(Year = seq(1,25), crop_yield = py$ycyc03, alt_water = py$yawc03, alt_elc = py$yaec03, irrigation_water = py$yiwc03, utility_elc = py$yuec03, total_water = py$ywc03, total_elc = py$yec03, precip = py$yrainc03, scenario = 'Moderate_Climate_Realized') %>% mutate_if(is.numeric, funs(round(.,2)))
+
+c04_df <- tibble(Year = seq(1,25), crop_yield = py$ycyc04, alt_water = py$yawc04, alt_elc = py$yaec04, irrigation_water = py$yiwc04, utility_elc = py$yuec04, total_water = py$ywc04, total_elc = py$yec04, precip = py$yrainc04, scenario = 'Wet_Climate_Realized') %>% mutate_if(is.numeric, funs(round(.,2)))
+
+
+
+stochvclimate1_df <- rbind(stoch_df,c1_df,c01_df)
+
+stochvclimate2_df <- rbind(stoch_df,c2_df,c02_df)
+
+stochvclimate3_df <- rbind(stoch_df,c3_df,c03_df)
+
+stochvclimate4_df <- rbind(stoch_df,c4_df,c04_df)
+
+
+stoch_df
+
+c1_df
+
+
+
+
+
+```
+
+
+
+```{r}
+
+
+stochvclimate1_df %>%  
+  pivot_longer(c(alt_water,irrigation_water,total_water,precip), names_to = 'Water_Source', values_to = 'Water_Depth') %>%
+  filter(Water_Source != 'total_water') %>%
+  filter(scenario == 'Stochastic_Model') %>%
+  ggplot(aes(x = Year, y = Water_Depth, group = Water_Source, fill = Water_Source, color = Water_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 125, by = 50), limits =c(0,125))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Stochastic Scenario', y = 'Water Depth (cm)', x = 'Year', size = 8) -> stoch_water
+
+stochvclimate1_df %>%  
+  pivot_longer(c(alt_water,irrigation_water,total_water,precip), names_to = 'Water_Source', values_to = 'Water_Depth') %>%
+  filter(Water_Source != 'total_water') %>%
+  filter(scenario == 'Dry_Climate') %>%
+  ggplot(aes(x = Year, y = Water_Depth, group = Water_Source, fill = Water_Source, color = Water_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 125, by = 50), limits =c(0,125))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Dry Climate Deterministic', y = 'Water Depth (cm)', x = 'Year', size = 8) -> plot_c1_climate_water
+
+stochvclimate1_df %>%  
+  pivot_longer(c(alt_water,irrigation_water,total_water,precip), names_to = 'Water_Source', values_to = 'Water_Depth') %>%
+  filter(Water_Source != 'total_water') %>%
+  filter(scenario == 'Dry_Climate_Realized') %>%
+  ggplot(aes(x = Year, y = Water_Depth, group = Water_Source, fill = Water_Source, color = Water_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 125, by = 50), limits =c(0,125))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Dry Climate Realized', y = 'Water Depth (cm)', x = 'Year', size = 8) -> plot_c1_climate_realized_water
+
+stochvclimate1_df %>%  
+  pivot_longer(c(alt_elc,utility_elc,total_elc), names_to = 'ELC_Source', values_to = 'ELC_Depth') %>%
+  filter(ELC_Source != 'total_elc') %>%
+  filter(scenario == 'Stochastic_Model') %>%
+  ggplot(aes(x = Year, y = ELC_Depth/1000, group = ELC_Source, fill = ELC_Source, color = ELC_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 1250, by = 250), limits =c(0,1250))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Stochastic Scenario', y = 'Electricity Produced (MWh)', x = 'Year', size = 8) -> stoch_elc
+
+stochvclimate1_df %>%  
+  pivot_longer(c(alt_elc,utility_elc,total_elc), names_to = 'ELC_Source', values_to = 'ELC_Depth') %>%
+  filter(ELC_Source != 'total_elc') %>%
+  filter(scenario == 'Dry_Climate') %>%
+  ggplot(aes(x = Year, y = ELC_Depth/1000, group = ELC_Source, fill = ELC_Source, color = ELC_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 1250, by = 250), limits =c(0,1250))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Dry Climate Deterministic', y = 'Electricity Produced (MWh)', x = 'Year', size = 8) -> plot_c1_climate_elc
+
+stochvclimate1_df %>%  
+  pivot_longer(c(alt_elc,utility_elc,total_elc), names_to = 'ELC_Source', values_to = 'ELC_Depth') %>%
+  filter(ELC_Source != 'total_elc') %>%
+  filter(scenario == 'Dry_Climate_Realized') %>%
+  ggplot(aes(x = Year, y = ELC_Depth/1000, group = ELC_Source, fill = ELC_Source, color = ELC_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 1250, by = 250), limits =c(0,1250))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Dry Climate Realized', y = 'Electricity Produced (MWh)', x = 'Year', size = 8) -> plot_c1_climate_realized_elc
+
+
+
+wateropc1 <- grid.arrange(plot_c1_climate_water, plot_c1_climate_realized_water, ncol = 2)
+elcopc1 <- grid.arrange(plot_c1_climate_elc, plot_c1_climate_realized_elc, ncol = 2)
+
+stoch_water
+stoch_elc
+wateropc1
+elcopc1
+```
+```{r}
+
+
+stochvclimate2_df %>%  
+  pivot_longer(c(alt_water,irrigation_water,total_water,precip), names_to = 'Water_Source', values_to = 'Water_Depth') %>%
+  filter(Water_Source != 'total_water') %>%
+  filter(scenario == 'Dry_Moderate_Climate') %>%
+  ggplot(aes(x = Year, y = Water_Depth, group = Water_Source, fill = Water_Source, color = Water_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 125, by = 50), limits =c(0,125))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Dry-Moderate Climate Deterministic', y = 'Water Depth (cm)', x = 'Year', size = 8) -> plot_c2_climate_water
+
+stochvclimate2_df %>%  
+  pivot_longer(c(alt_water,irrigation_water,total_water,precip), names_to = 'Water_Source', values_to = 'Water_Depth') %>%
+  filter(Water_Source != 'total_water') %>%
+  filter(scenario == 'Dry_Moderate_Climate_Realized') %>%
+  ggplot(aes(x = Year, y = Water_Depth, group = Water_Source, fill = Water_Source, color = Water_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 125, by = 50), limits =c(0,125))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Dry-Moderate Climate Realized', y = 'Water Depth (cm)', x = 'Year', size = 8) -> plot_c2_climate_realized_water
+
+
+stochvclimate2_df %>%  
+  pivot_longer(c(alt_elc,utility_elc,total_elc), names_to = 'ELC_Source', values_to = 'ELC_Depth') %>%
+  filter(ELC_Source != 'total_elc') %>%
+  filter(scenario == 'Dry_Moderate_Climate') %>%
+  ggplot(aes(x = Year, y = ELC_Depth/1000, group = ELC_Source, fill = ELC_Source, color = ELC_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 1250, by = 250), limits =c(0,1250))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Dry-Moderate Climate Deterministic', y = 'Electricity Produced (MWh)', x = 'Year', size = 8) -> plot_c2_climate_elc
+
+stochvclimate2_df %>%  
+  pivot_longer(c(alt_elc,utility_elc,total_elc), names_to = 'ELC_Source', values_to = 'ELC_Depth') %>%
+  filter(ELC_Source != 'total_elc') %>%
+  filter(scenario == 'Dry_Moderate_Climate_Realized') %>%
+  ggplot(aes(x = Year, y = ELC_Depth/1000, group = ELC_Source, fill = ELC_Source, color = ELC_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 1250, by = 250), limits =c(0,1250))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Dry-Moderate Climate Realized', y = 'Electricity Produced (MWh)', x = 'Year', size = 8) -> plot_c2_climate_realized_elc
+
+
+
+wateropc2 <- grid.arrange(plot_c2_climate_water, plot_c2_climate_realized_water, ncol = 2)
+elcopc2 <- grid.arrange(plot_c2_climate_elc, plot_c2_climate_realized_elc, ncol = 2)
+
+wateropc2
+elcopc2
+```
+```{r}
+
+stochvclimate3_df %>%  
+  pivot_longer(c(alt_water,irrigation_water,total_water,precip), names_to = 'Water_Source', values_to = 'Water_Depth') %>%
+  filter(Water_Source != 'total_water') %>%
+  filter(scenario == 'Moderate_Climate') %>%
+  ggplot(aes(x = Year, y = Water_Depth, group = Water_Source, fill = Water_Source, color = Water_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 125, by = 50), limits =c(0,125))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Moderate Climate Deterministic', y = 'Water Depth (cm)', x = 'Year', size = 8) -> plot_c3_climate_water
+
+stochvclimate3_df %>%  
+  pivot_longer(c(alt_water,irrigation_water,total_water,precip), names_to = 'Water_Source', values_to = 'Water_Depth') %>%
+  filter(Water_Source != 'total_water') %>%
+  filter(scenario == 'Moderate_Climate_Realized') %>%
+  ggplot(aes(x = Year, y = Water_Depth, group = Water_Source, fill = Water_Source, color = Water_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 125, by = 50), limits =c(0,125))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Moderate Climate Realized', y = 'Water Depth (cm)', x = 'Year', size = 8) -> plot_c3_climate_realized_water
+
+
+stochvclimate3_df %>%  
+  pivot_longer(c(alt_elc,utility_elc,total_elc), names_to = 'ELC_Source', values_to = 'ELC_Depth') %>%
+  filter(ELC_Source != 'total_elc') %>%
+  filter(scenario == 'Moderate_Climate') %>%
+  ggplot(aes(x = Year, y = ELC_Depth/1000, group = ELC_Source, fill = ELC_Source, color = ELC_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 1250, by = 250), limits =c(0,1250))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Moderate Climate Deterministic', y = 'Electricity Produced (MWh)', x = 'Year', size = 8) -> plot_c3_climate_elc
+
+stochvclimate3_df %>%  
+  pivot_longer(c(alt_elc,utility_elc,total_elc), names_to = 'ELC_Source', values_to = 'ELC_Depth') %>%
+  filter(ELC_Source != 'total_elc') %>%
+  filter(scenario == 'Moderate_Climate_Realized') %>%
+  ggplot(aes(x = Year, y = ELC_Depth/1000, group = ELC_Source, fill = ELC_Source, color = ELC_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 1250, by = 250), limits =c(0,1250))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Moderate Climate Realized', y = 'Electricity Produced (MWh)', x = 'Year', size = 8) -> plot_c3_climate_realized_elc
+
+
+
+wateropc3 <- grid.arrange(plot_c3_climate_water, plot_c3_climate_realized_water, ncol = 2)
+elcopc3 <- grid.arrange(plot_c3_climate_elc, plot_c3_climate_realized_elc, ncol = 2)
+
+wateropc3
+elcopc3
+```
+
+
+
+```{r}
+
+stochvclimate4_df %>%  
+  pivot_longer(c(alt_water,irrigation_water,total_water,precip), names_to = 'Water_Source', values_to = 'Water_Depth') %>%
+  filter(Water_Source != 'total_water') %>%
+  filter(scenario == 'Wet_Climate') %>%
+  ggplot(aes(x = Year, y = Water_Depth, group = Water_Source, fill = Water_Source, color = Water_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 125, by = 50), limits =c(0,125))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Wet Climate Deterministic', y = 'Water Depth (cm)', x = 'Year', size = 8) -> plot_c4_climate_water
+
+stochvclimate4_df %>%  
+  pivot_longer(c(alt_water,irrigation_water,total_water,precip), names_to = 'Water_Source', values_to = 'Water_Depth') %>%
+  filter(Water_Source != 'total_water') %>%
+  filter(scenario == 'Wet_Climate_Realized') %>%
+  ggplot(aes(x = Year, y = Water_Depth, group = Water_Source, fill = Water_Source, color = Water_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 125, by = 50), limits =c(0,125))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Wet Climate Realized', y = 'Water Depth (cm)', x = 'Year', size = 8) -> plot_c4_climate_realized_water
+
+
+stochvclimate4_df %>%  
+  pivot_longer(c(alt_elc,utility_elc,total_elc), names_to = 'ELC_Source', values_to = 'ELC_Depth') %>%
+  filter(ELC_Source != 'total_elc') %>%
+  filter(scenario == 'Wet_Climate') %>%
+  ggplot(aes(x = Year, y = ELC_Depth/1000, group = ELC_Source, fill = ELC_Source, color = ELC_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 1250, by = 250), limits =c(0,1250))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Wet Climate Deterministic', y = 'Electricity Produced (MWh)', x = 'Year', size = 8) -> plot_c4_climate_elc
+
+stochvclimate4_df %>%  
+  pivot_longer(c(alt_elc,utility_elc,total_elc), names_to = 'ELC_Source', values_to = 'ELC_Depth') %>%
+  filter(ELC_Source != 'total_elc') %>%
+  filter(scenario == 'Wet_Climate_Realized') %>%
+  ggplot(aes(x = Year, y = ELC_Depth/1000, group = ELC_Source, fill = ELC_Source, color = ELC_Source))+
+  geom_area(position = position_stack(reverse = TRUE))+
+  scale_y_continuous(breaks = seq(from = 0, to = 1250, by = 250), limits =c(0,1250))+
+  scale_x_continuous(breaks = seq(from = 1, to = 25, by = 2))+
+  theme_minimal()+
+  theme(plot.title = element_text(size = 12, face = 'bold'), 
+        legend.position = 'bottom', 
+        legend.text = element_text(size = 8), 
+        legend.title = element_blank(), 
+        axis.title = element_text(size = 8), 
+        axis.text = element_text(size = 8), 
+        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust =0.5),
+        legend.key.width = unit(0.06, 'in'), 
+        legend.key.height = unit(0.06,'in'), 
+        legend.margin = margin(t = 0, unit = 'cm'), 
+        plot.margin = unit(x = c(0.5,0.5,0.5,0.5), units = 'mm') ) +
+  labs(title = 'MI-EP Wet Climate Realized', y = 'Electricity Produced (MWh)', x = 'Year', size = 8) -> plot_c4_climate_realized_elc
+
+
+
+wateropc4 <- grid.arrange(plot_c4_climate_water, plot_c4_climate_realized_water, ncol = 2)
+elcopc4 <- grid.arrange(plot_c4_climate_elc, plot_c4_climate_realized_elc, ncol = 2)
+
+wateropc4
+elcopc4
+```
+```{r}
+
+save.image(file = "MI-EP.RData")
+
+ggsave(filename = "~/Coding/R/Research/Farm Model/Graphs/MI-EP-DS_profit.pdf", profitdetplot)
+ggsave(filename = "~/Coding/R/Research/Farm Model/Graphs/MI-EP-RS_profit.pdf", profitrealplot)
+ggsave(filename = "~/Coding/R/Research/Farm Model/Graphs/MI-EP-DS_cy.pdf", cydetplot)
+ggsave(filename = "~/Coding/R/Research/Farm Model/Graphs/MI-EP-RS_cy.pdf", cyrealplot)
+ggsave(filename = "~/Coding/R/Research/Farm Model/Graphs/MI-EP_winvest.pdf", waterinvestplot)
+ggsave(filename = "~/Coding/R/Research/Farm Model/Graphs/MI-EP_einvest.pdf", elcinvestplot)
+ggsave(filename = "~/Coding/R/Research/Farm Model/Graphs/MI-EP-SS_water.pdf", stoch_water)
+ggsave(filename = "~/Coding/R/Research/Farm Model/Graphs/MI-EP-SS_elc.pdf", stoch_elc)
+ggsave(filename = "~/Coding/R/Research/Farm Model/Graphs/MI-EP-DC-DS_water.pdf", wateropc1)
+ggsave(filename = "~/Coding/R/Research/Farm Model/Graphs/MI-EP-DC-DS_elc.pdf", elcopc1)
+ggsave(filename = "~/Coding/R/Research/Farm Model/Graphs/MI-EP-DMC-DS_water.pdf", wateropc2)
+ggsave(filename = "~/Coding/R/Research/Farm Model/Graphs/MI-EP-DMC-DS_elc.pdf", elcopc2)
+ggsave(filename = "~/Coding/R/Research/Farm Model/Graphs/MI-EP-MC-DS_water.pdf", wateropc3)
+ggsave(filename = "~/Coding/R/Research/Farm Model/Graphs/MI-EP-MC-DS_elc.pdf", elcopc3)
+ggsave(filename = "~/Coding/R/Research/Farm Model/Graphs/MI-EP-WC-DS_water.pdf", wateropc4)
+ggsave(filename = "~/Coding/R/Research/Farm Model/Graphs/MI-EP-WC-DS_elc.pdf", elcopc4)
+```
+
+
+

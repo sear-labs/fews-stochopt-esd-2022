@@ -1,0 +1,1001 @@
+site,label,scenario,year,variable,value
+EP,Equally Probable,Perfect Information,1,crop_yield,2.8630572462880504
+EP,Equally Probable,Perfect Information,2,crop_yield,2.8687463684307293
+EP,Equally Probable,Perfect Information,3,crop_yield,2.8545841067342397
+EP,Equally Probable,Perfect Information,4,crop_yield,2.8517611271602314
+EP,Equally Probable,Perfect Information,5,crop_yield,2.8845149997030832
+EP,Equally Probable,Perfect Information,6,crop_yield,2.851494171011356
+EP,Equally Probable,Perfect Information,7,crop_yield,2.8936874459837187
+EP,Equally Probable,Perfect Information,8,crop_yield,2.875296344078603
+EP,Equally Probable,Perfect Information,9,crop_yield,2.8541340579762657
+EP,Equally Probable,Perfect Information,10,crop_yield,2.8681119391993515
+EP,Equally Probable,Perfect Information,11,crop_yield,2.857884832054561
+EP,Equally Probable,Perfect Information,12,crop_yield,2.867371638249024
+EP,Equally Probable,Perfect Information,13,crop_yield,2.8678117975407638
+EP,Equally Probable,Perfect Information,14,crop_yield,2.8489631271790112
+EP,Equally Probable,Perfect Information,15,crop_yield,2.883528028576775
+EP,Equally Probable,Perfect Information,16,crop_yield,2.86689464086989
+EP,Equally Probable,Perfect Information,17,crop_yield,2.8600647857301627
+EP,Equally Probable,Perfect Information,18,crop_yield,2.884430666847903
+EP,Equally Probable,Perfect Information,19,crop_yield,2.86289988314106
+EP,Equally Probable,Perfect Information,20,crop_yield,2.867533649162781
+EP,Equally Probable,Perfect Information,21,crop_yield,2.8536227948433903
+EP,Equally Probable,Perfect Information,22,crop_yield,2.869343332996291
+EP,Equally Probable,Perfect Information,23,crop_yield,2.8569131056711528
+EP,Equally Probable,Perfect Information,24,crop_yield,2.8876238717772007
+EP,Equally Probable,Perfect Information,25,crop_yield,2.854229365896174
+EP,Equally Probable,Perfect Information,1,water,57.016207526295176
+EP,Equally Probable,Perfect Information,2,water,57.00510084241126
+EP,Equally Probable,Perfect Information,3,water,56.86983485992529
+EP,Equally Probable,Perfect Information,4,water,56.680765289709825
+EP,Equally Probable,Perfect Information,5,water,57.235117971972066
+EP,Equally Probable,Perfect Information,6,water,56.717702536912434
+EP,Equally Probable,Perfect Information,7,water,57.50571208479222
+EP,Equally Probable,Perfect Information,8,water,57.20090249728075
+EP,Equally Probable,Perfect Information,9,water,56.77445692694993
+EP,Equally Probable,Perfect Information,10,water,56.98961860394605
+EP,Equally Probable,Perfect Information,11,water,56.91821105604243
+EP,Equally Probable,Perfect Information,12,water,57.02049371022641
+EP,Equally Probable,Perfect Information,13,water,57.06223674951828
+EP,Equally Probable,Perfect Information,14,water,56.72724032914333
+EP,Equally Probable,Perfect Information,15,water,57.23124114782918
+EP,Equally Probable,Perfect Information,16,water,56.95829212161208
+EP,Equally Probable,Perfect Information,17,water,56.934148104047004
+EP,Equally Probable,Perfect Information,18,water,57.22928259314149
+EP,Equally Probable,Perfect Information,19,water,56.98564512426972
+EP,Equally Probable,Perfect Information,20,water,57.067146009361565
+EP,Equally Probable,Perfect Information,21,water,56.74111135383419
+EP,Equally Probable,Perfect Information,22,water,57.056086599858936
+EP,Equally Probable,Perfect Information,23,water,56.89899214159597
+EP,Equally Probable,Perfect Information,24,water,57.20392077924851
+EP,Equally Probable,Perfect Information,25,water,56.77932163341344
+EP,Equally Probable,Perfect Information,1,elc,253730.71304312447
+EP,Equally Probable,Perfect Information,2,elc,253332.07430938084
+EP,Equally Probable,Perfect Information,3,elc,253253.5028892546
+EP,Equally Probable,Perfect Information,4,elc,253638.38513064923
+EP,Equally Probable,Perfect Information,5,elc,253448.30253365252
+EP,Equally Probable,Perfect Information,6,elc,253685.28823559437
+EP,Equally Probable,Perfect Information,7,elc,253328.4683918882
+EP,Equally Probable,Perfect Information,8,elc,253262.26697504893
+EP,Equally Probable,Perfect Information,9,elc,253340.69866220205
+EP,Equally Probable,Perfect Information,10,elc,253493.89514006925
+EP,Equally Probable,Perfect Information,11,elc,253488.0711246992
+EP,Equally Probable,Perfect Information,12,elc,253391.1456977131
+EP,Equally Probable,Perfect Information,13,elc,253593.2030631022
+EP,Equally Probable,Perfect Information,14,elc,253152.70486948235
+EP,Equally Probable,Perfect Information,15,elc,253341.59933454578
+EP,Equally Probable,Perfect Information,16,elc,253329.26605188427
+EP,Equally Probable,Perfect Information,17,elc,253415.98700478417
+EP,Equally Probable,Perfect Information,18,elc,253203.6461058003
+EP,Equally Probable,Perfect Information,19,elc,253538.678753754
+EP,Equally Probable,Perfect Information,20,elc,253617.0791959011
+EP,Equally Probable,Perfect Information,21,elc,253583.989009008
+EP,Equally Probable,Perfect Information,22,elc,253225.13150391378
+EP,Equally Probable,Perfect Information,23,elc,253610.12133157975
+EP,Equally Probable,Perfect Information,24,elc,253096.6234927322
+EP,Equally Probable,Perfect Information,25,elc,253463.41867507037
+EP,Equally Probable,Perfect Information,1,irrigation,3.105218568327762
+EP,Equally Probable,Perfect Information,2,irrigation,3.1011244036168626
+EP,Equally Probable,Perfect Information,3,irrigation,3.125574452655428
+EP,Equally Probable,Perfect Information,4,irrigation,3.1899190050791604
+EP,Equally Probable,Perfect Information,5,irrigation,3.098490381235609
+EP,Equally Probable,Perfect Information,6,irrigation,3.201696621551763
+EP,Equally Probable,Perfect Information,7,irrigation,2.9889454061296155
+EP,Equally Probable,Perfect Information,8,irrigation,3.123242970357241
+EP,Equally Probable,Perfect Information,9,irrigation,3.2161354852952564
+EP,Equally Probable,Perfect Information,10,irrigation,3.146236917411137
+EP,Equally Probable,Perfect Information,11,irrigation,3.148844003552931
+EP,Equally Probable,Perfect Information,12,irrigation,3.0868500402883003
+EP,Equally Probable,Perfect Information,13,irrigation,3.1250648968424573
+EP,Equally Probable,Perfect Information,14,irrigation,3.199226138404594
+EP,Equally Probable,Perfect Information,15,irrigation,3.100645595204778
+EP,Equally Probable,Perfect Information,16,irrigation,3.1358276878985873
+EP,Equally Probable,Perfect Information,17,irrigation,3.1335845292609967
+EP,Equally Probable,Perfect Information,18,irrigation,3.1033948691067303
+EP,Equally Probable,Perfect Information,19,irrigation,3.1073239220384075
+EP,Equally Probable,Perfect Information,20,irrigation,3.1045920845927975
+EP,Equally Probable,Perfect Information,21,irrigation,3.1868562672252674
+EP,Equally Probable,Perfect Information,22,irrigation,3.1150671589610193
+EP,Equally Probable,Perfect Information,23,irrigation,3.1334151294407246
+EP,Equally Probable,Perfect Information,24,irrigation,3.12413076604507
+EP,Equally Probable,Perfect Information,25,irrigation,3.1838694434597468
+EP,Equally Probable,Perfect Information,1,alt_water,6.446310878303541
+EP,Equally Probable,Perfect Information,2,alt_water,6.451348276819261
+EP,Equally Probable,Perfect Information,3,alt_water,6.466870833262143
+EP,Equally Probable,Perfect Information,4,alt_water,6.47865771561472
+EP,Equally Probable,Perfect Information,5,alt_water,6.425959334366266
+EP,Equally Probable,Perfect Information,6,alt_water,6.477673007385761
+EP,Equally Probable,Perfect Information,7,alt_water,6.4323055201107415
+EP,Equally Probable,Perfect Information,8,alt_water,6.444286944971086
+EP,Equally Probable,Perfect Information,9,alt_water,6.42295140606554
+EP,Equally Probable,Perfect Information,10,alt_water,6.4272609815231805
+EP,Equally Probable,Perfect Information,11,alt_water,6.438183694092164
+EP,Equally Probable,Perfect Information,12,alt_water,6.460380084588472
+EP,Equally Probable,Perfect Information,13,alt_water,6.426307252086654
+EP,Equally Probable,Perfect Information,14,alt_water,6.45702528617645
+EP,Equally Probable,Perfect Information,15,alt_water,6.432970811539897
+EP,Equally Probable,Perfect Information,16,alt_water,6.45372083135985
+EP,Equally Probable,Perfect Information,17,alt_water,6.4801173463392026
+EP,Equally Probable,Perfect Information,18,alt_water,6.411777698101471
+EP,Equally Probable,Perfect Information,19,alt_water,6.425855229649896
+EP,Equally Probable,Perfect Information,20,alt_water,6.42668507171982
+EP,Equally Probable,Perfect Information,21,alt_water,6.475145236460242
+EP,Equally Probable,Perfect Information,22,alt_water,6.425858489156347
+EP,Equally Probable,Perfect Information,23,alt_water,6.444458228571875
+EP,Equally Probable,Perfect Information,24,alt_water,6.431002731049683
+EP,Equally Probable,Perfect Information,25,alt_water,6.438473185962092
+EP,Equally Probable,"Known Climate, Unknown Weather",1,crop_yield,2.8333113876167166
+EP,Equally Probable,"Known Climate, Unknown Weather",2,crop_yield,2.838079929635703
+EP,Equally Probable,"Known Climate, Unknown Weather",3,crop_yield,2.822891705497059
+EP,Equally Probable,"Known Climate, Unknown Weather",4,crop_yield,2.8162928594393657
+EP,Equally Probable,"Known Climate, Unknown Weather",5,crop_yield,2.8548806550137487
+EP,Equally Probable,"Known Climate, Unknown Weather",6,crop_yield,2.8181753897773394
+EP,Equally Probable,"Known Climate, Unknown Weather",7,crop_yield,2.863734460881742
+EP,Equally Probable,"Known Climate, Unknown Weather",8,crop_yield,2.845980372905708
+EP,Equally Probable,"Known Climate, Unknown Weather",9,crop_yield,2.8231396106331887
+EP,Equally Probable,"Known Climate, Unknown Weather",10,crop_yield,2.8384970620986842
+EP,Equally Probable,"Known Climate, Unknown Weather",11,crop_yield,2.8280691335525
+EP,Equally Probable,"Known Climate, Unknown Weather",12,crop_yield,2.8409436609375196
+EP,Equally Probable,"Known Climate, Unknown Weather",13,crop_yield,2.8377377022617694
+EP,Equally Probable,"Known Climate, Unknown Weather",14,crop_yield,2.8171850879408313
+EP,Equally Probable,"Known Climate, Unknown Weather",15,crop_yield,2.854489630608526
+EP,Equally Probable,"Known Climate, Unknown Weather",16,crop_yield,2.835992646123433
+EP,Equally Probable,"Known Climate, Unknown Weather",17,crop_yield,2.8276766065855714
+EP,Equally Probable,"Known Climate, Unknown Weather",18,crop_yield,2.855816844263928
+EP,Equally Probable,"Known Climate, Unknown Weather",19,crop_yield,2.830445431042342
+EP,Equally Probable,"Known Climate, Unknown Weather",20,crop_yield,2.837858049668126
+EP,Equally Probable,"Known Climate, Unknown Weather",21,crop_yield,2.8235325389783963
+EP,Equally Probable,"Known Climate, Unknown Weather",22,crop_yield,2.843497876792851
+EP,Equally Probable,"Known Climate, Unknown Weather",23,crop_yield,2.8233153407211145
+EP,Equally Probable,"Known Climate, Unknown Weather",24,crop_yield,2.8552116716066096
+EP,Equally Probable,"Known Climate, Unknown Weather",25,crop_yield,2.8210448295260213
+EP,Equally Probable,"Known Climate, Unknown Weather",1,water,56.72071459629835
+EP,Equally Probable,"Known Climate, Unknown Weather",2,water,56.70117876775162
+EP,Equally Probable,"Known Climate, Unknown Weather",3,water,56.55946014438151
+EP,Equally Probable,"Known Climate, Unknown Weather",4,water,56.319832166043746
+EP,Equally Probable,"Known Climate, Unknown Weather",5,water,56.91933748416491
+EP,Equally Probable,"Known Climate, Unknown Weather",6,water,56.37591939626747
+EP,Equally Probable,"Known Climate, Unknown Weather",7,water,57.210468278580436
+EP,Equally Probable,"Known Climate, Unknown Weather",8,water,56.891812791104364
+EP,Equally Probable,"Known Climate, Unknown Weather",9,water,56.45360562253417
+EP,Equally Probable,"Known Climate, Unknown Weather",10,water,56.67384621093843
+EP,Equally Probable,"Known Climate, Unknown Weather",11,water,56.610551737804975
+EP,Equally Probable,"Known Climate, Unknown Weather",12,water,56.729001818850655
+EP,Equally Probable,"Known Climate, Unknown Weather",13,water,56.745888254585836
+EP,Equally Probable,"Known Climate, Unknown Weather",14,water,56.388656636066386
+EP,Equally Probable,"Known Climate, Unknown Weather",15,water,56.91890355760427
+EP,Equally Probable,"Known Climate, Unknown Weather",16,water,56.63999356027113
+EP,Equally Probable,"Known Climate, Unknown Weather",17,water,56.59371634609587
+EP,Equally Probable,"Known Climate, Unknown Weather",18,water,56.93141913800057
+EP,Equally Probable,"Known Climate, Unknown Weather",19,water,56.661373788965676
+EP,Equally Probable,"Known Climate, Unknown Weather",20,water,56.761182505807874
+EP,Equally Probable,"Known Climate, Unknown Weather",21,water,56.415691958265825
+EP,Equally Probable,"Known Climate, Unknown Weather",22,water,56.763341538601864
+EP,Equally Probable,"Known Climate, Unknown Weather",23,water,56.550921793425346
+EP,Equally Probable,"Known Climate, Unknown Weather",24,water,56.8739091025075
+EP,Equally Probable,"Known Climate, Unknown Weather",25,water,56.438345158061644
+EP,Equally Probable,"Known Climate, Unknown Weather",1,elc,245360.94248688387
+EP,Equally Probable,"Known Climate, Unknown Weather",2,elc,245331.20320420642
+EP,Equally Probable,"Known Climate, Unknown Weather",3,elc,245260.99388698867
+EP,Equally Probable,"Known Climate, Unknown Weather",4,elc,245566.6475779596
+EP,Equally Probable,"Known Climate, Unknown Weather",5,elc,245190.8516848933
+EP,Equally Probable,"Known Climate, Unknown Weather",6,elc,245301.697445165
+EP,Equally Probable,"Known Climate, Unknown Weather",7,elc,245364.62310291504
+EP,Equally Probable,"Known Climate, Unknown Weather",8,elc,245372.74168234237
+EP,Equally Probable,"Known Climate, Unknown Weather",9,elc,245405.80642536134
+EP,Equally Probable,"Known Climate, Unknown Weather",10,elc,245477.2545996137
+EP,Equally Probable,"Known Climate, Unknown Weather",11,elc,245519.65097853827
+EP,Equally Probable,"Known Climate, Unknown Weather",12,elc,245614.55240412767
+EP,Equally Probable,"Known Climate, Unknown Weather",13,elc,245499.19720334472
+EP,Equally Probable,"Known Climate, Unknown Weather",14,elc,245608.0375206932
+EP,Equally Probable,"Known Climate, Unknown Weather",15,elc,245432.3906789014
+EP,Equally Probable,"Known Climate, Unknown Weather",16,elc,245243.90607965118
+EP,Equally Probable,"Known Climate, Unknown Weather",17,elc,245290.0869573882
+EP,Equally Probable,"Known Climate, Unknown Weather",18,elc,245440.9065701511
+EP,Equally Probable,"Known Climate, Unknown Weather",19,elc,245375.56263779078
+EP,Equally Probable,"Known Climate, Unknown Weather",20,elc,245420.7789450212
+EP,Equally Probable,"Known Climate, Unknown Weather",21,elc,245594.47495288405
+EP,Equally Probable,"Known Climate, Unknown Weather",22,elc,245237.42814832617
+EP,Equally Probable,"Known Climate, Unknown Weather",23,elc,245481.76746372643
+EP,Equally Probable,"Known Climate, Unknown Weather",24,elc,245414.409528694
+EP,Equally Probable,"Known Climate, Unknown Weather",25,elc,245338.26270059095
+EP,Equally Probable,"Known Climate, Unknown Weather",1,irrigation,2.985150624870676
+EP,Equally Probable,"Known Climate, Unknown Weather",2,irrigation,2.980663703093335
+EP,Equally Probable,"Known Climate, Unknown Weather",3,irrigation,3.0170693798001835
+EP,Equally Probable,"Known Climate, Unknown Weather",4,irrigation,3.0754573447031466
+EP,Equally Probable,"Known Climate, Unknown Weather",5,irrigation,2.957394762241278
+EP,Equally Probable,"Known Climate, Unknown Weather",6,irrigation,3.074932876276535
+EP,Equally Probable,"Known Climate, Unknown Weather",7,irrigation,2.8721371199903674
+EP,Equally Probable,"Known Climate, Unknown Weather",8,irrigation,2.989654501670207
+EP,Equally Probable,"Known Climate, Unknown Weather",9,irrigation,3.0823953890345166
+EP,Equally Probable,"Known Climate, Unknown Weather",10,irrigation,3.007778537396653
+EP,Equally Probable,"Known Climate, Unknown Weather",11,irrigation,3.0283132079400175
+EP,Equally Probable,"Known Climate, Unknown Weather",12,irrigation,2.986802686158577
+EP,Equally Probable,"Known Climate, Unknown Weather",13,irrigation,3.008806001840545
+EP,Equally Probable,"Known Climate, Unknown Weather",14,irrigation,3.0860528053419998
+EP,Equally Probable,"Known Climate, Unknown Weather",15,irrigation,2.9698591278135114
+EP,Equally Probable,"Known Climate, Unknown Weather",16,irrigation,3.0140529696833456
+EP,Equally Probable,"Known Climate, Unknown Weather",17,irrigation,3.01390368473099
+EP,Equally Probable,"Known Climate, Unknown Weather",18,irrigation,2.981861528845461
+EP,Equally Probable,"Known Climate, Unknown Weather",19,irrigation,2.97804420335654
+EP,Equally Probable,"Known Climate, Unknown Weather",20,irrigation,2.975748435045191
+EP,Equally Probable,"Known Climate, Unknown Weather",21,irrigation,3.0564915343119385
+EP,Equally Probable,"Known Climate, Unknown Weather",22,irrigation,2.9863328754484058
+EP,Equally Probable,"Known Climate, Unknown Weather",23,irrigation,3.0199750601750845
+EP,Equally Probable,"Known Climate, Unknown Weather",24,irrigation,3.0005698383132935
+EP,Equally Probable,"Known Climate, Unknown Weather",25,irrigation,3.054304329501809
+EP,Equally Probable,"Known Climate, Unknown Weather",1,alt_water,6.43033968046601
+EP,Equally Probable,"Known Climate, Unknown Weather",2,alt_water,6.444532990845185
+EP,Equally Probable,"Known Climate, Unknown Weather",3,alt_water,6.431711846752856
+EP,Equally Probable,"Known Climate, Unknown Weather",4,alt_water,6.4332927753341425
+EP,Equally Probable,"Known Climate, Unknown Weather",5,alt_water,6.434482817120104
+EP,Equally Probable,"Known Climate, Unknown Weather",6,alt_water,6.436003728784449
+EP,Equally Probable,"Known Climate, Unknown Weather",7,alt_water,6.437214375779528
+EP,Equally Probable,"Known Climate, Unknown Weather",8,alt_water,6.420558990574444
+EP,Equally Probable,"Known Climate, Unknown Weather",9,alt_water,6.419329695665767
+EP,Equally Probable,"Known Climate, Unknown Weather",10,alt_water,6.431774034081038
+EP,Equally Probable,"Known Climate, Unknown Weather",11,alt_water,6.427600659228457
+EP,Equally Probable,"Known Climate, Unknown Weather",12,alt_water,6.43942612534446
+EP,Equally Probable,"Known Climate, Unknown Weather",13,alt_water,6.422596495113426
+EP,Equally Probable,"Known Climate, Unknown Weather",14,alt_water,6.436624549142785
+EP,Equally Probable,"Known Climate, Unknown Weather",15,alt_water,6.429930766055624
+EP,Equally Probable,"Known Climate, Unknown Weather",16,alt_water,6.431133405723253
+EP,Equally Probable,"Known Climate, Unknown Weather",17,alt_water,6.434406461149904
+EP,Equally Probable,"Known Climate, Unknown Weather",18,alt_water,6.421640277513833
+EP,Equally Probable,"Known Climate, Unknown Weather",19,alt_water,6.42157144053257
+EP,Equally Probable,"Known Climate, Unknown Weather",20,alt_water,6.420911267660164
+EP,Equally Probable,"Known Climate, Unknown Weather",21,alt_water,6.4434939616793985
+EP,Equally Probable,"Known Climate, Unknown Weather",22,alt_water,6.430369129731664
+EP,Equally Probable,"Known Climate, Unknown Weather",23,alt_water,6.429629725685275
+EP,Equally Probable,"Known Climate, Unknown Weather",24,alt_water,6.429531358529702
+EP,Equally Probable,"Known Climate, Unknown Weather",25,alt_water,6.426576835330159
+EP,Equally Probable,Stochastic,1,crop_yield,2.672391679032896
+EP,Equally Probable,Stochastic,2,crop_yield,2.6745700440370124
+EP,Equally Probable,Stochastic,3,crop_yield,2.66177431503103
+EP,Equally Probable,Stochastic,4,crop_yield,2.6546219742148467
+EP,Equally Probable,Stochastic,5,crop_yield,2.690580821217502
+EP,Equally Probable,Stochastic,6,crop_yield,2.654197214477354
+EP,Equally Probable,Stochastic,7,crop_yield,2.7107569508151452
+EP,Equally Probable,Stochastic,8,crop_yield,2.6866398990752116
+EP,Equally Probable,Stochastic,9,crop_yield,2.6580084689915022
+EP,Equally Probable,Stochastic,10,crop_yield,2.6784397838821734
+EP,Equally Probable,Stochastic,11,crop_yield,2.6677284001760007
+EP,Equally Probable,Stochastic,12,crop_yield,2.6827234847118997
+EP,Equally Probable,Stochastic,13,crop_yield,2.677465061633084
+EP,Equally Probable,Stochastic,14,crop_yield,2.650259314564605
+EP,Equally Probable,Stochastic,15,crop_yield,2.6931639015012245
+EP,Equally Probable,Stochastic,16,crop_yield,2.6676172220609997
+EP,Equally Probable,Stochastic,17,crop_yield,2.66833488833681
+EP,Equally Probable,Stochastic,18,crop_yield,2.6973560622053525
+EP,Equally Probable,Stochastic,19,crop_yield,2.6725259231112624
+EP,Equally Probable,Stochastic,20,crop_yield,2.679938835524999
+EP,Equally Probable,Stochastic,21,crop_yield,2.662795888582966
+EP,Equally Probable,Stochastic,22,crop_yield,2.677184308014302
+EP,Equally Probable,Stochastic,23,crop_yield,2.669081347455648
+EP,Equally Probable,Stochastic,24,crop_yield,2.6946502575070967
+EP,Equally Probable,Stochastic,25,crop_yield,2.6552956083294093
+EP,Equally Probable,Stochastic,1,water,54.564911561353334
+EP,Equally Probable,Stochastic,2,water,54.5257692993922
+EP,Equally Probable,Stochastic,3,water,54.3852853906455
+EP,Equally Probable,Stochastic,4,water,54.18033686075554
+EP,Equally Probable,Stochastic,5,water,54.76855681058434
+EP,Equally Probable,Stochastic,6,water,54.206429866844545
+EP,Equally Probable,Stochastic,7,water,55.04211963334496
+EP,Equally Probable,Stochastic,8,water,54.71294138305507
+EP,Equally Probable,Stochastic,9,water,54.303327243809
+EP,Equally Probable,Stochastic,10,water,54.53909382480965
+EP,Equally Probable,Stochastic,11,water,54.4543902927294
+EP,Equally Probable,Stochastic,12,water,54.57103917645865
+EP,Equally Probable,Stochastic,13,water,54.61096863177769
+EP,Equally Probable,Stochastic,14,water,54.20842582577598
+EP,Equally Probable,Stochastic,15,water,54.76802487967723
+EP,Equally Probable,Stochastic,16,water,54.45560647970257
+EP,Equally Probable,Stochastic,17,water,54.41250651421796
+EP,Equally Probable,Stochastic,18,water,54.7992246454567
+EP,Equally Probable,Stochastic,19,water,54.556603957941334
+EP,Equally Probable,Stochastic,20,water,54.620671081119674
+EP,Equally Probable,Stochastic,21,water,54.24909820829501
+EP,Equally Probable,Stochastic,22,water,54.60052063935157
+EP,Equally Probable,Stochastic,23,water,54.443892583428465
+EP,Equally Probable,Stochastic,24,water,54.72376205853462
+EP,Equally Probable,Stochastic,25,water,54.2905711841746
+EP,Equally Probable,Stochastic,1,elc,196760.03204778585
+EP,Equally Probable,Stochastic,2,elc,196696.10724935212
+EP,Equally Probable,Stochastic,3,elc,196942.674337348
+EP,Equally Probable,Stochastic,4,elc,197125.3165872124
+EP,Equally Probable,Stochastic,5,elc,196586.52179274897
+EP,Equally Probable,Stochastic,6,elc,197143.5808153685
+EP,Equally Probable,Stochastic,7,elc,196221.2372136351
+EP,Equally Probable,Stochastic,8,elc,196833.08879934886
+EP,Equally Probable,Stochastic,9,elc,197216.6376689827
+EP,Equally Probable,Stochastic,10,elc,196778.29620162214
+EP,Equally Probable,Stochastic,11,elc,196979.20272455516
+EP,Equally Probable,Stochastic,12,elc,196714.37139036588
+EP,Equally Probable,Stochastic,13,elc,196869.6173222358
+EP,Equally Probable,Stochastic,14,elc,197253.1661778813
+EP,Equally Probable,Stochastic,15,elc,196604.78598582145
+EP,Equally Probable,Stochastic,16,elc,196842.22107422748
+EP,Equally Probable,Stochastic,17,elc,196924.4100523628
+EP,Equally Probable,Stochastic,18,elc,196668.7107168601
+EP,Equally Probable,Stochastic,19,elc,196659.57883414323
+EP,Equally Probable,Stochastic,20,elc,196650.44665514273
+EP,Equally Probable,Stochastic,21,elc,197070.52385040646
+EP,Equally Probable,Stochastic,22,elc,196677.84301148242
+EP,Equally Probable,Stochastic,23,elc,196951.80637885365
+EP,Equally Probable,Stochastic,24,elc,196814.82449696085
+EP,Equally Probable,Stochastic,25,elc,197033.9954934886
+EP,Equally Probable,Stochastic,1,irrigation,2.9636648638415117
+EP,Equally Probable,Stochastic,2,irrigation,2.9565091048130747
+EP,Equally Probable,Stochastic,3,irrigation,3.0010586676390028
+EP,Equally Probable,Stochastic,4,irrigation,3.0421600004445
+EP,Equally Probable,Stochastic,5,irrigation,2.930647765514936
+EP,Equally Probable,Stochastic,6,irrigation,3.0433217605245986
+EP,Equally Probable,Stochastic,7,irrigation,2.8609801033805806
+EP,Equally Probable,Stochastic,8,irrigation,2.9746676752429653
+EP,Equally Probable,Stochastic,9,irrigation,3.051676324129936
+EP,Equally Probable,Stochastic,10,irrigation,2.972065152438444
+EP,Equally Probable,Stochastic,11,irrigation,3.006206963133098
+EP,Equally Probable,Stochastic,12,irrigation,2.9613783908892435
+EP,Equally Probable,Stochastic,13,irrigation,2.9824642264386005
+EP,Equally Probable,Stochastic,14,irrigation,3.0598259696965093
+EP,Equally Probable,Stochastic,15,irrigation,2.935340503782606
+EP,Equally Probable,Stochastic,16,irrigation,2.9823988064116436
+EP,Equally Probable,Stochastic,17,irrigation,2.9998969135791422
+EP,Equally Probable,Stochastic,18,irrigation,2.9467334586606246
+EP,Equally Probable,Stochastic,19,irrigation,2.946947055697986
+EP,Equally Probable,Stochastic,20,irrigation,2.9453951547245634
+EP,Equally Probable,Stochastic,21,irrigation,3.0328485966289915
+EP,Equally Probable,Stochastic,22,irrigation,2.949874307099846
+EP,Equally Probable,Stochastic,23,irrigation,3.002963666380457
+EP,Equally Probable,Stochastic,24,irrigation,2.9754479608694546
+EP,Equally Probable,Stochastic,25,irrigation,3.0194024617343884
+EP,Equally Probable,Stochastic,1,alt_water,4.7643719490928955
+EP,Equally Probable,Stochastic,2,alt_water,4.7756463879010695
+EP,Equally Probable,Stochastic,3,alt_water,4.765877068850542
+EP,Equally Probable,Stochastic,4,alt_water,4.788297945352732
+EP,Equally Probable,Stochastic,5,alt_water,4.759521090748701
+EP,Equally Probable,Stochastic,6,alt_water,4.781417450432307
+EP,Equally Probable,Stochastic,7,alt_water,4.7557239801397895
+EP,Equally Probable,Stochastic,8,alt_water,4.755624137195893
+EP,Equally Probable,Stochastic,9,alt_water,4.764882661311323
+EP,Equally Probable,Stochastic,10,alt_water,4.776873563730603
+EP,Equally Probable,Stochastic,11,alt_water,4.7648268585126985
+EP,Equally Probable,Stochastic,12,alt_water,4.774270045986394
+EP,Equally Probable,Stochastic,13,alt_water,4.758014745992171
+EP,Equally Probable,Stochastic,14,alt_water,4.773119511162055
+EP,Equally Probable,Stochastic,15,alt_water,4.763249652367274
+EP,Equally Probable,Stochastic,16,alt_water,4.770514351385059
+EP,Equally Probable,Stochastic,17,alt_water,4.774276766109826
+EP,Equally Probable,Stochastic,18,alt_water,4.765282299813271
+EP,Equally Probable,Stochastic,19,alt_water,4.770890619467327
+EP,Equally Probable,Stochastic,20,alt_water,4.76866513902357
+EP,Equally Probable,Stochastic,21,alt_water,4.79242606661218
+EP,Equally Probable,Stochastic,22,alt_water,4.762167593131575
+EP,Equally Probable,Stochastic,23,alt_water,4.773346027432454
+EP,Equally Probable,Stochastic,24,alt_water,4.764989136947833
+EP,Equally Probable,Stochastic,25,alt_water,4.76974822016256
+EP,Equally Probable,Expected Value,1,crop_yield,2.6721047164001868
+EP,Equally Probable,Expected Value,2,crop_yield,2.674274566524578
+EP,Equally Probable,Expected Value,3,crop_yield,2.661488337396631
+EP,Equally Probable,Expected Value,4,crop_yield,2.654331870799463
+EP,Equally Probable,Expected Value,5,crop_yield,2.69028946484526
+EP,Equally Probable,Expected Value,6,crop_yield,2.6539107609818764
+EP,Equally Probable,Expected Value,7,crop_yield,2.7104565719886335
+EP,Equally Probable,Expected Value,8,crop_yield,2.6863587656688925
+EP,Equally Probable,Expected Value,9,crop_yield,2.657731499936263
+EP,Equally Probable,Expected Value,10,crop_yield,2.6781464953722667
+EP,Equally Probable,Expected Value,11,crop_yield,2.667445825024475
+EP,Equally Probable,Expected Value,12,crop_yield,2.682426541941241
+EP,Equally Probable,Expected Value,13,crop_yield,2.6771836906335085
+EP,Equally Probable,Expected Value,14,crop_yield,2.649981620541087
+EP,Equally Probable,Expected Value,15,crop_yield,2.6928713280780285
+EP,Equally Probable,Expected Value,16,crop_yield,2.6673280745579095
+EP,Equally Probable,Expected Value,17,crop_yield,2.668045258006538
+EP,Equally Probable,Expected Value,18,crop_yield,2.6970661626623715
+EP,Equally Probable,Expected Value,19,crop_yield,2.672233119595741
+EP,Equally Probable,Expected Value,20,crop_yield,2.679645540259981
+EP,Equally Probable,Expected Value,21,crop_yield,2.6625028604256356
+EP,Equally Probable,Expected Value,22,crop_yield,2.676892718543416
+EP,Equally Probable,Expected Value,23,crop_yield,2.668795365405033
+EP,Equally Probable,Expected Value,24,crop_yield,2.6943627962258483
+EP,Equally Probable,Expected Value,25,crop_yield,2.655010608926587
+EP,Equally Probable,Expected Value,1,water,54.55666643861692
+EP,Equally Probable,Expected Value,2,water,54.51727446866428
+EP,Equally Probable,Expected Value,3,water,54.37705170892512
+EP,Equally Probable,Expected Value,4,water,54.172002110454706
+EP,Equally Probable,Expected Value,5,water,54.760172496065884
+EP,Equally Probable,Expected Value,6,water,54.19820309723528
+EP,Equally Probable,Expected Value,7,water,55.03347791325789
+EP,Equally Probable,Expected Value,8,water,54.704864149291936
+EP,Equally Probable,Expected Value,9,water,54.2953524963154
+EP,Equally Probable,Expected Value,10,water,54.53066943760341
+EP,Equally Probable,Expected Value,11,water,54.44626967112828
+EP,Equally Probable,Expected Value,12,water,54.56248865773472
+EP,Equally Probable,Expected Value,13,water,54.602878617605825
+EP,Equally Probable,Expected Value,14,water,54.20047096752325
+EP,Equally Probable,Expected Value,15,water,54.759609201641055
+EP,Equally Probable,Expected Value,16,water,54.44729741370192
+EP,Equally Probable,Expected Value,17,water,54.404190084583824
+EP,Equally Probable,Expected Value,18,water,54.79089101140605
+EP,Equally Probable,Expected Value,19,water,54.548184346336384
+EP,Equally Probable,Expected Value,20,water,54.61223022179095
+EP,Equally Probable,Expected Value,21,water,54.240682686543614
+EP,Equally Probable,Expected Value,22,water,54.59211781646906
+EP,Equally Probable,Expected Value,23,water,54.435678465292256
+EP,Equally Probable,Expected Value,24,water,54.715503826834144
+EP,Equally Probable,Expected Value,25,water,54.28236385851815
+EP,Equally Probable,Expected Value,1,elc,196666.66470564713
+EP,Equally Probable,Expected Value,2,elc,196602.4818813622
+EP,Equally Probable,Expected Value,3,elc,196850.04417036776
+EP,Equally Probable,Expected Value,4,elc,197033.4235833082
+EP,Equally Probable,Expected Value,5,elc,196492.45413034628
+EP,Equally Probable,Expected Value,6,elc,197051.76153800933
+EP,Equally Probable,Expected Value,7,elc,196125.69518993882
+EP,Equally Probable,Expected Value,8,elc,196740.01633568408
+EP,Equally Probable,Expected Value,9,elc,197125.11327630605
+EP,Equally Probable,Expected Value,10,elc,196685.00256567553
+EP,Equally Probable,Expected Value,11,elc,196886.71999775764
+EP,Equally Probable,Expected Value,12,elc,196620.81973619197
+EP,Equally Probable,Expected Value,13,elc,196776.69229416316
+EP,Equally Probable,Expected Value,14,elc,197161.78921623025
+EP,Equally Probable,Expected Value,15,elc,196510.79203826358
+EP,Equally Probable,Expected Value,16,elc,196749.18545618138
+EP,Equally Probable,Expected Value,17,elc,196831.7061602415
+EP,Equally Probable,Expected Value,18,elc,196574.97478279175
+EP,Equally Probable,Expected Value,19,elc,196565.8060378054
+EP,Equally Probable,Expected Value,20,elc,196556.6369967414
+EP,Equally Probable,Expected Value,21,elc,196978.40968747094
+EP,Equally Probable,Expected Value,22,elc,196584.14393697513
+EP,Equally Probable,Expected Value,23,elc,196859.21306823115
+EP,Equally Probable,Expected Value,24,elc,196721.67830496025
+EP,Equally Probable,Expected Value,25,elc,196941.73391563003
+EP,Equally Probable,Expected Value,1,irrigation,2.9554002052662423
+EP,Equally Probable,Expected Value,2,irrigation,2.9480001312079174
+EP,Equally Probable,Expected Value,3,irrigation,2.992821931867587
+EP,Equally Probable,Expected Value,4,irrigation,3.0338045237679987
+EP,Equally Probable,Expected Value,5,irrigation,2.9222574690231897
+EP,Equally Probable,Expected Value,6,irrigation,3.0350710341806924
+EP,Equally Probable,Expected Value,7,irrigation,2.8523315056989382
+EP,Equally Probable,Expected Value,8,irrigation,2.966570509754278
+EP,Equally Probable,Expected Value,9,irrigation,3.043697838986297
+EP,Equally Probable,Expected Value,10,irrigation,2.9636189863176265
+EP,Equally Probable,Expected Value,11,irrigation,2.9980679508165076
+EP,Equally Probable,Expected Value,12,irrigation,2.952827463196476
+EP,Equally Probable,Expected Value,13,irrigation,2.9743600539783808
+EP,Equally Probable,Expected Value,14,irrigation,3.051826506073436
+EP,Equally Probable,Expected Value,15,irrigation,2.9269152832962035
+EP,Equally Probable,Expected Value,16,irrigation,2.974071273782657
+EP,Equally Probable,Expected Value,17,irrigation,2.9915554482893194
+EP,Equally Probable,Expected Value,18,irrigation,2.9383849933476722
+EP,Equally Probable,Expected Value,19,irrigation,2.938514835105787
+EP,Equally Probable,Expected Value,20,irrigation,2.9369489470392116
+EP,Equally Probable,Expected Value,21,irrigation,3.024409353689073
+EP,Equally Probable,Expected Value,22,irrigation,2.941476998532872
+EP,Equally Probable,Expected Value,23,irrigation,2.994726909521611
+EP,Equally Probable,Expected Value,24,irrigation,2.9671692978236055
+EP,Equally Probable,Expected Value,25,irrigation,3.0111936061997957
+EP,Equally Probable,Expected Value,1,alt_water,4.500443588782776
+EP,Equally Probable,Expected Value,2,alt_water,4.517749370021678
+EP,Equally Probable,Expected Value,3,alt_water,4.506431171717104
+EP,Equally Probable,Expected Value,4,alt_water,4.535404212621994
+EP,Equally Probable,Expected Value,5,alt_water,4.496078312324822
+EP,Equally Probable,Expected Value,6,alt_water,4.526159103362938
+EP,Equally Probable,Expected Value,7,alt_water,4.492322005854463
+EP,Equally Probable,Expected Value,8,alt_water,4.488975000038375
+EP,Equally Probable,Expected Value,9,alt_water,4.503344970715294
+EP,Equally Probable,Expected Value,10,alt_water,4.518622320567974
+EP,Equally Probable,Expected Value,11,alt_water,4.502715520331217
+EP,Equally Probable,Expected Value,12,alt_water,4.518869411071824
+EP,Equally Probable,Expected Value,13,alt_water,4.492108477580931
+EP,Equally Probable,Expected Value,14,alt_water,4.512738675879628
+EP,Equally Probable,Expected Value,15,alt_water,4.501131802032825
+EP,Equally Probable,Expected Value,16,alt_water,4.510884249414209
+EP,Equally Probable,Expected Value,17,alt_water,4.517385962161233
+EP,Equally Probable,Expected Value,18,alt_water,4.501669637892185
+EP,Equally Probable,Expected Value,19,alt_water,4.5092533535592585
+EP,Equally Probable,Expected Value,20,alt_water,4.50785951559345
+EP,Equally Probable,Expected Value,21,alt_water,4.540504438055588
+EP,Equally Probable,Expected Value,22,alt_water,4.501350093228699
+EP,Equally Probable,Expected Value,23,alt_water,4.5128622472458835
+EP,Equally Probable,Expected Value,24,alt_water,4.503393085286496
+EP,Equally Probable,Expected Value,25,alt_water,4.51114913185936
+DML,Dry Most Likely,Perfect Information,1,crop_yield,2.765396822883987
+DML,Dry Most Likely,Perfect Information,2,crop_yield,2.776902640246345
+DML,Dry Most Likely,Perfect Information,3,crop_yield,2.7884223592194375
+DML,Dry Most Likely,Perfect Information,4,crop_yield,2.768773320326601
+DML,Dry Most Likely,Perfect Information,5,crop_yield,2.786054825121053
+DML,Dry Most Likely,Perfect Information,6,crop_yield,2.7896507993142405
+DML,Dry Most Likely,Perfect Information,7,crop_yield,2.782351818491871
+DML,Dry Most Likely,Perfect Information,8,crop_yield,2.7813404297707733
+DML,Dry Most Likely,Perfect Information,9,crop_yield,2.7596891490645277
+DML,Dry Most Likely,Perfect Information,10,crop_yield,2.756752559639148
+DML,Dry Most Likely,Perfect Information,11,crop_yield,2.7742772420625657
+DML,Dry Most Likely,Perfect Information,12,crop_yield,2.771530856370035
+DML,Dry Most Likely,Perfect Information,13,crop_yield,2.7685306694641545
+DML,Dry Most Likely,Perfect Information,14,crop_yield,2.773921441604009
+DML,Dry Most Likely,Perfect Information,15,crop_yield,2.7578146497120652
+DML,Dry Most Likely,Perfect Information,16,crop_yield,2.7786462198211397
+DML,Dry Most Likely,Perfect Information,17,crop_yield,2.762515848660634
+DML,Dry Most Likely,Perfect Information,18,crop_yield,2.776533969496346
+DML,Dry Most Likely,Perfect Information,19,crop_yield,2.7505603169941124
+DML,Dry Most Likely,Perfect Information,20,crop_yield,2.7564605479136475
+DML,Dry Most Likely,Perfect Information,21,crop_yield,2.7565710794548504
+DML,Dry Most Likely,Perfect Information,22,crop_yield,2.770034896150326
+DML,Dry Most Likely,Perfect Information,23,crop_yield,2.7832662131206356
+DML,Dry Most Likely,Perfect Information,24,crop_yield,2.7725596103704104
+DML,Dry Most Likely,Perfect Information,25,crop_yield,2.7627882611950545
+DML,Dry Most Likely,Perfect Information,1,water,53.83866937165936
+DML,Dry Most Likely,Perfect Information,2,water,53.98808852014003
+DML,Dry Most Likely,Perfect Information,3,water,54.151113276571124
+DML,Dry Most Likely,Perfect Information,4,water,53.80678676147122
+DML,Dry Most Likely,Perfect Information,5,water,54.08237679464973
+DML,Dry Most Likely,Perfect Information,6,water,54.06113498341283
+DML,Dry Most Likely,Perfect Information,7,water,54.11237902457062
+DML,Dry Most Likely,Perfect Information,8,water,54.02469195887327
+DML,Dry Most Likely,Perfect Information,9,water,53.59219251933659
+DML,Dry Most Likely,Perfect Information,10,water,53.55936175993145
+DML,Dry Most Likely,Perfect Information,11,water,53.929053521263924
+DML,Dry Most Likely,Perfect Information,12,water,53.88799852434984
+DML,Dry Most Likely,Perfect Information,13,water,53.7811216166556
+DML,Dry Most Likely,Perfect Information,14,water,53.8558821439771
+DML,Dry Most Likely,Perfect Information,15,water,53.667598395419155
+DML,Dry Most Likely,Perfect Information,16,water,53.93813135088849
+DML,Dry Most Likely,Perfect Information,17,water,53.72823184758859
+DML,Dry Most Likely,Perfect Information,18,water,53.95728662867992
+DML,Dry Most Likely,Perfect Information,19,water,53.54353495986375
+DML,Dry Most Likely,Perfect Information,20,water,53.70720766786819
+DML,Dry Most Likely,Perfect Information,21,water,53.60212731897267
+DML,Dry Most Likely,Perfect Information,22,water,53.86133840842462
+DML,Dry Most Likely,Perfect Information,23,water,54.06026423046556
+DML,Dry Most Likely,Perfect Information,24,water,53.93489747229275
+DML,Dry Most Likely,Perfect Information,25,water,53.674132513209464
+DML,Dry Most Likely,Perfect Information,1,elc,407515.4658158137
+DML,Dry Most Likely,Perfect Information,2,elc,407601.84968128783
+DML,Dry Most Likely,Perfect Information,3,elc,407439.30539753765
+DML,Dry Most Likely,Perfect Information,4,elc,407277.2528526621
+DML,Dry Most Likely,Perfect Information,5,elc,407609.7324173336
+DML,Dry Most Likely,Perfect Information,6,elc,407349.3681028209
+DML,Dry Most Likely,Perfect Information,7,elc,407464.1157399484
+DML,Dry Most Likely,Perfect Information,8,elc,407385.70046690304
+DML,Dry Most Likely,Perfect Information,9,elc,407570.9827002941
+DML,Dry Most Likely,Perfect Information,10,elc,407696.95915530564
+DML,Dry Most Likely,Perfect Information,11,elc,407447.00004701555
+DML,Dry Most Likely,Perfect Information,12,elc,407664.0191383966
+DML,Dry Most Likely,Perfect Information,13,elc,407459.81836403377
+DML,Dry Most Likely,Perfect Information,14,elc,407140.1535098469
+DML,Dry Most Likely,Perfect Information,15,elc,407504.88655187906
+DML,Dry Most Likely,Perfect Information,16,elc,407173.6770904302
+DML,Dry Most Likely,Perfect Information,17,elc,407535.83157982543
+DML,Dry Most Likely,Perfect Information,18,elc,407466.515659904
+DML,Dry Most Likely,Perfect Information,19,elc,407620.0025703574
+DML,Dry Most Likely,Perfect Information,20,elc,407638.9411342125
+DML,Dry Most Likely,Perfect Information,21,elc,407489.53071737336
+DML,Dry Most Likely,Perfect Information,22,elc,407391.94158795767
+DML,Dry Most Likely,Perfect Information,23,elc,407285.3970386295
+DML,Dry Most Likely,Perfect Information,24,elc,407578.94873030594
+DML,Dry Most Likely,Perfect Information,25,elc,407449.6610874528
+DML,Dry Most Likely,Perfect Information,1,irrigation,4.333990274542881
+DML,Dry Most Likely,Perfect Information,2,irrigation,4.3310452506022274
+DML,Dry Most Likely,Perfect Information,3,irrigation,4.327209292323872
+DML,Dry Most Likely,Perfect Information,4,irrigation,4.340011059829395
+DML,Dry Most Likely,Perfect Information,5,irrigation,4.362950205025713
+DML,Dry Most Likely,Perfect Information,6,irrigation,4.339471095923053
+DML,Dry Most Likely,Perfect Information,7,irrigation,4.270459578431252
+DML,Dry Most Likely,Perfect Information,8,irrigation,4.313079162466265
+DML,Dry Most Likely,Perfect Information,9,irrigation,4.419128982336623
+DML,Dry Most Likely,Perfect Information,10,irrigation,4.439047157212068
+DML,Dry Most Likely,Perfect Information,11,irrigation,4.323171389424112
+DML,Dry Most Likely,Perfect Information,12,irrigation,4.321359667472707
+DML,Dry Most Likely,Perfect Information,13,irrigation,4.351723224647653
+DML,Dry Most Likely,Perfect Information,14,irrigation,4.369670704563605
+DML,Dry Most Likely,Perfect Information,15,irrigation,4.3913410949125495
+DML,Dry Most Likely,Perfect Information,16,irrigation,4.349401146395368
+DML,Dry Most Likely,Perfect Information,17,irrigation,4.371497173196944
+DML,Dry Most Likely,Perfect Information,18,irrigation,4.32495838367359
+DML,Dry Most Likely,Perfect Information,19,irrigation,4.401940118450249
+DML,Dry Most Likely,Perfect Information,20,irrigation,4.327609544681187
+DML,Dry Most Likely,Perfect Information,21,irrigation,4.406958685911387
+DML,Dry Most Likely,Perfect Information,22,irrigation,4.3715470572188275
+DML,Dry Most Likely,Perfect Information,23,irrigation,4.30837543810285
+DML,Dry Most Likely,Perfect Information,24,irrigation,4.35526543326863
+DML,Dry Most Likely,Perfect Information,25,irrigation,4.405068976794259
+DML,Dry Most Likely,Perfect Information,1,alt_water,10.902648698454245
+DML,Dry Most Likely,Perfect Information,2,alt_water,10.957242365837983
+DML,Dry Most Likely,Perfect Information,3,alt_water,10.904622470347404
+DML,Dry Most Likely,Perfect Information,4,alt_water,10.915521650435592
+DML,Dry Most Likely,Perfect Information,5,alt_water,10.894521123341637
+DML,Dry Most Likely,Perfect Information,6,alt_water,10.920743431859373
+DML,Dry Most Likely,Perfect Information,7,alt_water,10.932872375448182
+DML,Dry Most Likely,Perfect Information,8,alt_water,10.915747046857433
+DML,Dry Most Likely,Perfect Information,9,alt_water,10.928478223744886
+DML,Dry Most Likely,Perfect Information,10,alt_water,10.931298882930667
+DML,Dry Most Likely,Perfect Information,11,alt_water,10.948086251742986
+DML,Dry Most Likely,Perfect Information,12,alt_water,10.936613499539035
+DML,Dry Most Likely,Perfect Information,13,alt_water,10.90721555990462
+DML,Dry Most Likely,Perfect Information,14,alt_water,10.946246631033109
+DML,Dry Most Likely,Perfect Information,15,alt_water,10.926101518052262
+DML,Dry Most Likely,Perfect Information,16,alt_water,10.896788200938325
+DML,Dry Most Likely,Perfect Information,17,alt_water,10.953329842558489
+DML,Dry Most Likely,Perfect Information,18,alt_water,10.936494987633802
+DML,Dry Most Likely,Perfect Information,19,alt_water,10.926271290579923
+DML,Dry Most Likely,Perfect Information,20,alt_water,10.910934407433313
+DML,Dry Most Likely,Perfect Information,21,alt_water,10.94664690336272
+DML,Dry Most Likely,Perfect Information,22,alt_water,10.88992094859151
+DML,Dry Most Likely,Perfect Information,23,alt_water,10.89799862849349
+DML,Dry Most Likely,Perfect Information,24,alt_water,10.908397852294536
+DML,Dry Most Likely,Perfect Information,25,alt_water,10.891517622855428
+DML,Dry Most Likely,"Known Climate, Unknown Weather",1,crop_yield,2.7554702047734527
+DML,Dry Most Likely,"Known Climate, Unknown Weather",2,crop_yield,2.761079020549693
+DML,Dry Most Likely,"Known Climate, Unknown Weather",3,crop_yield,2.7735357661813618
+DML,Dry Most Likely,"Known Climate, Unknown Weather",4,crop_yield,2.753702109178056
+DML,Dry Most Likely,"Known Climate, Unknown Weather",5,crop_yield,2.772444374428214
+DML,Dry Most Likely,"Known Climate, Unknown Weather",6,crop_yield,2.7748627542818345
+DML,Dry Most Likely,"Known Climate, Unknown Weather",7,crop_yield,2.769622737612831
+DML,Dry Most Likely,"Known Climate, Unknown Weather",8,crop_yield,2.763342239984171
+DML,Dry Most Likely,"Known Climate, Unknown Weather",9,crop_yield,2.7441445137706575
+DML,Dry Most Likely,"Known Climate, Unknown Weather",10,crop_yield,2.743254654620617
+DML,Dry Most Likely,"Known Climate, Unknown Weather",11,crop_yield,2.7579891862701627
+DML,Dry Most Likely,"Known Climate, Unknown Weather",12,crop_yield,2.760896445509217
+DML,Dry Most Likely,"Known Climate, Unknown Weather",13,crop_yield,2.7528314034462995
+DML,Dry Most Likely,"Known Climate, Unknown Weather",14,crop_yield,2.757569733160205
+DML,Dry Most Likely,"Known Climate, Unknown Weather",15,crop_yield,2.7459212945732143
+DML,Dry Most Likely,"Known Climate, Unknown Weather",16,crop_yield,2.763506974275433
+DML,Dry Most Likely,"Known Climate, Unknown Weather",17,crop_yield,2.7493084363921536
+DML,Dry Most Likely,"Known Climate, Unknown Weather",18,crop_yield,2.7598565443418552
+DML,Dry Most Likely,"Known Climate, Unknown Weather",19,crop_yield,2.733984612282516
+DML,Dry Most Likely,"Known Climate, Unknown Weather",20,crop_yield,2.74339004537329
+DML,Dry Most Likely,"Known Climate, Unknown Weather",21,crop_yield,2.7438521342749462
+DML,Dry Most Likely,"Known Climate, Unknown Weather",22,crop_yield,2.7595452400945697
+DML,Dry Most Likely,"Known Climate, Unknown Weather",23,crop_yield,2.767214837728389
+DML,Dry Most Likely,"Known Climate, Unknown Weather",24,crop_yield,2.760982118697457
+DML,Dry Most Likely,"Known Climate, Unknown Weather",25,crop_yield,2.751034464397385
+DML,Dry Most Likely,"Known Climate, Unknown Weather",1,water,53.766432085292834
+DML,Dry Most Likely,"Known Climate, Unknown Weather",2,water,53.87011041323333
+DML,Dry Most Likely,"Known Climate, Unknown Weather",3,water,54.043278207357574
+DML,Dry Most Likely,"Known Climate, Unknown Weather",4,water,53.694357038989736
+DML,Dry Most Likely,"Known Climate, Unknown Weather",5,water,53.98789055778849
+DML,Dry Most Likely,"Known Climate, Unknown Weather",6,water,53.95825214345856
+DML,Dry Most Likely,"Known Climate, Unknown Weather",7,water,54.03326689323048
+DML,Dry Most Likely,"Known Climate, Unknown Weather",8,water,53.90887042529148
+DML,Dry Most Likely,"Known Climate, Unknown Weather",9,water,53.47516791450662
+DML,Dry Most Likely,"Known Climate, Unknown Weather",10,water,53.46857748366662
+DML,Dry Most Likely,"Known Climate, Unknown Weather",11,water,53.810357319514345
+DML,Dry Most Likely,"Known Climate, Unknown Weather",12,water,53.79851193831603
+DML,Dry Most Likely,"Known Climate, Unknown Weather",13,water,53.682102197619564
+DML,Dry Most Likely,"Known Climate, Unknown Weather",14,water,53.747413728347354
+DML,Dry Most Likely,"Known Climate, Unknown Weather",15,water,53.57749250404704
+DML,Dry Most Likely,"Known Climate, Unknown Weather",16,water,53.831128111658046
+DML,Dry Most Likely,"Known Climate, Unknown Weather",17,water,53.62682160753909
+DML,Dry Most Likely,"Known Climate, Unknown Weather",18,water,53.82553402550301
+DML,Dry Most Likely,"Known Climate, Unknown Weather",19,water,53.41970624689657
+DML,Dry Most Likely,"Known Climate, Unknown Weather",20,water,53.614059996617996
+DML,Dry Most Likely,"Known Climate, Unknown Weather",21,water,53.517039473736084
+DML,Dry Most Likely,"Known Climate, Unknown Weather",22,water,53.773176163415286
+DML,Dry Most Likely,"Known Climate, Unknown Weather",23,water,53.94110852789442
+DML,Dry Most Likely,"Known Climate, Unknown Weather",24,water,53.85211057921054
+DML,Dry Most Likely,"Known Climate, Unknown Weather",25,water,53.577023862004445
+DML,Dry Most Likely,"Known Climate, Unknown Weather",1,elc,409222.44473240507
+DML,Dry Most Likely,"Known Climate, Unknown Weather",2,elc,409066.1328730519
+DML,Dry Most Likely,"Known Climate, Unknown Weather",3,elc,409117.05715054413
+DML,Dry Most Likely,"Known Climate, Unknown Weather",4,elc,409035.12871927576
+DML,Dry Most Likely,"Known Climate, Unknown Weather",5,elc,409097.44490235136
+DML,Dry Most Likely,"Known Climate, Unknown Weather",6,elc,409009.80755553575
+DML,Dry Most Likely,"Known Climate, Unknown Weather",7,elc,409192.24829841184
+DML,Dry Most Likely,"Known Climate, Unknown Weather",8,elc,409041.7153414844
+DML,Dry Most Likely,"Known Climate, Unknown Weather",9,elc,409206.32191152754
+DML,Dry Most Likely,"Known Climate, Unknown Weather",10,elc,409494.6253074767
+DML,Dry Most Likely,"Known Climate, Unknown Weather",11,elc,409009.4203828154
+DML,Dry Most Likely,"Known Climate, Unknown Weather",12,elc,409328.36390050023
+DML,Dry Most Likely,"Known Climate, Unknown Weather",13,elc,409073.2607172947
+DML,Dry Most Likely,"Known Climate, Unknown Weather",14,elc,409137.1199416807
+DML,Dry Most Likely,"Known Climate, Unknown Weather",15,elc,409567.0436508705
+DML,Dry Most Likely,"Known Climate, Unknown Weather",16,elc,408910.52631021815
+DML,Dry Most Likely,"Known Climate, Unknown Weather",17,elc,409219.0740141737
+DML,Dry Most Likely,"Known Climate, Unknown Weather",18,elc,409045.4550122587
+DML,Dry Most Likely,"Known Climate, Unknown Weather",19,elc,409360.577058397
+DML,Dry Most Likely,"Known Climate, Unknown Weather",20,elc,409135.4730378654
+DML,Dry Most Likely,"Known Climate, Unknown Weather",21,elc,409035.52403232706
+DML,Dry Most Likely,"Known Climate, Unknown Weather",22,elc,409233.3432328742
+DML,Dry Most Likely,"Known Climate, Unknown Weather",23,elc,409059.8825866642
+DML,Dry Most Likely,"Known Climate, Unknown Weather",24,elc,409388.3989791783
+DML,Dry Most Likely,"Known Climate, Unknown Weather",25,elc,409070.57772078854
+DML,Dry Most Likely,"Known Climate, Unknown Weather",1,irrigation,4.158167174910151
+DML,Dry Most Likely,"Known Climate, Unknown Weather",2,irrigation,4.133773482686432
+DML,Dry Most Likely,"Known Climate, Unknown Weather",3,irrigation,4.159222968883575
+DML,Dry Most Likely,"Known Climate, Unknown Weather",4,irrigation,4.169129413529338
+DML,Dry Most Likely,"Known Climate, Unknown Weather",5,irrigation,4.190134545905196
+DML,Dry Most Likely,"Known Climate, Unknown Weather",6,irrigation,4.176777039566733
+DML,Dry Most Likely,"Known Climate, Unknown Weather",7,irrigation,4.114553169897949
+DML,Dry Most Likely,"Known Climate, Unknown Weather",8,irrigation,4.133055689555577
+DML,Dry Most Likely,"Known Climate, Unknown Weather",9,irrigation,4.243895059465476
+DML,Dry Most Likely,"Known Climate, Unknown Weather",10,irrigation,4.27201652824748
+DML,Dry Most Likely,"Known Climate, Unknown Weather",11,irrigation,4.150131281869104
+DML,Dry Most Likely,"Known Climate, Unknown Weather",12,irrigation,4.154410390399427
+DML,Dry Most Likely,"Known Climate, Unknown Weather",13,irrigation,4.188510621028197
+DML,Dry Most Likely,"Known Climate, Unknown Weather",14,irrigation,4.188718606898277
+DML,Dry Most Likely,"Known Climate, Unknown Weather",15,irrigation,4.2396183990201095
+DML,Dry Most Likely,"Known Climate, Unknown Weather",16,irrigation,4.162689697207469
+DML,Dry Most Likely,"Known Climate, Unknown Weather",17,irrigation,4.195406332173559
+DML,Dry Most Likely,"Known Climate, Unknown Weather",18,irrigation,4.138267851689238
+DML,Dry Most Likely,"Known Climate, Unknown Weather",19,irrigation,4.2285817133389445
+DML,Dry Most Likely,"Known Climate, Unknown Weather",20,irrigation,4.150988847915176
+DML,Dry Most Likely,"Known Climate, Unknown Weather",21,irrigation,4.230828892230952
+DML,Dry Most Likely,"Known Climate, Unknown Weather",22,irrigation,4.194531001851916
+DML,Dry Most Likely,"Known Climate, Unknown Weather",23,irrigation,4.125159234205962
+DML,Dry Most Likely,"Known Climate, Unknown Weather",24,irrigation,4.189778413559141
+DML,Dry Most Likely,"Known Climate, Unknown Weather",25,irrigation,4.213416364817088
+DML,Dry Most Likely,"Known Climate, Unknown Weather",1,alt_water,11.242816076273671
+DML,Dry Most Likely,"Known Climate, Unknown Weather",2,alt_water,11.249059954211713
+DML,Dry Most Likely,"Known Climate, Unknown Weather",3,alt_water,11.228707563574837
+DML,Dry Most Likely,"Known Climate, Unknown Weather",4,alt_water,11.237904111993403
+DML,Dry Most Likely,"Known Climate, Unknown Weather",5,alt_water,11.226046827506853
+DML,Dry Most Likely,"Known Climate, Unknown Weather",6,alt_water,11.237235638368261
+DML,Dry Most Likely,"Known Climate, Unknown Weather",7,alt_water,11.243015677274366
+DML,Dry Most Likely,"Known Climate, Unknown Weather",8,alt_water,11.237277933939236
+DML,Dry Most Likely,"Known Climate, Unknown Weather",9,alt_water,11.24127104736845
+DML,Dry Most Likely,"Known Climate, Unknown Weather",10,alt_water,11.24450074181718
+DML,Dry Most Likely,"Known Climate, Unknown Weather",11,alt_water,11.23997546204035
+DML,Dry Most Likely,"Known Climate, Unknown Weather",12,alt_water,11.246898807203051
+DML,Dry Most Likely,"Known Climate, Unknown Weather",13,alt_water,11.231379397554393
+DML,Dry Most Likely,"Known Climate, Unknown Weather",14,alt_water,11.2472259636986
+DML,Dry Most Likely,"Known Climate, Unknown Weather",15,alt_water,11.240588880484697
+DML,Dry Most Likely,"Known Climate, Unknown Weather",16,alt_water,11.236124780481216
+DML,Dry Most Likely,"Known Climate, Unknown Weather",17,alt_water,11.254403693592803
+DML,Dry Most Likely,"Known Climate, Unknown Weather",18,alt_water,11.240420110940114
+DML,Dry Most Likely,"Known Climate, Unknown Weather",19,alt_water,11.239531611476231
+DML,Dry Most Likely,"Known Climate, Unknown Weather",20,alt_water,11.241469134479763
+DML,Dry Most Likely,"Known Climate, Unknown Weather",21,alt_water,11.252227751622426
+DML,Dry Most Likely,"Known Climate, Unknown Weather",22,alt_water,11.234621216359947
+DML,Dry Most Likely,"Known Climate, Unknown Weather",23,alt_water,11.230953628339265
+DML,Dry Most Likely,"Known Climate, Unknown Weather",24,alt_water,11.24010302898592
+DML,Dry Most Likely,"Known Climate, Unknown Weather",25,alt_water,11.237808388602192
+DML,Dry Most Likely,Stochastic,1,crop_yield,2.666790703413288
+DML,Dry Most Likely,Stochastic,2,crop_yield,2.671290905782232
+DML,Dry Most Likely,Stochastic,3,crop_yield,2.681936162124295
+DML,Dry Most Likely,Stochastic,4,crop_yield,2.6626952335134257
+DML,Dry Most Likely,Stochastic,5,crop_yield,2.6776202654455483
+DML,Dry Most Likely,Stochastic,6,crop_yield,2.683233706610598
+DML,Dry Most Likely,Stochastic,7,crop_yield,2.6820871285819656
+DML,Dry Most Likely,Stochastic,8,crop_yield,2.6718262254797636
+DML,Dry Most Likely,Stochastic,9,crop_yield,2.6525056398908724
+DML,Dry Most Likely,Stochastic,10,crop_yield,2.6543310943854985
+DML,Dry Most Likely,Stochastic,11,crop_yield,2.6659756860607198
+DML,Dry Most Likely,Stochastic,12,crop_yield,2.6751798395333517
+DML,Dry Most Likely,Stochastic,13,crop_yield,2.6571058709579787
+DML,Dry Most Likely,Stochastic,14,crop_yield,2.6618079732382776
+DML,Dry Most Likely,Stochastic,15,crop_yield,2.6595231375639035
+DML,Dry Most Likely,Stochastic,16,crop_yield,2.6633268749434666
+DML,Dry Most Likely,Stochastic,17,crop_yield,2.6595537035297925
+DML,Dry Most Likely,Stochastic,18,crop_yield,2.668710630044271
+DML,Dry Most Likely,Stochastic,19,crop_yield,2.6449380069130863
+DML,Dry Most Likely,Stochastic,20,crop_yield,2.6516406166045896
+DML,Dry Most Likely,Stochastic,21,crop_yield,2.6541588321588123
+DML,Dry Most Likely,Stochastic,22,crop_yield,2.6672982360303394
+DML,Dry Most Likely,Stochastic,23,crop_yield,2.6791678781940784
+DML,Dry Most Likely,Stochastic,24,crop_yield,2.6738433927057432
+DML,Dry Most Likely,Stochastic,25,crop_yield,2.6561148796167267
+DML,Dry Most Likely,Stochastic,1,water,52.52407673422537
+DML,Dry Most Likely,Stochastic,2,water,52.58088899495772
+DML,Dry Most Likely,Stochastic,3,water,52.7302077208028
+DML,Dry Most Likely,Stochastic,4,water,52.466267757348895
+DML,Dry Most Likely,Stochastic,5,water,52.662925654092604
+DML,Dry Most Likely,Stochastic,6,water,52.67966747217035
+DML,Dry Most Likely,Stochastic,7,water,52.73870632636199
+DML,Dry Most Likely,Stochastic,8,water,52.62729569067018
+DML,Dry Most Likely,Stochastic,9,water,52.259886702145444
+DML,Dry Most Likely,Stochastic,10,water,52.232901202747
+DML,Dry Most Likely,Stochastic,11,water,52.52915972754175
+DML,Dry Most Likely,Stochastic,12,water,52.580547213589924
+DML,Dry Most Likely,Stochastic,13,water,52.42219409706799
+DML,Dry Most Likely,Stochastic,14,water,52.43136317813086
+DML,Dry Most Likely,Stochastic,15,water,52.34149375796374
+DML,Dry Most Likely,Stochastic,16,water,52.525398328837724
+DML,Dry Most Likely,Stochastic,17,water,52.36464329104064
+DML,Dry Most Likely,Stochastic,18,water,52.56502352525248
+DML,Dry Most Likely,Stochastic,19,water,52.208149323821345
+DML,Dry Most Likely,Stochastic,20,water,52.37483849966236
+DML,Dry Most Likely,Stochastic,21,water,52.250021919708104
+DML,Dry Most Likely,Stochastic,22,water,52.505043300235165
+DML,Dry Most Likely,Stochastic,23,water,52.71332758367221
+DML,Dry Most Likely,Stochastic,24,water,52.57205299218669
+DML,Dry Most Likely,Stochastic,25,water,52.35165238253582
+DML,Dry Most Likely,Stochastic,1,elc,402129.3747090164
+DML,Dry Most Likely,Stochastic,2,elc,402129.37460567255
+DML,Dry Most Likely,Stochastic,3,elc,402129.3746241806
+DML,Dry Most Likely,Stochastic,4,elc,402129.37478232215
+DML,Dry Most Likely,Stochastic,5,elc,402129.37476329424
+DML,Dry Most Likely,Stochastic,6,elc,402129.37460945133
+DML,Dry Most Likely,Stochastic,7,elc,402129.3744887303
+DML,Dry Most Likely,Stochastic,8,elc,402129.37461844756
+DML,Dry Most Likely,Stochastic,9,elc,402129.37500066886
+DML,Dry Most Likely,Stochastic,10,elc,402129.3750857051
+DML,Dry Most Likely,Stochastic,11,elc,402129.3747004655
+DML,Dry Most Likely,Stochastic,12,elc,402129.37461267837
+DML,Dry Most Likely,Stochastic,13,elc,402129.3748815297
+DML,Dry Most Likely,Stochastic,14,elc,402129.37484197837
+DML,Dry Most Likely,Stochastic,15,elc,402129.3749569076
+DML,Dry Most Likely,Stochastic,16,elc,402129.3747715332
+DML,Dry Most Likely,Stochastic,17,elc,402129.374843995
+DML,Dry Most Likely,Stochastic,18,elc,402129.374596635
+DML,Dry Most Likely,Stochastic,19,elc,402129.37506218365
+DML,Dry Most Likely,Stochastic,20,elc,402129.37482290104
+DML,Dry Most Likely,Stochastic,21,elc,402129.3750159341
+DML,Dry Most Likely,Stochastic,22,elc,402129.37479298044
+DML,Dry Most Likely,Stochastic,23,elc,402129.37454957375
+DML,Dry Most Likely,Stochastic,24,elc,402129.37475030357
+DML,Dry Most Likely,Stochastic,25,elc,402129.37491223967
+DML,Dry Most Likely,Stochastic,1,irrigation,4.059556782526666
+DML,Dry Most Likely,Stochastic,2,irrigation,4.034791834312594
+DML,Dry Most Likely,Stochastic,3,irrigation,4.069081715171357
+DML,Dry Most Likely,Stochastic,4,irrigation,4.067176779959288
+DML,Dry Most Likely,Stochastic,5,irrigation,4.1033716646650715
+DML,Dry Most Likely,Stochastic,6,irrigation,4.074796745808661
+DML,Dry Most Likely,Stochastic,7,irrigation,4.0176468304001
+DML,Dry Most Likely,Stochastic,8,irrigation,4.0386017791364575
+DML,Dry Most Likely,Stochastic,9,irrigation,4.13575670903675
+DML,Dry Most Likely,Stochastic,10,irrigation,4.1681416874004205
+DML,Dry Most Likely,Stochastic,11,irrigation,4.051936792571943
+DML,Dry Most Likely,Stochastic,12,irrigation,4.048126830491514
+DML,Dry Most Likely,Stochastic,13,irrigation,4.088131717069952
+DML,Dry Most Likely,Stochastic,14,irrigation,4.093846749101681
+DML,Dry Most Likely,Stochastic,15,irrigation,4.137661705386269
+DML,Dry Most Likely,Stochastic,16,irrigation,4.067176731383852
+DML,Dry Most Likely,Stochastic,17,irrigation,4.097656780939545
+DML,Dry Most Likely,Stochastic,18,irrigation,4.030981817243012
+DML,Dry Most Likely,Stochastic,19,irrigation,4.126231721747041
+DML,Dry Most Likely,Stochastic,20,irrigation,4.048126814185468
+DML,Dry Most Likely,Stochastic,21,irrigation,4.133851767599112
+DML,Dry Most Likely,Stochastic,22,irrigation,4.090036733016886
+DML,Dry Most Likely,Stochastic,23,irrigation,4.029076789307086
+DML,Dry Most Likely,Stochastic,24,irrigation,4.099561722665109
+DML,Dry Most Likely,Stochastic,25,irrigation,4.103371731644125
+DML,Dry Most Likely,Stochastic,1,alt_water,10.794424618980194
+DML,Dry Most Likely,Stochastic,2,alt_water,10.796991685492879
+DML,Dry Most Likely,Stochastic,3,alt_water,10.78371674288794
+DML,Dry Most Likely,Stochastic,4,alt_water,10.79744654033195
+DML,Dry Most Likely,Stochastic,5,alt_water,10.780134838128172
+DML,Dry Most Likely,Stochastic,6,alt_water,10.792154858548136
+DML,Dry Most Likely,Stochastic,7,alt_water,10.793910058653678
+DML,Dry Most Likely,Stochastic,8,alt_water,10.78981050148072
+DML,Dry Most Likely,Stochastic,9,alt_water,10.798663265477455
+DML,Dry Most Likely,Stochastic,10,alt_water,10.798329151169824
+DML,Dry Most Likely,Stochastic,11,alt_water,10.793651768574291
+DML,Dry Most Likely,Stochastic,12,alt_water,10.801076755480292
+DML,Dry Most Likely,Stochastic,13,alt_water,10.789684841700891
+DML,Dry Most Likely,Stochastic,14,alt_water,10.793747902033173
+DML,Dry Most Likely,Stochastic,15,alt_water,10.796803395636186
+DML,Dry Most Likely,Stochastic,16,alt_water,10.786955561268787
+DML,Dry Most Likely,Stochastic,17,alt_water,10.80036968661439
+DML,Dry Most Likely,Stochastic,18,alt_water,10.795943514417244
+DML,Dry Most Likely,Stochastic,19,alt_water,10.796746844398397
+DML,Dry Most Likely,Stochastic,20,alt_water,10.796188644853121
+DML,Dry Most Likely,Stochastic,21,alt_water,10.80140500717679
+DML,Dry Most Likely,Stochastic,22,alt_water,10.792273377756247
+DML,Dry Most Likely,Stochastic,23,alt_water,10.791521168361795
+DML,Dry Most Likely,Stochastic,24,alt_water,10.789542093254786
+DML,Dry Most Likely,Stochastic,25,alt_water,10.797407230841971
+DML,Dry Most Likely,Expected Value,1,crop_yield,2.7146028314695867
+DML,Dry Most Likely,Expected Value,2,crop_yield,2.718956861075043
+DML,Dry Most Likely,Expected Value,3,crop_yield,2.7292410820883486
+DML,Dry Most Likely,Expected Value,4,crop_yield,2.7106515123999313
+DML,Dry Most Likely,Expected Value,5,crop_yield,2.7250976942786833
+DML,Dry Most Likely,Expected Value,6,crop_yield,2.7306564205798405
+DML,Dry Most Likely,Expected Value,7,crop_yield,2.7293608410916432
+DML,Dry Most Likely,Expected Value,8,crop_yield,2.7193831079307196
+DML,Dry Most Likely,Expected Value,9,crop_yield,2.7009782046857436
+DML,Dry Most Likely,Expected Value,10,crop_yield,2.7028709468146848
+DML,Dry Most Likely,Expected Value,11,crop_yield,2.7137755951167994
+DML,Dry Most Likely,Expected Value,12,crop_yield,2.722843007687155
+DML,Dry Most Likely,Expected Value,13,crop_yield,2.7051794323674927
+DML,Dry Most Likely,Expected Value,14,crop_yield,2.7098534229110283
+DML,Dry Most Likely,Expected Value,15,crop_yield,2.707792797076498
+DML,Dry Most Likely,Expected Value,16,crop_yield,2.711143259072643
+DML,Dry Most Likely,Expected Value,17,crop_yield,2.7077604094141248
+DML,Dry Most Likely,Expected Value,18,crop_yield,2.716417318885168
+DML,Dry Most Likely,Expected Value,19,crop_yield,2.6935425924770704
+DML,Dry Most Likely,Expected Value,20,crop_yield,2.6998259199669743
+DML,Dry Most Likely,Expected Value,21,crop_yield,2.7026514463306417
+DML,Dry Most Likely,Expected Value,22,crop_yield,2.715160733912594
+DML,Dry Most Likely,Expected Value,23,crop_yield,2.7265084750788167
+DML,Dry Most Likely,Expected Value,24,crop_yield,2.7215396982161666
+DML,Dry Most Likely,Expected Value,25,crop_yield,2.7043589989686403
+DML,Dry Most Likely,Expected Value,1,water,53.291676239071265
+DML,Dry Most Likely,Expected Value,2,water,53.35117215554295
+DML,Dry Most Likely,Expected Value,3,water,53.48907754702836
+DML,Dry Most Likely,Expected Value,4,water,53.234779057518075
+DML,Dry Most Likely,Expected Value,5,water,53.4191041039013
+DML,Dry Most Likely,Expected Value,6,water,53.445919505184754
+DML,Dry Most Likely,Expected Value,7,water,53.50541840390093
+DML,Dry Most Likely,Expected Value,8,water,53.391534420985515
+DML,Dry Most Likely,Expected Value,9,water,53.03040164886359
+DML,Dry Most Likely,Expected Value,10,water,53.00385805348472
+DML,Dry Most Likely,Expected Value,11,water,53.2963123245161
+DML,Dry Most Likely,Expected Value,12,water,53.35374006769093
+DML,Dry Most Likely,Expected Value,13,water,53.18554162123009
+DML,Dry Most Likely,Expected Value,14,water,53.19874427907911
+DML,Dry Most Likely,Expected Value,15,water,53.11022351664569
+DML,Dry Most Likely,Expected Value,16,water,53.28695347340054
+DML,Dry Most Likely,Expected Value,17,water,53.13717421086976
+DML,Dry Most Likely,Expected Value,18,water,53.33463130280799
+DML,Dry Most Likely,Expected Value,19,water,52.977095470022185
+DML,Dry Most Likely,Expected Value,20,water,53.14400489925123
+DML,Dry Most Likely,Expected Value,21,water,53.02433235095067
+DML,Dry Most Likely,Expected Value,22,water,53.27062865524321
+DML,Dry Most Likely,Expected Value,23,water,53.47757692759883
+DML,Dry Most Likely,Expected Value,24,water,53.335845519812736
+DML,Dry Most Likely,Expected Value,25,water,53.12038351552606
+DML,Dry Most Likely,Expected Value,1,elc,431774.45576931443
+DML,Dry Most Likely,Expected Value,2,elc,431774.455749149
+DML,Dry Most Likely,Expected Value,3,elc,431774.4557553687
+DML,Dry Most Likely,Expected Value,4,elc,431774.45577741705
+DML,Dry Most Likely,Expected Value,5,elc,431774.4557803171
+DML,Dry Most Likely,Expected Value,6,elc,431774.455753259
+DML,Dry Most Likely,Expected Value,7,elc,431774.45572623226
+DML,Dry Most Likely,Expected Value,8,elc,431774.4557537754
+DML,Dry Most Likely,Expected Value,9,elc,431774.45582522475
+DML,Dry Most Likely,Expected Value,10,elc,431774.4558378039
+DML,Dry Most Likely,Expected Value,11,elc,431774.4557674376
+DML,Dry Most Likely,Expected Value,12,elc,431774.4557492634
+DML,Dry Most Likely,Expected Value,13,elc,431774.4557999371
+DML,Dry Most Likely,Expected Value,14,elc,431774.4557918017
+DML,Dry Most Likely,Expected Value,15,elc,431774.4558156491
+DML,Dry Most Likely,Expected Value,16,elc,431774.45578107814
+DML,Dry Most Likely,Expected Value,17,elc,431774.45579447993
+DML,Dry Most Likely,Expected Value,18,elc,431774.4557523529
+DML,Dry Most Likely,Expected Value,19,elc,431774.45583343285
+DML,Dry Most Likely,Expected Value,20,elc,431774.4557860183
+DML,Dry Most Likely,Expected Value,21,elc,431774.4558200738
+DML,Dry Most Likely,Expected Value,22,elc,431774.45578482084
+DML,Dry Most Likely,Expected Value,23,elc,431774.4557376794
+DML,Dry Most Likely,Expected Value,24,elc,431774.45577962266
+DML,Dry Most Likely,Expected Value,25,elc,431774.4558049986
+DML,Dry Most Likely,Expected Value,1,irrigation,4.059555174149835
+DML,Dry Most Likely,Expected Value,2,irrigation,4.03479017707737
+DML,Dry Most Likely,Expected Value,3,irrigation,4.069080172851808
+DML,Dry Most Likely,Expected Value,4,irrigation,4.067175176886243
+DML,Dry Most Likely,Expected Value,5,irrigation,4.103370167789442
+DML,Dry Most Likely,Expected Value,6,irrigation,4.074795171203896
+DML,Dry Most Likely,Expected Value,7,irrigation,4.017645182294319
+DML,Dry Most Likely,Expected Value,8,irrigation,4.038600177515486
+DML,Dry Most Likely,Expected Value,9,irrigation,4.1357551648275015
+DML,Dry Most Likely,Expected Value,10,irrigation,4.16814015799828
+DML,Dry Most Likely,Expected Value,11,irrigation,4.051935177753795
+DML,Dry Most Likely,Expected Value,12,irrigation,4.048125175900647
+DML,Dry Most Likely,Expected Value,13,irrigation,4.088130172254737
+DML,Dry Most Likely,Expected Value,14,irrigation,4.093845169687185
+DML,Dry Most Likely,Expected Value,15,irrigation,4.1376601648593585
+DML,Dry Most Likely,Expected Value,16,irrigation,4.067175174330851
+DML,Dry Most Likely,Expected Value,17,irrigation,4.097655168972564
+DML,Dry Most Likely,Expected Value,18,irrigation,4.0309801780804735
+DML,Dry Most Likely,Expected Value,19,irrigation,4.126230167867449
+DML,Dry Most Likely,Expected Value,20,irrigation,4.048125177689781
+DML,Dry Most Likely,Expected Value,21,irrigation,4.133850162183745
+DML,Dry Most Likely,Expected Value,22,irrigation,4.090035171994808
+DML,Dry Most Likely,Expected Value,23,irrigation,4.029075180201666
+DML,Dry Most Likely,Expected Value,24,irrigation,4.0995601679158895
+DML,Dry Most Likely,Expected Value,25,irrigation,4.103370171302372
+DML,Dry Most Likely,Expected Value,1,alt_water,10.84121044209534
+DML,Dry Most Likely,Expected Value,2,alt_water,10.860912796013466
+DML,Dry Most Likely,Expected Value,3,alt_water,10.774919770262336
+DML,Dry Most Likely,Expected Value,4,alt_water,10.852976960754365
+DML,Dry Most Likely,Expected Value,5,alt_water,10.7526869894916
+DML,Dry Most Likely,Expected Value,6,alt_water,10.828974420224817
+DML,Dry Most Likely,Expected Value,7,alt_water,10.836436060180695
+DML,Dry Most Likely,Expected Value,8,alt_water,10.814685003163914
+DML,Dry Most Likely,Expected Value,9,alt_water,10.864762138416914
+DML,Dry Most Likely,Expected Value,10,alt_water,10.86649426503229
+DML,Dry Most Likely,Expected Value,11,alt_water,10.837461794037766
+DML,Dry Most Likely,Expected Value,12,alt_water,10.882090974975906
+DML,Dry Most Likely,Expected Value,13,alt_water,10.809212475841125
+DML,Dry Most Likely,Expected Value,14,alt_water,10.841368051191148
+DML,Dry Most Likely,Expected Value,15,alt_water,10.852973725786638
+DML,Dry Most Likely,Expected Value,16,alt_water,10.79528173751643
+DML,Dry Most Likely,Expected Value,17,alt_water,10.880720726637653
+DML,Dry Most Likely,Expected Value,18,alt_water,10.854465034121791
+DML,Dry Most Likely,Expected Value,19,alt_water,10.85215305284668
+DML,Dry Most Likely,Expected Value,20,alt_water,10.853039249172934
+DML,Dry Most Likely,Expected Value,21,alt_water,10.890626386330771
+DML,Dry Most Likely,Expected Value,22,alt_water,10.825368989467892
+DML,Dry Most Likely,Expected Value,23,alt_water,10.817844195075
+DML,Dry Most Likely,Expected Value,24,alt_water,10.811633726202224
+DML,Dry Most Likely,Expected Value,25,alt_water,10.853250102904681

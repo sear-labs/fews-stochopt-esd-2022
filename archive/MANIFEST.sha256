@@ -1,0 +1,43 @@
+# sha256 over RAW BYTES of every file in archive/.
+# A CRLF-normalised hash of the same file differs; this is the raw one.
+#
+# archive/ is the code that produced the published result. It is preserved
+# verbatim and never maintained: corrections go into src/fews_stochopt/,
+# and the divergence is recorded in docs/reproduction-notes.md.
+#
+# 34 files
+
+25b4edc692b5f24647d47b6ff1f01ea6b83b5c8eb2a0a5997a92ef662a2611dd  archive/README.md
+a10bda673814843613306be3bc9038739df15e12dced7abc36d6b8d05c4ed883  archive/stage1-python/FarmModelStoch_EV_loop.ipynb
+cbcba3afb7698ae1fb4a541182e45b957f1d96c95fa859e92ee7bf581109a88a  archive/stage1-python/FarmModelStoch_PI_loop.ipynb
+f940f49c47d7c5762864c5ba399cec91893316391eb35a0d9c41286100843e3b  archive/stage1-python/FEWS_Farm_model.py
+49603838aa71513cfd3c3da1f22174741702ad388410b269d5dab6134667f6c8  archive/stage1-python/superseded/Farm Model Original.ipynb
+201cdedef7f9259e263b11fe1d7a0373300348b3b521a7b76b0ed09bb6f79360  archive/stage1-python/superseded/FarmModelStoch v2.ipynb
+884605bebb0d8593fd773bad474bde164e5ffa98c1400e23266be33daddd35e0  archive/stage1-python/superseded/FarmModelStoch v3.ipynb
+da0b9d053c37651cd04ace85529cc3982e454505baa50323f17212e04badefda  archive/stage1-python/superseded/FarmModelStoch-v0.ipynb
+a0cfa4306a7105a12ffc6b4c6c5cf967f8cf4dc1c3b2eb7c016b70f43c2bfdf5  archive/stage1-python/superseded/FarmModelStoch.ipynb
+f30e1e562352fda51d6bfbede4b968e87afec89bc5cb12d742234d2fde71e95f  archive/stage1-python/superseded/Untitled.ipynb
+4dbf6fdc03c0fc8e847d6b8e210408e8bca274727df81e2b64d5ec90eebe46f1  archive/stage2-r/farm_report.Rmd
+8b1c110744ba464d80922db88a5b24ff9019f206f812594b98755b2f02d4dd37  archive/stage2-r/markov_chain.Rmd
+d364726fba9bd43b6a2de222e1c95b158d110b4e8246220540e42b5a5a091c2c  archive/stage2-r/render_reports.R
+f0177192d800672040d6fdfc81559bdaa46e8317621d7496332a54754dcb19a8  archive/stage2-r/superseded/Farm model  scratch.Rmd
+f49a8cc407d8af27a41fbc48deb3c37c9f3e2e76c175bd93519a314ac6ad781a  archive/stage2-r/superseded/Farm model combined.Rmd
+a8064c8b569b4db38f0b6e5e8fa737de6b4006407396f6473693487e76af3878  archive/stage2-r/superseded/Farm model one iter.Rmd
+55f4c5f565bb6c74e3898fa96202d68b642dcefe9899a1a3587de413b59c1b2f  archive/stage2-r/superseded/Farm model smaller size.Rmd
+79f9f076a2e1a02857332db14ba25958edd05dd015cc0351277806bd6f2ec603  archive/stage2-r/superseded/Farm_research_exploration.Rmd
+86b1a998350123dcab552b6dc96d98f46b378222d1e6dde0dd52b36ec42e1760  archive/stage2-r/superseded/FM 1 iter dry likely.Rmd
+bbfa82753672aeb161cf40d71865533658136b9db3263eaaa5332550e3bb5d6b  archive/stage2-r/superseded/FM 1 iter equal prob.Rmd
+3343fde88ab64aef9c74661914057d92bf7ad7a71c0466c28e55dfafb7450f46  archive/stage2-r/superseded/FM DML Graphs.Rmd
+08ec7ab4460238a828a2339af51323649a3960793064dfaaf50cee4513c9afa8  archive/stage2-r/superseded/FM DML MC.Rmd
+99721f3bd6dda9167d6b743937d5b28837af0576c6e765f341d02977ffc3c683  archive/stage2-r/superseded/FM EP Graphs.Rmd
+57d507e9aaea50e1d8df6ffae55808ddc1bb49bf2834470e3e0fe6fa67b290a7  archive/stage2-r/superseded/FM EP MC.Rmd
+7a3b868bfdb078b52205365e9d0c494b158bcefec11472f0d5d93f8f1e03e2ca  archive/stage2-r/superseded/FM Final Outputs.Rmd
+e643709bc9da0d824e490648ebda202692b95569f1eb2e0fc1f36fceac755feb  archive/stage2-r/superseded/FM Graphs.Rmd
+117431a4272ab1b9a4100b5055ad658fe0be7c9e7a024ae1892ba970b350ef4d  archive/stage2-r/superseded/FM MI DML All Climates.Rmd
+50e1deae44ed462ec4c053a40c53d4326cf44a39a6b2a1753fd23faac3670ae7  archive/stage2-r/superseded/FM MI EP 1 Climate.Rmd
+4fba4e25c3733307906237bc3cd42315a62a1453483d1e91188720574ca9c7b3  archive/stage2-r/superseded/FM MI EP All Climates.Rmd
+f60133aed6a8582d98b0cbda68ce9858d0e916853956d95e5cfac844252a67e7  archive/stage2-r/superseded/FM multi iter equal prob (old)_.Rmd
+50c430d3d2f18aad0394ae723e7b15e8f8f92cd86cc071c6db4ad351d633b347  archive/stage2-r/superseded/FM output combine.Rmd
+5e893b4b70e8a0df06097ab0893cd4617d17d18fbab188bc38126266de7b7bb4  archive/stage2-r/superseded/FM Traditional DML.Rmd
+620a15133ac84f10c18cda8c45508d4552c427d4791a6056df104fb22b137f46  archive/stage2-r/superseded/FM Traditional EP.Rmd
+58fa99a3566207b42804d24f7281e62605e43b0a27aafc7a1f4e4747fadaca68  archive/stage2-r/superseded/README.md
