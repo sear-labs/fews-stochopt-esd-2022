@@ -407,3 +407,35 @@ def test_the_licence_free_exports_resolve_without_a_solver():
         "the licence-free export surface has changed\n"
         f"--- stdout ---\n{proc.stdout}\n--- stderr ---\n{proc.stderr}"
     )
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason=(
+        "KNOWN, UNFIXED: analysis.py:30 -> aggregate.py:38 -> model.py:43 imports "
+        "gurobipy, so regenerating the figures needs a Gurobi licence even though "
+        "make_figures.py reads only results/clean/. The fix touches files in "
+        "pipeline._SOURCE_MODULES and re-stamps the provenance of all ten solved "
+        "scenarios, which is a decision rather than a cleanup. See "
+        "docs/reproduction-notes.md section 20."
+    ),
+)
+def test_regenerating_the_figures_needs_no_solver():
+    """The figure path is stage 9 and reads 90 KB of committed cleaned output.
+
+    Nothing about drawing a line through `results/clean/` requires a solver, and
+    a reader without a licence is exactly who the committed cleaned output exists
+    for. This is `strict=True` deliberately: when the import coupling is fixed
+    this test XPASSes, which pytest reports as a failure, and the marker has to
+    be removed. A known defect that quietly heals is a known defect nobody
+    notices has healed.
+    """
+    proc = _run_without_gurobipy(
+        "import runpy, sys\n"
+        "sys.argv = ['make_figures.py', '--quiet']\n"
+        "runpy.run_path('scripts/make_figures.py', run_name='__main__')"
+    )
+    assert proc.returncode == 0, (
+        "make_figures.py cannot run without a solver\n"
+        f"--- stderr ---\n{proc.stderr[-1500:]}"
+    )

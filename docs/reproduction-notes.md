@@ -962,10 +962,38 @@ standard names -- a module-level import reached by an eager one -- in the same
 repository whose lazy-import remedy supplied that entry. The remedy was applied
 to the package's `__init__` and not followed one level down.
 
-It does not falsify the licence-free claims that are asserted: the verification
+It does not falsify the licence-free claims that are *asserted*: the verification
 notebook imports `fews_stochopt` and `fews_stochopt.config`, never `aggregate`,
-and both of those tests still pass. It falsifies a claim nobody had made in
-writing, which is why nothing caught it.
+and both of those tests still pass.
+
+**But it does break a documented capability, which is worse, and I reported the
+milder version first.** Running each script under the blocker rather than
+reasoning about it -- prompted by the SAV session naming `scripts/*.py` as
+something it had not checked either -- shows `make_figures.py` failing outright
+without a solver. That script reads **only** `results/clean/`: 90 KB of committed
+cleaned output, whose entire purpose is that a reader without a Gurobi licence
+can use it. Stage 9 of the nine is behind a licence it does not need.
+
+Two edges cause it, not one, and I found the second only by running it:
+
+    scripts/make_figures.py
+      -> analysis.py:30 -> aggregate.py:38 -> model.py:43 -> gurobipy
+      -> analysis.py:33 ----------------------^
+
+Making the first edge lazy leaves the second, and the test stayed red -- which is
+the whole argument for block-and-run over reading the import graph. Both of
+`analysis.py`'s couplings are annotation-only (`ScenarioResult`, five uses, with
+`from __future__ import annotations` at line 23), so they could move under
+`TYPE_CHECKING` freely. **That is not sufficient.** `analysis` needs `SCENARIOS`,
+`scenario_stats` and `value_of_information` from `aggregate` at runtime, and
+`aggregate` needs four scenario-name strings from `model` at runtime. The root is
+`model.py` holding four string constants, so **the fix necessarily touches
+`_SOURCE_MODULES`** -- verified by attempting the cheap version, not assumed.
+
+`tests/test_artifacts.py::test_regenerating_the_figures_needs_no_solver` records
+this as `xfail(strict=True)`: when the coupling is fixed the test XPASSes, which
+pytest reports as a failure, and the marker must be removed. A known defect that
+quietly heals is one nobody notices has healed.
 
 **The fix is small and is deliberately not applied here.** Move the four
 constants into a solver-free module and put `ScenarioResult` under

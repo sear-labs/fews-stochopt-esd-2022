@@ -99,6 +99,7 @@ measurements.
 | A regenerated sample matches the committed distribution, never the committed draws | `test_a_fresh_sample_has_the_committed_distribution` |
 | `aggregate` imports `model` at module level, so `SCENARIOS` -- four strings -- needs a Gurobi licence. Known, unfixed: the fix re-stamps all ten provenance records | `test_the_licence_free_exports_resolve_without_a_solver` |
 | Every name in `__all__` resolves through the lazy `__getattr__` | `test_every_advertised_export_actually_resolves` |
+| Regenerating the figures needs a Gurobi licence it should not -- known, unfixed, `xfail(strict)` | `test_regenerating_the_figures_needs_no_solver` |
 | The archive must never change | `test_the_archive_is_frozen` |
 | No maintained code in a second language | `test_no_maintained_code_is_in_another_language` |
 | The verification notebook must not need a solver | `test_the_verification_notebook_needs_no_solver` |
