@@ -59,7 +59,7 @@ actually contains before accepting its label.
 |---|---|
 | How sensitive? | Not. Public paper, public data, no restricted inputs. It stays private only until the reproduction is finished. |
 | Actively developed? | Yes — so it has git. |
-| In a syncing folder? | No. `C:\Users\jonesec\dev\repo\projects\` is outside OneDrive, so `.git` lives in place and the pointer treatment does not apply. |
+| In a syncing folder? | No -- the working tree lives outside OneDrive, so `.git` lives in place and the pointer treatment does not apply. The path is deliberately not named: this file is published, and an absolute path both names one machine and is silently wrong on every other. |
 | How many devices edit it? | One. |
 
 Restricted Pecan Street data is **not** used. Checked rather than assumed: the model's

@@ -1309,3 +1309,56 @@ absent licence. What the exercise is worth is now measurable rather than
 arguable: run as a real clone, it found two committed absolute paths, a
 suite-aborting collection error, and a guard that did not guard. None of those
 were visible from the working tree.
+
+### The sweep that could not have found anything
+
+Section 24 fixed two paths in the notebooks. The obvious follow-up was to check
+whether anything *else* committed carries one, so I swept all 253 tracked files
+and got "no machine paths found."
+
+**That sweep was structurally incapable of matching.** Its pattern built the
+separator as `chr(92)` -- a single backslash -- and a single backslash before
+`+` in a *regular expression* means a literal plus sign, so it was looking for
+`C:+Users+...`. It reported a clean result over the whole tree in about a second,
+and the result was worth nothing.
+
+Promoting the same sweep into a test, with the escaping right, found one
+immediately: **`CLAUDE.md` itself**, naming this machine's absolute path in the
+"in a syncing folder?" axis -- in a file that is committed, read by every session
+that opens this folder, and destined to be public. Rewritten to state the fact
+without the path, which is what the standard asks for anyway: an absolute path is
+true of one machine and silently wrong on every other.
+
+Two things worth keeping from that:
+
+- **A search that must return zero has to be shown capable of returning one.**
+  That rule is already asserted in this repository, for the archive freeze and
+  the gurobipy blocker, and I still ran a one-off grep and believed its silence.
+  A throwaway check gets no probe, which is exactly when it is least watched.
+- **The Windows-path escape trap bit twice in one section**, in opposite
+  directions: once making a docstring fail to parse, once making a regex match
+  nothing at all. The first announced itself. The second reported success.
+
+`test_no_committed_file_carries_a_machine_path` now sweeps the tree on every
+run, exempting `archive/` -- whose R files genuinely contain
+`~/Coding/Data/Farm_Model/...` from a machine layout that no longer exists, which
+is frozen history rather than a leak, and cannot be edited without breaking the
+freeze. Watched to fail by injecting a path into `README.md`.
+
+### And a check on the clone itself, prompted by the SAV session
+
+Its first stranger-run showed no leak, and it nearly reported that: an editable
+install of its working copy shadowed the clone, so the clone was importing the
+*dev* package. **A `git clone` isolates files, not imports.**
+
+Checked here rather than assumed, because this machine has the same editable
+install -- `import fews_stochopt` from an unrelated directory resolves to
+`dev/repo/projects/...`. The section 24 runs were clean: `PYTHONPATH` won,
+because this install uses a `.pth` rather than a PEP 660 meta-path finder, and
+`fews_stochopt.__file__` pointed inside the clone. That is the install method's
+luck rather than anything the method guaranteed, so the provenance is worth
+printing whenever this is repeated:
+
+    python -c "import fews_stochopt as f; print(f.__file__)"
+
+If that path is not inside the clone, the clone is not a stranger.

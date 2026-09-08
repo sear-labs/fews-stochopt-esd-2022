@@ -790,3 +790,59 @@ def test_no_committed_output_carries_an_absolute_path(path):
         f"{found}. It cannot reproduce on anyone else's machine, and it names "
         f"this one in a published artifact."
     )
+
+
+# The whole committed tree, not just the notebooks. Backslashes built with
+# chr(92), never typed -- a Windows path in a non-raw string makes `\U` an
+# escape, which broke the first version of the notebook guard.
+_WINDOWS_HOME = "[A-Za-z]:" + chr(92) + chr(92) + "+Users" + chr(92) + chr(92) + "+[A-Za-z0-9_.-]+"
+_POSIX_HOME = "/(?:home|Users)/[A-Za-z0-9_.-]+/"
+
+# `archive/` is frozen history from a machine layout that no longer exists, and
+# its R files genuinely contain `~/Coding/Data/...`. Preserving those verbatim is
+# the point of an archive; they are not this author's paths and cannot be edited
+# without breaking the freeze.
+_PATH_SWEEP_EXEMPT = ("archive/",)
+
+
+def test_no_committed_file_carries_a_machine_path():
+    """The general form of the notebook guard, over the whole tree.
+
+    Two absolute paths reached `00_verification.ipynb`'s committed output and
+    neither was visible from this working tree, because on the machine that
+    wrote a path the path is correct. That was found by cloning. This is the
+    cheap check that does not need a clone: nothing committed should name
+    anyone's home directory.
+
+    It matters twice over for this repository. A path breaks reproduction for
+    every reader who is not the author -- and this repository is intended to go
+    public, where a committed home directory publishes a username and a machine
+    layout to everyone who reads the file.
+    """
+    listed = subprocess.run(
+        ["git", "ls-files"], cwd=str(ROOT), capture_output=True, text=True, check=True
+    ).stdout.split()
+    assert len(listed) > 100, f"git ls-files returned only {len(listed)} paths"
+
+    patterns = {"Windows home": _WINDOWS_HOME, "POSIX home": _POSIX_HOME}
+    offenders = {}
+    scanned = 0
+    for name in listed:
+        if name.startswith(_PATH_SWEEP_EXEMPT):
+            continue
+        path = ROOT / name
+        if not path.is_file():
+            continue
+        scanned += 1
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for label, rx in patterns.items():
+            found = re.findall(rx, text)
+            if found:
+                offenders.setdefault(name, []).extend(sorted(set(found))[:2])
+
+    assert scanned > 100, f"only {scanned} files scanned; the sweep is not running"
+    assert not offenders, (
+        f"committed file(s) carry a machine path: {offenders}. They will not "
+        f"reproduce for any other reader, and this repository is intended to be "
+        f"published."
+    )
