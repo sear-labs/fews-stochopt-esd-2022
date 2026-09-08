@@ -97,6 +97,8 @@ measurements.
 | `reference/reconstructed/` is an estimate; two rows per site are unidentified | `test_unidentified_rows_are_recorded_not_invented` |
 | The five weather states are rounded to 2 dp, reproducing R's `as.character`; the exact product matches nothing | `test_the_state_values_survive_the_formatting_round_trip` |
 | A regenerated sample matches the committed distribution, never the committed draws | `test_a_fresh_sample_has_the_committed_distribution` |
+| `aggregate` imports `model` at module level, so `SCENARIOS` -- four strings -- needs a Gurobi licence. Known, unfixed: the fix re-stamps all ten provenance records | `test_the_licence_free_exports_resolve_without_a_solver` |
+| Every name in `__all__` resolves through the lazy `__getattr__` | `test_every_advertised_export_actually_resolves` |
 | The archive must never change | `test_the_archive_is_frozen` |
 | No maintained code in a second language | `test_no_maintained_code_is_in_another_language` |
 | The verification notebook must not need a solver | `test_the_verification_notebook_needs_no_solver` |

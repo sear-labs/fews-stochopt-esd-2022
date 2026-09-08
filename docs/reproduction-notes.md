@@ -866,18 +866,35 @@ reaching the last rung means the next failure has nowhere to go. **An ordered
 ladder is not an alias map**: its last entry existing-but-unused is the design,
 where a sixteenth alias existing-but-unused is an untested branch.
 
-**Is there unverified correction machinery anywhere else?** Measured with
-`coverage` over the whole suite rather than argued: **no.** Every never-executed
-line in the directly-imported modules is one of two things.
+**Is there unverified correction machinery anywhere else?** **Yes -- I first wrote
+"no" here, and it was wrong.** The correction and how it was caught are section
+20; what follows is the corrected version.
 
-- **A validation guard** -- `raise FileNotFoundError`, `raise ValueError` -- in
-  `data.py`, `config.py` and `markov.py`. All fifteen misses in `data.py` are of
-  this kind.
-- **A subprocess artefact.** `pipeline.py` reports 0% and `model.py` 27%, which is
-  false: both run inside `scripts/run_all.py`, which the suite invokes as a
-  subprocess that in-process coverage cannot see. The provenance stamps show
-  `model.py`'s solve path executing 8,016 times. `markov.write_reconstruction` and
-  `config.config_digest` are the same story, via `scripts/`.
+Coverage has to be taken as a **union across every entry point**, not from
+`pytest` alone. In-process only, the report reads 53% with `pipeline.py` at 0%
+and `model.py` at 27% -- all three misleading. Combining `pytest`, `run_all.py`,
+`export_artifacts.py` and `reconstruct_markov.py` gives **76%**, and `pipeline.py`
+rises to 86%. Two separate causes hide behind a low number here, and naming only
+the first is what let a real finding through:
+
+- **A subprocess artefact.** The suite shells out to `scripts/`, which
+  in-process coverage cannot see. `collapsed.repair_solution` looked dead and is
+  not -- it runs inside `export_artifacts.py`, which the union run shows.
+- **A warm-cache artefact.** `model.py` stays at 27% even in the union, because
+  `run_all.py` reused solved scenarios and never entered the solve path. Its
+  8,016 executions are recorded in the provenance stamps, not in any coverage
+  report. **A cache makes live code look dead.**
+
+With those accounted for, the remaining never-executed lines are of two kinds.
+
+- **Validation guards** -- `raise FileNotFoundError`, `raise ValueError`,
+  `raise AssertionError` -- in `data.py`, `config.py`, `collapsed.py`,
+  `aggregate.py`, `analysis.py` and `markov.py`. All fifteen misses in `data.py`
+  are of this kind, and so are all four in `aggregate.py` and the single one in
+  `analysis.py`. Read individually, not sampled.
+- **One genuine instance of the third variant**, in `__init__.py` lines 67-68:
+  the `_EXPORTS` branch of the lazy `__getattr__`. **Ten advertised public names,
+  none of which had ever been resolved.** Section 20.
 
 ### The distinction that has to go with the rule
 
@@ -897,3 +914,83 @@ that does not say so indicts every validation branch in the codebase.*
 `coverage` is deliberately **not** added to the declared dependencies. It was used
 once, as a diagnostic, and a tool that measures the suite is not a thing the suite
 needs to run.
+
+## 20. The audit in section 19 was wrong, and the way it was wrong is the finding
+
+Section 19 originally concluded "no unverified correction machinery." I had read
+`data.py`'s fifteen misses individually, sampled two lines each from `markov.py`
+and `config.py`, and **not looked at `aggregate.py` (42 misses), `analysis.py`
+(58) or `collapsed.py` (20) at all** -- I assigned them to the subprocess bucket
+because the number was large and the explanation fitted.
+
+What prompted the recheck was the SAV session reporting the same mistake in its
+own work: it had said "all ten scenarios" as evidence of breadth, then found the
+ten ran one static code path ten times. Reading that, the obvious question was
+whether my "every never-executed line" had been established or assumed. It had
+been assumed.
+
+**Two things fell out of actually reading them.**
+
+`collapsed.repair_solution` -- 24 lines, a *correction*, not a guard -- was among
+the never-executed. It has exactly one caller, `scripts/export_artifacts.py`, and
+running coverage against that script directly shows it covered. Real, but the
+subprocess explanation held.
+
+`__init__.py` lines 67-68 did not. That is the `_EXPORTS` branch of the lazy
+`__getattr__`: **ten advertised public names, and the branch that resolves them
+had never executed once.** Every consumer in this repository imports from the
+submodules -- `from fews_stochopt.config import load_config` -- so nothing had
+ever asked the package for `fews_stochopt.load_config`. `__all__` is a promise
+that nothing checked.
+
+All ten do resolve, as it happens. That is what "unverified" means and why it is
+worth a test rather than a shrug: it was correct and nobody knew.
+
+### What the test then found, which the audit had not
+
+Splitting the promise -- which advertised names survive with `gurobipy` blocked
+-- failed on the first run. Four names that have no business needing a solver
+need one:
+
+    ScenarioStats  scenario_stats  value_of_information  SCENARIOS
+
+`aggregate.py:38` imports `fews_stochopt.model` at module level, for four
+scenario-name string constants and one annotation; `model.py:43` imports
+`gurobipy` at module level. So **`SCENARIOS`, a tuple of four strings, cannot be
+resolved without a Gurobi licence.** This is precisely the defect shape the
+standard names -- a module-level import reached by an eager one -- in the same
+repository whose lazy-import remedy supplied that entry. The remedy was applied
+to the package's `__init__` and not followed one level down.
+
+It does not falsify the licence-free claims that are asserted: the verification
+notebook imports `fews_stochopt` and `fews_stochopt.config`, never `aggregate`,
+and both of those tests still pass. It falsifies a claim nobody had made in
+writing, which is why nothing caught it.
+
+**The fix is small and is deliberately not applied here.** Move the four
+constants into a solver-free module and put `ScenarioResult` under
+`TYPE_CHECKING`, where it already belongs -- all five uses are annotations and
+the module has `from __future__ import annotations`, so nothing evaluates at
+runtime. But `model.py` and `aggregate.py` are both in
+`pipeline._SOURCE_MODULES`, so editing either re-stamps the provenance of all ten
+solved scenarios, re-solves the pipeline, and rewrites the committed results with
+last-digit barrier churn. **Re-stamping the provenance of a published
+reproduction to tidy an API is a decision, not a cleanup**, and it is Jones's.
+
+Until then the split is asserted in both directions: six names are pinned as
+solver-bound, and if the coupling is ever fixed the test fails and says to
+tighten the set. An over-claim that cannot rot.
+
+### The transferable part
+
+**"I checked X" and "X was in the set I checked" are different claims, and the
+gap between them is invisible from the inside.** Both sessions made it on the
+same day, in different repositories, about different things -- one reporting ten
+scenarios as breadth, one reporting a whole-codebase audit from one module read
+and two sampled. Neither was caught by more care; both were caught by the other
+session describing its own version out loud.
+
+The cheap defence, worth more than the resolution to be careful: **name what you
+did not look at.** Section 19 would have been correct, and obviously incomplete,
+if it had said "read `data.py` in full, sampled `markov.py` and `config.py`, did
+not open the other three."

@@ -304,3 +304,106 @@ def test_the_verifier_runs_without_a_solver():
     assert proc.returncode == 0, (
         f"verify_solution.py needs a solver\n--- stderr ---\n{proc.stderr}"
     )
+
+
+def test_every_advertised_export_actually_resolves():
+    """`__all__` is a promise, and until now nothing checked it.
+
+    The package resolves its public names lazily (PEP 562 `__getattr__`) so that
+    importing it does not drag in a solver -- the remedy behind
+    `test_importing_the_package_does_not_need_a_solver`. But **every consumer in
+    this repository imports from the submodules**, `from fews_stochopt.config
+    import load_config`, so the `_EXPORTS` branch of that `__getattr__` had never
+    executed once. Ten advertised names, zero ever resolved: a coverage run over
+    every entry point put lines 67-68 among the handful never reached.
+
+    That is the same shape as a sixteen-entry alias map with one entry exercised.
+    A broken entry here raises loudly rather than resolving wrongly, so this is
+    unverified rather than wrong -- which is exactly the state a test removes.
+    """
+    import fews_stochopt
+
+    exports = fews_stochopt._EXPORTS
+    assert exports, "the export map is empty; this test is checking nothing"
+
+    unresolved = {}
+    for name, module in exports.items():
+        try:
+            attr = getattr(fews_stochopt, name)
+        except Exception as exc:  # noqa: BLE001 -- the failure is the finding
+            unresolved[name] = f"{type(exc).__name__}: {exc}"
+            continue
+        assert attr is not None, f"{name} resolved to None"
+        assert getattr(attr, "__module__", module) or True
+    assert not unresolved, (
+        f"{len(unresolved)} of {len(exports)} advertised exports do not resolve, "
+        f"so `__all__` names things the package cannot provide: {unresolved}"
+    )
+
+    # `__dir__` drives tab-completion and `from ... import *`; it must not
+    # advertise a name the resolver would refuse.
+    for name in dir(fews_stochopt):
+        if name.startswith("_"):
+            continue
+        assert name in exports or name in fews_stochopt._SUBMODULES, (
+            f"__dir__ advertises {name!r}, which __getattr__ does not resolve"
+        )
+
+
+# Measured, not assumed: which advertised names survive with gurobipy blocked.
+# Six do not. Only two of those six should need a solver.
+#
+# `aggregate.py:38` imports `fews_stochopt.model` at module level for four
+# scenario-name string constants and one annotation, and `model.py:43` imports
+# gurobipy at module level. So `SCENARIOS` -- a tuple of four strings -- cannot
+# be resolved without a Gurobi licence. That is the exact defect shape the
+# standard names: a module-level import reached by an eager one.
+#
+# It is asserted as it stands rather than fixed. The fix is small and known --
+# move the four constants to a solver-free module, and put `ScenarioResult`
+# under TYPE_CHECKING where it already belongs, since all five uses are
+# annotations and the module has `from __future__ import annotations`. But
+# `model.py` and `aggregate.py` are both in `pipeline._SOURCE_MODULES`, so
+# touching either re-stamps the provenance of all ten solved scenarios and
+# re-solves the pipeline. Re-stamping a published reproduction for an API
+# tidy-up is a decision, not a cleanup. See `docs/reproduction-notes.md` §20.
+SOLVER_BOUND_EXPORTS = {
+    "ScenarioResult",        # legitimately from `model`
+    "solve_scenario",        # legitimately from `model`
+    "ScenarioStats",         # from `aggregate`, coupled via the import above
+    "scenario_stats",        # ditto
+    "value_of_information",  # ditto
+    "SCENARIOS",             # ditto -- four strings behind a licence
+}
+
+
+def test_the_licence_free_exports_resolve_without_a_solver():
+    """Splitting the promise: which advertised names survive with no gurobipy.
+
+    Asserting the split in BOTH directions is what makes this a measurement
+    rather than a wish. If the coupling above is ever fixed, the second half
+    fails and tells you to tighten the set, instead of the set quietly
+    over-claiming forever.
+    """
+    lines = [
+        "import fews_stochopt as f",
+        f"needs_solver = {sorted(SOLVER_BOUND_EXPORTS)!r}",
+        "bad, unexpectedly_ok = [], []",
+        "for name in f._EXPORTS:",
+        "    try:",
+        "        getattr(f, name)",
+        "        resolved = True",
+        "    except Exception:",
+        "        resolved = False",
+        "    if resolved and name in needs_solver:",
+        "        unexpectedly_ok.append(name)",
+        "    if not resolved and name not in needs_solver:",
+        "        bad.append(name)",
+        "assert not bad, f'these should not need a solver: {bad}'",
+        "assert not unexpectedly_ok, f'no longer solver-bound, tighten the set: {unexpectedly_ok}'",
+    ]
+    proc = _run_without_gurobipy("\n".join(lines))
+    assert proc.returncode == 0, (
+        "the licence-free export surface has changed\n"
+        f"--- stdout ---\n{proc.stdout}\n--- stderr ---\n{proc.stderr}"
+    )
