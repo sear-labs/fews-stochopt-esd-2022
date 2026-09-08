@@ -832,3 +832,68 @@ layer.** The model produces raw output and does not care what is kept. It is the
 analysis that decides what everything downstream reads, and therefore what has to
 be committed -- which is where the 135 MB against a 10 MB boundary was resolved by
 committing the aggregate rather than the detail.
+
+## 19. Three ways an injection comes back harmless, and only one is good news
+
+Section 18 records one of these; the SAV session measured a second and a third on
+the same day. They look identical from the outside -- you break something, the
+suite stays green -- and they need different responses.
+
+| What happened | Why nothing moved | What to do |
+|---|---|---|
+| SAV, first attempt | no defect existed; the import was already lazy | the injection was wrong -- pick a real defect |
+| here, section 18 | the defect existed and a second copy absorbed it | remove **every** copy |
+| SAV, second attempt | the defect existed and that code never runs | show the site executes before believing the result |
+
+The third is the one that flatters you. SAV's column resolver carries four
+correction mechanisms for one problem -- a 16-entry alias map, `.lower()`,
+`.upper()` and a dimension rule. Instrumented across ten scenarios, **one alias
+fires and fifteen never execute**, nor do the other three mechanisms. Deleting the
+fifteen leaves 47 of 47 tests green; deleting the one that fires turns six red. So
+the suite is not blind to aliases -- it covers one entry of sixteen, and the other
+fifteen are unverified rather than untested.
+
+### The same audit here, and what it found
+
+Two questions, because a ladder and an alias map are not the same shape.
+
+**Does the solver ladder have a dead rung?** Yes -- and deliberately. Across all
+8,016 solves recorded in the provenance stamps, rungs 0, 1 and 2 all fire and
+**5,450 solves (68%) need a fallback**, so the ladder is load-bearing rather than
+decorative. Rung 3 has never been reached. That is not dead code, it is headroom,
+and `test_the_solver_ladder_never_runs_out_of_rungs` asserts it stays that way --
+reaching the last rung means the next failure has nowhere to go. **An ordered
+ladder is not an alias map**: its last entry existing-but-unused is the design,
+where a sixteenth alias existing-but-unused is an untested branch.
+
+**Is there unverified correction machinery anywhere else?** Measured with
+`coverage` over the whole suite rather than argued: **no.** Every never-executed
+line in the directly-imported modules is one of two things.
+
+- **A validation guard** -- `raise FileNotFoundError`, `raise ValueError` -- in
+  `data.py`, `config.py` and `markov.py`. All fifteen misses in `data.py` are of
+  this kind.
+- **A subprocess artefact.** `pipeline.py` reports 0% and `model.py` 27%, which is
+  false: both run inside `scripts/run_all.py`, which the suite invokes as a
+  subprocess that in-process coverage cannot see. The provenance stamps show
+  `model.py`'s solve path executing 8,016 times. `markov.write_reconstruction` and
+  `config.config_digest` are the same story, via `scripts/`.
+
+### The distinction that has to go with the rule
+
+**A guard that never fires is succeeding; a correction that never fires is
+unverified.** They are indistinguishable in a coverage report and opposite in
+meaning. `raise ValueError("climate probabilities sum to ...")` executing would
+mean the committed inputs had gone wrong -- its silence is the whole point. An
+alias that never fires means nobody has ever checked it maps to the right column.
+
+Stated as a rule and worth carrying up: *an injection proves something only at a
+site you have shown executes. If nothing moved, three things are
+indistinguishable -- there was no defect, a second copy absorbed it, or the code
+you broke never ran. Establish a positive control first. But apply this to
+corrections, not to guards: a guard's silence is its success condition, and a rule
+that does not say so indicts every validation branch in the codebase.*
+
+`coverage` is deliberately **not** added to the declared dependencies. It was used
+once, as a diagnostic, and a tool that measures the suite is not a thing the suite
+needs to run.
