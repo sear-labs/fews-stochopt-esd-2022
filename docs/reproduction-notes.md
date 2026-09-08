@@ -1241,3 +1241,71 @@ licence.** A `sitecustomize` blocker is a faithful simulation of one import
 failing, and this section is what that simulation is worth: it found something
 real three times. It is still not the same fact, and the distinction stays
 recorded rather than quietly rounded up.
+
+## 24. A real clone, and the two paths it was shipping
+
+Section 23 simulated a fresh clone by moving directories aside. The SAV session
+did the same check as an actual `git clone`, which is the correct upgrade: **a
+clone is what a stranger gets by definition; a mutated tree is a guess about
+one.** The guess was wrong twice here.
+
+It still held `results/regenerated/` and `results/reports/`, which a clone does
+not. And it structurally could not find what a clone found immediately, because
+**on the machine that wrote an absolute path, the absolute path is correct.**
+
+### Two machine paths were committed inside the notebooks
+
+    verify_solution.py logged ARTIFACTS -- an absolute path -- into
+    "Verifying 12 model(s) from ..."
+
+    the notebook's run() helper returned the CompletedProcess, and its repr
+    carries `args`: the anaconda interpreter path and the absolute script path
+
+Two consequences, and the first hid the second. Every reader who clones gets
+different text there, so the output-reproducibility check added in section 21
+**failed for everyone except the author**. And a repository heading for
+publication was shipping a home directory and a username inside a file people
+read.
+
+Fixed at source both times rather than normalised, which is the rule that keeps
+earning its place: the verifier logs a repo-relative path, and the helper returns
+`proc.returncode` instead of an object whose repr carries paths.
+`test_no_committed_output_carries_an_absolute_path` guards both notebooks.
+
+Its own first version did not parse. A Windows path in a non-raw docstring makes
+`\U` an escape -- the trap recorded at the user level, met again here. Its
+backslashes are built with `chr(92)` now, with a comment saying why.
+
+### A collection error costs the suite, not the module
+
+With the paths fixed, a licence-free clone still reported 4 failures and 19
+errors, and then something worse: **two modules failed to collect, and pytest
+aborts the entire run on a collection error.** A reader without a licence saw no
+results at all -- not the stages they could run.
+
+All 23 were the documented CI exemption behaving correctly. But an ERROR reads as
+a broken repository, where a skip reads as a stage you cannot run, and the
+difference is the whole impression a stranger forms. Three changes:
+
+- `pipeline_run` skips when `gurobipy` is absent, rather than failing setup
+- the four remaining licence-bound tests use `importorskip` with a reason each
+- the two solver-bound modules skip at module scope
+
+The last needed two attempts. The first guard sat *below* a plain
+`import gurobipy as gp`, so it never ran -- **a guard placed after the thing it
+guards is not a guard**, and only re-cloning showed it, since with a licence
+present both versions look identical.
+
+### What a stranger sees now
+
+    58 passed, 23 skipped, 1 xfailed, 0 failed, 0 errors
+
+against 46 passed with three uncollectable modules when section 23 started.
+Nothing is masked: every skip is conditioned on `gurobipy` being unimportable, so
+all 97 still run on a machine with a licence.
+
+**And the limit that has not moved.** This is still a blocked import, not an
+absent licence. What the exercise is worth is now measurable rather than
+arguable: run as a real clone, it found two committed absolute paths, a
+suite-aborting collection error, and a guard that did not guard. None of those
+were visible from the working tree.
