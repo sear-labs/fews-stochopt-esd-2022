@@ -1378,6 +1378,24 @@ are skipped without a word. The `scanned > 100` assertion passed throughout. Now
 split on NUL with `-z`, plus an assertion that **every** listed path resolves --
 because "skipped silently" is the failure mode, not "scanned too few".
 
+**The fix was not demonstrated until the SAV session demonstrated theirs.** I
+changed the split, added the resolve assertion, watched the suite go green, and
+moved on -- but my probes were a `README.md` injection and a PNG in a temporary
+directory, neither of which has a space in its name. Fixing the enumeration and
+then probing a case the enumeration never mishandled proves nothing about the
+fix. Injecting the actual case:
+
+    figures/probe file.png, poisoned, git-added
+
+    whitespace .split()  (before)   PASSES -- the file is never opened
+    NUL -z split         (after)    FAILS, naming 'figures/probe file.png'
+
+The old version does not merely miss it: it reports a completely ordinary run.
+Nothing in its output distinguishes "253 files, clean" from "251 files, clean,
+and two I could not open". That is why the assertion that every listed path
+resolves matters more than the count -- **skipped silently is the failure,
+scanned too few is the version that would have been visible.**
+
 **Then the binary scan I wrote to answer their question returned zero, and the
 zero was worthless -- again.** Probing it first, as the rule this section already
 states, showed it blind to a poisoned PNG *and* a poisoned PDF. The cause was the
