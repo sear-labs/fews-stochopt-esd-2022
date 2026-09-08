@@ -24,13 +24,15 @@ from __future__ import annotations
 
 from dataclasses import asdict
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
 from fews_stochopt.aggregate import SCENARIOS, scenario_stats, value_of_information
 from fews_stochopt.config import Config, repo_root
 from fews_stochopt.data import climate_of_run, load_precipitation
-from fews_stochopt.model import ScenarioResult
+if TYPE_CHECKING:  # annotation-only; see the note in aggregate.py
+    from fews_stochopt.model import ScenarioResult
 
 CLEAN = "clean"
 
@@ -125,7 +127,7 @@ def climate_table(cfg: Config, results: dict[str, dict[str, ScenarioResult]]) ->
     This is what shows that a wetter climate does not always earn more -- the
     yield curve peaks near 72 cm and the farm cannot shed water.
     """
-    from fews_stochopt.model import PERFECT_INFORMATION
+    from fews_stochopt.names import PERFECT_INFORMATION
 
     rows = []
     for site, by_scenario in results.items():

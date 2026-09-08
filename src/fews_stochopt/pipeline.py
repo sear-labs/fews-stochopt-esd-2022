@@ -34,7 +34,8 @@ from fews_stochopt.model import ScenarioResult, solve_scenario
 
 # Every module whose source can change a number. Listed rather than globbed, so
 # adding a module is a deliberate decision about whether it affects results.
-_SOURCE_MODULES = ("config.py", "data.py", "model.py", "aggregate.py")
+_SOURCE_MODULES = ("config.py", "data.py", "model.py", "aggregate.py",
+                   "names.py")
 
 
 def _sha256(path: Path) -> str:

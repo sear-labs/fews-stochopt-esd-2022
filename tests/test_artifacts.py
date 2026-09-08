@@ -353,29 +353,20 @@ def test_every_advertised_export_actually_resolves():
 
 
 # Measured, not assumed: which advertised names survive with gurobipy blocked.
-# Six do not. Only two of those six should need a solver.
+# Two do not, and both come from `model`, which builds and solves.
 #
-# `aggregate.py:38` imports `fews_stochopt.model` at module level for four
-# scenario-name string constants and one annotation, and `model.py:43` imports
-# gurobipy at module level. So `SCENARIOS` -- a tuple of four strings -- cannot
-# be resolved without a Gurobi licence. That is the exact defect shape the
-# standard names: a module-level import reached by an eager one.
+# It was six. `aggregate` imported four scenario-name strings and one annotation
+# from `model`, and `model` imports gurobipy at module scope -- so `SCENARIOS`,
+# a list of four strings, needed a commercial licence, and so did regenerating a
+# figure from committed CSVs. The names now live in `fews_stochopt.names`, which
+# imports nothing, and the annotation is under `TYPE_CHECKING`.
 #
-# It is asserted as it stands rather than fixed. The fix is small and known --
-# move the four constants to a solver-free module, and put `ScenarioResult`
-# under TYPE_CHECKING where it already belongs, since all five uses are
-# annotations and the module has `from __future__ import annotations`. But
-# `model.py` and `aggregate.py` are both in `pipeline._SOURCE_MODULES`, so
-# touching either re-stamps the provenance of all ten solved scenarios and
-# re-solves the pipeline. Re-stamping a published reproduction for an API
-# tidy-up is a decision, not a cleanup. See `docs/reproduction-notes.md` §20.
+# Asserted in BOTH directions below, which is what caught the fix: if a name
+# stops being solver-bound the second half fails and says to tighten this set,
+# rather than the set quietly over-claiming forever.
 SOLVER_BOUND_EXPORTS = {
-    "ScenarioResult",        # legitimately from `model`
-    "solve_scenario",        # legitimately from `model`
-    "ScenarioStats",         # from `aggregate`, coupled via the import above
-    "scenario_stats",        # ditto
-    "value_of_information",  # ditto
-    "SCENARIOS",             # ditto -- four strings behind a licence
+    "ScenarioResult",  # legitimately from `model`
+    "solve_scenario",  # legitimately from `model`
 }
 
 
@@ -411,26 +402,19 @@ def test_the_licence_free_exports_resolve_without_a_solver():
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "KNOWN, UNFIXED: analysis.py:30 -> aggregate.py:38 -> model.py:43 imports "
-        "gurobipy, so regenerating the figures needs a Gurobi licence even though "
-        "make_figures.py reads only results/clean/. The fix touches files in "
-        "pipeline._SOURCE_MODULES and re-stamps the provenance of all ten solved "
-        "scenarios, which is a decision rather than a cleanup. See "
-        "docs/reproduction-notes.md section 20."
-    ),
-)
 def test_regenerating_the_figures_needs_no_solver():
     """The figure path is stage 9 and reads 90 KB of committed cleaned output.
 
     Nothing about drawing a line through `results/clean/` requires a solver, and
-    a reader without a licence is exactly who the committed cleaned output exists
-    for. This is `strict=True` deliberately: when the import coupling is fixed
-    this test XPASSes, which pytest reports as a failure, and the marker has to
-    be removed. A known defect that quietly heals is a known defect nobody
-    notices has healed.
+    a reader without a licence is exactly who the committed cleaned output
+    exists for.
+
+    **This was `xfail(strict=True)` for four commits and now passes.** The
+    coupling behind it -- `analysis` -> `aggregate` -> `model` -> `gurobipy`,
+    for four scenario-name strings and one annotation -- is broken: the names
+    live in `fews_stochopt.names`, which imports nothing, and the annotation is
+    under `TYPE_CHECKING`. The strict marker is what reported the fix: it turns
+    an XPASS into a failure, so a known defect cannot quietly heal unnoticed.
     """
     proc = _run_without_gurobipy(
         "import runpy, sys\n"

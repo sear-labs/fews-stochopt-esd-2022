@@ -97,9 +97,8 @@ measurements.
 | `reference/reconstructed/` is an estimate; two rows per site are unidentified | `test_unidentified_rows_are_recorded_not_invented` |
 | The five weather states are rounded to 2 dp, reproducing R's `as.character`; the exact product matches nothing | `test_the_state_values_survive_the_formatting_round_trip` |
 | A regenerated sample matches the committed distribution, never the committed draws | `test_a_fresh_sample_has_the_committed_distribution` |
-| `aggregate` imports `model` at module level, so `SCENARIOS` -- four strings -- needs a Gurobi licence. Known, unfixed: the fix re-stamps all ten provenance records | `test_the_licence_free_exports_resolve_without_a_solver` |
+| Reading results needs no solver: the scenario names live in `names.py`, which imports nothing | `test_the_licence_free_exports_resolve_without_a_solver`, `test_regenerating_the_figures_needs_no_solver` |
 | Every name in `__all__` resolves through the lazy `__getattr__` | `test_every_advertised_export_actually_resolves` |
-| Regenerating the figures needs a Gurobi licence it should not -- known, unfixed, `xfail(strict)` | `test_regenerating_the_figures_needs_no_solver` |
 | The committed figures are byte-identical to what `make_figures.py` draws | `test_the_committed_figures_are_what_the_script_draws` |
 | Both notebooks' committed outputs are byte-identical to what re-executing produces | `test_the_committed_notebook_outputs_are_reproducible` |
 | That comparison can actually see the rendered table | `test_the_notebook_comparison_can_see_the_table` |

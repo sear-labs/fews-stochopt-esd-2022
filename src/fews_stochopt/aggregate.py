@@ -29,22 +29,27 @@ $64,865.98, to the cent, and it satisfies the identity EVPI = EVKW + EVKC, which
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 from scipy import stats as scs
 
 from fews_stochopt.config import Config
-from fews_stochopt.model import (
+from fews_stochopt.names import (
     EXPECTED_VALUE,
     KNOWN_CLIMATE,
     PERFECT_INFORMATION,
+    SCENARIOS,
     STOCHASTIC,
-    ScenarioResult,
 )
 
-# Table order, as printed in the paper.
-SCENARIOS = [PERFECT_INFORMATION, KNOWN_CLIMATE, STOCHASTIC, EXPECTED_VALUE]
+if TYPE_CHECKING:  # `ScenarioResult` is only ever an annotation here, and this
+    # module has `from __future__ import annotations`, so it is never evaluated
+    # at runtime. Importing it for real pulled in `model`, and `model` imports
+    # gurobipy at module scope -- which is what put a solver licence in front of
+    # reading results.
+    from fews_stochopt.model import ScenarioResult
 
 
 @dataclass

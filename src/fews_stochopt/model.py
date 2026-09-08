@@ -52,16 +52,18 @@ from fews_stochopt.data import (
     rain_dict,
 )
 
-# The scenario names, and the order the paper's tables use.
-PERFECT_INFORMATION = "Perfect Information"
-KNOWN_CLIMATE = "Known Climate, Unknown Weather"
-STOCHASTIC = "Stochastic"
-EXPECTED_VALUE = "Expected Value"
-
-# A diagnostic, not one of the paper's four. It is the Expected Value scenario
-# with the first stage pinned to what the published run invested, which isolates
-# the second stage from the flat first-stage optimum. See reference/README.md.
-EXPECTED_VALUE_PUBLISHED_FIRST_STAGE = "Expected Value (published first stage)"
+# The scenario names now live in `names`, which imports nothing. They are keys
+# that every downstream table, figure and cache path uses, and keeping them here
+# -- in a module that imports gurobipy at line 43 -- put a solver licence in
+# front of reading results. Re-exported so existing imports still work.
+from fews_stochopt.names import (  # noqa: F401
+    EXPECTED_VALUE,
+    EXPECTED_VALUE_PUBLISHED_FIRST_STAGE,
+    KNOWN_CLIMATE,
+    PERFECT_INFORMATION,
+    SCENARIOS,
+    STOCHASTIC,
+)
 
 
 @dataclass
