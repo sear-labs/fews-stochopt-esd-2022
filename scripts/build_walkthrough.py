@@ -51,10 +51,13 @@ which is the failure the repository's own tests exist to prevent.
 instances and their solutions, and verifying them is arithmetic. That is this
 repository's central claim and it is the part that runs everywhere.
 
-**Sections 3 and 4 need `gurobipy` but not a licence file.** The models solved
-there are 37 variables; the licence that ships with `pip install gurobipy` allows
-2,000. Only the full 704,002-variable formulation in section 5 needs a real
-licence, and section 5 is optional.""")
+**Sections 3 and 4 need `gurobipy`, and should need no licence file.** The models
+solved there are 37 variables against a documented 2,000-variable cap on the
+licence bundled with `pip install gurobipy`. That cap is reported rather than
+measured here — this machine holds a full academic licence — so treat it as an
+inference until this notebook has been run somewhere without one. Only the full
+704,002-variable formulation in section 5 needs a real licence, and section 5 is
+optional.""")
 
     yield MD("""## 1. Install
 
@@ -191,8 +194,16 @@ weights, n_runs = collapsed.rain_weights(cfg, "EP")
 probe = collapsed.build(cfg, weights, n_runs, env)
 print(f"collapsed model: {probe.NumVars} variables, {probe.NumConstrs} linear "
       f"and {probe.NumQConstrs} quadratic constraints")
-print(f"free pip-installed Gurobi licence allows 2,000 variables -> "
-      f"{'fits' if probe.NumVars <= 2000 else 'DOES NOT FIT'}")
+# The documented cap on the licence bundled with `pip install gurobipy` is 2,000
+# variables. That is a REPORTED cap, not one measured here: this machine holds a
+# full academic licence, and forcing the fallback makes Gurobi error rather than
+# degrade. Counting variables is also the weaker probe -- the limit is enforced
+# when you optimize, so a model that declares small can still be refused. Treat
+# the line below as an inference, and the real test as running this notebook on
+# Colab, where no licence file exists.
+print(f"documented cap on the bundled licence: 2,000 variables -> "
+      f"{'well inside' if probe.NumVars <= 2000 else 'OVER'} "
+      f"({probe.NumVars} declared; not verified under that licence here)")
 del probe, env''')
 
     yield CODE('''QUICK = True   # skip the 4,000-solve Perfect Information scenario
@@ -213,8 +224,9 @@ display(solved.style.format({"mean_profit": "{:,.4f}",
 
 if QUICK:
     print("\\nQUICK = True: Perfect Information was NOT solved here.")
-    print("It is 4,000 solves of 178 variables, about two minutes, and it fits")
-    print("the free licence too. Its published value is read from results/ below.")''')
+    print("It is 4,000 solves of 178 variables each, about two minutes, and it")
+    print("should fit the bundled licence too. Its published value is read from")
+    print("results/ below.")''')
 
     yield MD("""### Against the published figures
 
