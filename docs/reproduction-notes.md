@@ -1313,7 +1313,12 @@ were visible from the working tree.
 ### The sweep that could not have found anything
 
 Section 24 fixed two paths in the notebooks. The obvious follow-up was to check
-whether anything *else* committed carries one, so I swept all 253 tracked files
+whether anything *else* committed carries one, so I swept what I reported as
+"all 253 tracked files" -- a number that was itself wrong, and wrong in the
+flattering direction. There are **195** tracked files; the whitespace split
+fragmented 24 paths containing spaces into 254 pieces, so the broken
+enumeration reported scanning *more* files than exist while actually opening
+fewer
 and got "no machine paths found."
 
 **That sweep was structurally incapable of matching.** Its pattern built the
