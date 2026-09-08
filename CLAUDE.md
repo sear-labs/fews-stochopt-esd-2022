@@ -101,7 +101,8 @@ measurements.
 | Every name in `__all__` resolves through the lazy `__getattr__` | `test_every_advertised_export_actually_resolves` |
 | Regenerating the figures needs a Gurobi licence it should not -- known, unfixed, `xfail(strict)` | `test_regenerating_the_figures_needs_no_solver` |
 | The committed figures are byte-identical to what `make_figures.py` draws | `test_the_committed_figures_are_what_the_script_draws` |
-| The verification notebook's committed outputs are what re-executing produces | `test_the_verification_notebooks_committed_outputs_are_reproducible` |
+| Both notebooks' committed outputs are byte-identical to what re-executing produces | `test_the_committed_notebook_outputs_are_reproducible` |
+| That comparison can actually see the rendered table | `test_the_notebook_comparison_can_see_the_table` |
 | The archive must never change | `test_the_archive_is_frozen` |
 | No maintained code in a second language | `test_no_maintained_code_is_in_another_language` |
 | The verification notebook must not need a solver | `test_the_verification_notebook_needs_no_solver` |

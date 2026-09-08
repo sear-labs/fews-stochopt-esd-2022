@@ -151,8 +151,16 @@ short = {"Value_of_Known_Weather": "EVKW", "Value_of_Known_Climate": "EVKC",
          "Value_of_Stochastic_Solution": "VSS"}
 table = values.assign(quantity=values["variable"].map(short))[
     ["label", "quantity", "published", "value", "difference"]]
-display(table.style.format({"published": "{:,.4f}", "value": "{:,.4f}",
-                            "difference": "{:+.4f}"}))
+# Rendered through HTML() with a fixed uuid so the committed output is
+# byte-reproducible. A bare Styler emits two machine-dependent tokens: a
+# `<Styler at 0x...>` repr in text/plain, and a random table id throughout the
+# HTML. Both are inert, and a comparison taught to ignore them would also be
+# ignoring the table itself -- which is exactly what happened here once.
+from IPython.display import HTML
+
+styled = table.style.format({"published": "{:,.4f}", "value": "{:,.4f}",
+                             "difference": "{:+.4f}"}).set_uuid("voi")
+display(HTML(styled.to_html()))
 
 worst = table["difference"].abs().max()
 print(f"largest difference: ${worst:,.4f}")
@@ -244,9 +252,14 @@ full = stats[stats["variable"] == "profit_mean"].set_index(["label", "scenario"]
 solved["full_pipeline"] = [full[(r.label, r.scenario)] for r in solved.itertuples()]
 solved["difference"] = solved["mean_profit"] - solved["full_pipeline"]
 
-display(solved[["label", "scenario", "full_pipeline", "mean_profit", "difference"]]
-        .style.format({"full_pipeline": "{:,.4f}", "mean_profit": "{:,.4f}",
-                       "difference": "{:+.4f}"}))
+# Fixed uuid and HTML(), as in the verification notebook: the two tokens a
+# bare Styler emits are the only thing that was not reproducible here.
+from IPython.display import HTML
+
+styled = (solved[["label", "scenario", "full_pipeline", "mean_profit", "difference"]]
+          .style.format({"full_pipeline": "{:,.4f}", "mean_profit": "{:,.4f}",
+                         "difference": "{:+.4f}"}).set_uuid("solved"))
+display(HTML(styled.to_html()))
 
 if QUICK:
     print("QUICK = True: Perfect Information was not solved here.")''')

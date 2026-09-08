@@ -1066,3 +1066,52 @@ stamps rather than watched.
 The reason for writing this down rather than fixing it: two sessions independently
 listed unchecked items this week and each found something real in the other's
 list. The list is the instrument.
+
+## 22. The test I shipped in section 21 was blind, and a normaliser hid it
+
+The notebook-output check added one commit earlier compared only `text/plain`
+and normalised ` at 0x...` away. The one cell carrying a real result renders a
+pandas Styler, whose `text/plain` is the string `<Styler at 0x...>` and nothing
+else -- the 4 KB of actual table lives in `text/html`, which the comparison never
+read. So the normaliser erased the only channel that differed, and the subject of
+the test was never compared at all.
+
+**Measured rather than reasoned about:** adding $11,111 to a committed value in
+`results/clean/value_of_information.csv` makes the notebook re-execute with a
+visibly different table, and the test passed.
+
+The prompt was the SAV session reporting the opposite result -- its normaliser
+changed no outcome, which it flagged as *a normaliser earning its place by
+existing*, and it removed it. Running mine both ways showed the reverse and
+worse: mine changed the outcome because it was covering the whole subject.
+
+### Fix the source, not the comparison
+
+Their distinction is the one that matters and it decided the remedy here. A
+`Styler` repr is not something a comparison should be taught to ignore, because
+the token is only inert *today*: a permanent normaliser widens, and the next
+thing behind it will not be inert. Both machine-dependent tokens are ours to
+remove at source:
+
+    display(styler)                    -> <Styler at 0x...>  and a random table id
+    display(HTML(styler.set_uuid(...).to_html()))  -> neither
+
+`build_notebooks.py` now renders both tables that way. **There is no
+normalisation left in the test**, and the comparison reads every output channel.
+`test_the_notebook_comparison_can_see_the_table` asserts the captured output
+actually contains the first value from the cleaned CSV, so a future narrowing
+fails loudly instead of going blind again.
+
+### And the exemption I wrote in the same commit was wrong
+
+Section 21 said the example notebook was deliberately unchecked because it solves
+and its last digits move. That is the plausible general claim, and it is false
+here. Every stream output re-executes **bit-identical, Gurobi solve included**;
+the only difference was the same two Styler tokens. On a fixed instance with a
+deterministic solve there is nothing to move.
+
+So both notebooks are now checked strictly. The lesson is the one this whole
+exchange keeps re-deriving, and I managed to break it in the sentence that named
+it: **reason about the artifact, not about the repository.** "Notebooks that
+solve are not comparable" is a statement about a class; whether *this* one is
+comparable was a five-minute measurement.

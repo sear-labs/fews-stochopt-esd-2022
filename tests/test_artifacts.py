@@ -441,56 +441,84 @@ def test_regenerating_the_figures_needs_no_solver():
     )
 
 
-def test_the_verification_notebooks_committed_outputs_are_reproducible():
-    """Rule 5's exception says a reader sees the outputs without running the
-    notebook. That is only honest if the committed outputs are what the code
-    actually produces -- and `build_notebooks.py --check` deliberately does not
-    check it, comparing source cells because outputs legitimately differ between
-    machines.
+def _cell_outputs(nb):
+    """Every output channel of every code cell, joined. No normalisation.
 
-    That reasoning is right in general and too strong for this notebook. It
-    executes `verify_solution.py`, which is deterministic arithmetic over
-    committed artifacts with no solver and no RNG, so its outputs *are*
-    reproducible -- with one exception that has to be normalised rather than
-    asserted away: a `<... object at 0x7f...>` repr carries a memory address.
-
-    The example notebook is deliberately not checked this way. It solves, so its
-    last digits move between runs, which is the difference the builder's
-    docstring is talking about.
+    Comparing only `text/plain` is what made the first version of this test
+    blind: the one cell carrying a table emits `<Styler at 0x...>` there and the
+    table itself in `text/html`. See the docstring below.
     """
+    rows = []
+    for cell in nb.cells:
+        if cell.cell_type != "code":
+            continue
+        chunks = []
+        for o in cell.get("outputs", []):
+            if o.output_type == "stream":
+                chunks.append(o.text)
+            elif o.output_type in ("execute_result", "display_data"):
+                data = o.get("data", {})
+                chunks.append(str(data.get("text/plain", "")))
+                chunks.append(str(data.get("text/html", "")))
+            elif o.output_type == "error":
+                chunks.append("ERROR:" + o.get("ename", ""))
+        rows.append("".join(chunks))
+    return rows
+
+
+def _execute_copy(path):
     nbformat = pytest.importorskip("nbformat")
     nbclient = pytest.importorskip("nbclient")
-
-    committed = nbformat.read(VERIFICATION, as_version=4)
-    fresh = json.loads(json.dumps(committed))
-    fresh = nbformat.from_dict(fresh)
+    fresh = nbformat.from_dict(json.loads(json.dumps(nbformat.read(path, as_version=4))))
     nbclient.NotebookClient(
         fresh, timeout=600, kernel_name="python3",
         resources={"metadata": {"path": str(ROOT / "notebooks")}},
     ).execute()
+    return fresh
 
-    def texts(nb):
-        out = []
-        for cell in nb.cells:
-            if cell.cell_type != "code":
-                continue
-            chunks = []
-            for o in cell.get("outputs", []):
-                if o.output_type == "stream":
-                    chunks.append(o.text)
-                elif o.output_type in ("execute_result", "display_data"):
-                    chunks.append(str(o.get("data", {}).get("text/plain", "")))
-                elif o.output_type == "error":
-                    chunks.append("ERROR:" + o.get("ename", ""))
-            # A repr carrying a memory address is not a result.
-            out.append(re.sub(r" at 0x[0-9a-fA-F]+", " at 0xADDR", "".join(chunks)))
-        return out
 
-    old, new = texts(committed), texts(fresh)
+@pytest.mark.parametrize("path", NOTEBOOKS, ids=lambda p: p.name)
+def test_the_committed_notebook_outputs_are_reproducible(path):
+    """Rule 5's exception says a reader sees the outputs without running the
+    notebook. That is honest only if the committed outputs are what the code
+    produces, and `build_notebooks.py --check` deliberately does not check it --
+    it compares source cells, because outputs legitimately differ between
+    machines. Right in general, too strong for this notebook: it runs
+    deterministic arithmetic over committed artifacts, with no solver and no RNG.
+
+    **The first version of this test was blind, and passed while being so.**
+    It compared only `text/plain` and normalised away ` at 0x...`. The one cell
+    that carries a real result renders a pandas Styler, whose `text/plain` is
+    just `<Styler at 0x...>` -- so the normaliser erased the only channel that
+    differed, and the 4 KB of actual table in `text/html` was never compared at
+    all. Measured: adding $11,111 to a committed value in
+    `results/clean/value_of_information.csv` produced a completely different
+    table and this test still passed.
+
+    Two things changed. The comparison now reads **every** output channel. And
+    the notebook was fixed at source rather than the comparison taught to ignore
+    it -- `build_notebooks.py` renders through `HTML()` with `set_uuid`, so
+    neither the repr address nor the Styler's random table id appears. **There is
+    no normalisation left here**, which is the point: a normaliser that changes
+    no outcome is a future excuse for a real difference, and this one was hiding
+    the whole subject.
+
+    **Both notebooks are checked, and the reason the second one was exempt turned
+    out to be wrong.** I had written that the example notebook could not be
+    compared because it solves and its last digits move. Measured: every stream
+    output re-executes bit-identical, Gurobi solve included. What actually
+    differed was the same two Styler tokens, in a repository where the instance
+    is fixed and the solve deterministic. Reasoning about the artifact rather
+    than about the repository is the whole lesson of this section -- and I made
+    the file-shaped mistake in the same breath as naming it.
+    """
+    nbformat = pytest.importorskip("nbformat")
+    committed = nbformat.read(path, as_version=4)
+    old = _cell_outputs(committed)
+    new = _cell_outputs(_execute_copy(path))
+
     assert old, "the committed notebook has no code-cell outputs to compare"
-    assert len(old) == len(new), (
-        f"{len(old)} committed code cells against {len(new)} executed"
-    )
+    assert len(old) == len(new), f"{len(old)} committed cells against {len(new)}"
     differing = [i for i, (a, b) in enumerate(zip(old, new)) if a != b]
     assert not differing, (
         f"cell(s) {differing} produce different output than committed, so the "
@@ -502,6 +530,27 @@ def test_the_verification_notebooks_committed_outputs_are_reproducible():
     )
 
 
+def test_the_notebook_comparison_can_see_the_table():
+    """The guard the blind version needed and did not have.
+
+    A comparison that cannot see a cell's real content passes for the wrong
+    reason, and nothing about a green run distinguishes that from correctness.
+    This asserts the captured output actually contains the numbers -- so if the
+    comparison ever narrows back to `text/plain`, or the table stops being
+    emitted, this fails instead of quietly going blind again.
+    """
+    nbformat = pytest.importorskip("nbformat")
+    captured = "".join(_cell_outputs(nbformat.read(VERIFICATION, as_version=4)))
+
+    values = ROOT / "results" / "clean" / "value_of_information.csv"
+    published = values.read_text(encoding="utf-8").splitlines()[1].split(",")
+    number = float(published[3])
+    rendered = f"{number:,.4f}"
+    assert rendered in captured, (
+        f"the captured notebook output does not contain {rendered!r}, the first "
+        f"value in {values.name}. The comparison is not seeing the table, which "
+        f"is how the first version of this test passed while blind."
+    )
 def test_the_committed_figures_are_what_the_script_draws(pipeline_run):
     """The Part 4 corollary, applied to the one generated artifact that lacked it.
 
