@@ -46,6 +46,15 @@ The nine stages, and which are empty here:
 **A stage being empty is a finding, not an omission.** Two of the nine do not exist here
 because the original's input needed no conversion.
 
+**And one stage sat in the wrong directory.** `markov_chain.Rmd` was filed in
+`stage2-r/` beside the report files, but it is a *generator*: it produces
+`data/raw/precips_c0_*.csv`, which is the model's input. That is stages 1-3, not
+stage 8, and it changes the acceptance test -- a report is checked by comparing
+tables, a generator whose RNG state was never recorded can only be checked
+distributionally. Ported to `fews_stochopt.markov.simulate`, asserted by
+`tests/test_markov_reconstruction.py`. Check what a "reporting" directory
+actually contains before accepting its label.
+
 | Axis | Answer |
 |---|---|
 | How sensitive? | Not. Public paper, public data, no restricted inputs. It stays private only until the reproduction is finished. |
@@ -86,6 +95,8 @@ measurements.
 | Standard errors divide by `sqrt(n-1)`, reproducing the original | the R report and `aggregate._summary`, both commented |
 | `profit` carries a lower bound of zero, as in the original | `test_profit_non_negativity_never_binds` |
 | `reference/reconstructed/` is an estimate; two rows per site are unidentified | `test_unidentified_rows_are_recorded_not_invented` |
+| The five weather states are rounded to 2 dp, reproducing R's `as.character`; the exact product matches nothing | `test_the_state_values_survive_the_formatting_round_trip` |
+| A regenerated sample matches the committed distribution, never the committed draws | `test_a_fresh_sample_has_the_committed_distribution` |
 | The archive must never change | `test_the_archive_is_frozen` |
 | No maintained code in a second language | `test_no_maintained_code_is_in_another_language` |
 | The verification notebook must not need a solver | `test_the_verification_notebook_needs_no_solver` |

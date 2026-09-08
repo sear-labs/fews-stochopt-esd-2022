@@ -1,4 +1,15 @@
-"""The committed reconstruction still matches what the script produces.
+"""The Markov layer: the reconstructed matrix, and the generator ported from it.
+
+Two halves. The first checks that `reference/reconstructed/` still matches what
+`scripts/reconstruct_markov.py` produces. The second is the acceptance test for
+`markov.simulate`, the port of `markov_chain.Rmd` -- which is a *generator*
+producing model inputs, not a report, whatever directory it was filed under.
+
+A ported analysis layer has no objective to reconcile on, so its acceptance test
+has to be invented, and the original's RNG state was never recorded. That leaves
+a distributional comparison as the strongest check available.
+
+The committed reconstruction still matches what the script produces.
 
 `reference/reconstructed/` holds an estimate of `trans_matrix.csv`, the input that
 was lost before this repository was split out. A generated artifact and the script
@@ -20,7 +31,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from fews_stochopt import analysis, markov  # noqa: E402
 from fews_stochopt.config import load_config  # noqa: E402
+from fews_stochopt.data import load_precipitation  # noqa: E402
 from fews_stochopt.markov import pooled_reconstruct, reconstruct  # noqa: E402
 
 RECONSTRUCTED = ROOT / "reference" / "reconstructed"
@@ -115,3 +128,94 @@ def test_unidentified_rows_are_recorded_not_invented():
         assert len(identified) == 18
         for state in identified:
             assert matrix.loc[state].sum() == pytest.approx(1.0, rel=1e-12)
+
+
+# ---------------------------------------------------------------------------
+# The generator's own acceptance test.
+#
+# `markov.simulate` is a port of `markov_chain.Rmd`, and porting an analysis
+# layer offers no objective to reconcile on -- so the acceptance test has to be
+# invented. The individual draws are unrecoverable (the original's RNG state was
+# never recorded), which leaves a distributional comparison as the strongest
+# check available. `analysis.precipitation_table` computes exactly that
+# comparison and writes it to `results/clean/precipitation_states.csv`, where
+# until now **nothing asserted it**: the column could have gone to zeros and the
+# CSV would still have looked complete.
+# ---------------------------------------------------------------------------
+
+RAW_LEVELS = {"w1": 5, "w2": 15, "w3": 30, "w4": 45, "w5": 60}
+
+
+def test_a_fresh_sample_has_the_committed_distribution():
+    """The invented acceptance test: same distribution, never the same draws.
+
+    Tolerance is set by sampling error, not by taste. At 800 runs per site a
+    share near 0.25 carries a standard error of about 0.0022, so 0.02 is roughly
+    nine of them -- loose enough never to flake, tight enough that a generator
+    drawing from the wrong distribution cannot pass.
+    """
+    cfg = load_config()
+    fresh = {s: markov.simulate(cfg, s, iters=200) for s in cfg.sites}
+    table = analysis.precipitation_table(cfg, fresh)
+
+    assert len(table) == 10, f"expected 5 states x 2 sites, got {len(table)}"
+    assert table["regenerated_share"].notna().all(), (
+        "the regenerated column is empty, so the comparison never happened"
+    )
+    worst = (table["committed_share"] - table["regenerated_share"]).abs().max()
+    assert worst < 0.02, (
+        f"a regenerated share differs from the committed one by {worst:.4f}, "
+        f"more than sampling error explains:\n{table.to_string(index=False)}"
+    )
+
+
+def test_the_state_values_survive_the_formatting_round_trip():
+    """The round-trip is load-bearing, and it fails as an empty join.
+
+    The original turned states into numbers with `as.character`, which prints
+    the shortest form within 15 significant digits -- so the committed files
+    hold exactly `26.67` where `15 * 2.54 * 0.7` is `26.669999999999998`. **All
+    five states are affected, not only that one.** A port computing the exact
+    product matches nothing, and the symptom is a join returning no rows, which
+    reads as a missing file rather than as a precision difference.
+
+    Verified by injecting it: with both round-trips removed, the regenerated
+    share is 0.0 for five of five states at both sites.
+    """
+    cfg = load_config()
+    committed = {
+        site: set(load_precipitation(cfg, site)["precip"].unique()) for site in cfg.sites
+    }
+
+    for name, inches in RAW_LEVELS.items():
+        state = cfg.weather_states[name]
+        exact = inches * 2.54 * 0.7
+        assert exact != state, (
+            f"{name}: the unrounded product equals the committed value, so this "
+            f"test no longer demonstrates anything. Check the conversion."
+        )
+        for site, values in committed.items():
+            assert state in values, (
+                f"{site}: weather state {name} = {state!r} appears nowhere in the "
+                f"committed precipitation file. The round-trip at config.py has "
+                f"been removed or changed; comparisons by value will now find "
+                f"no matches and report an empty join."
+            )
+
+
+def test_the_generator_emits_only_committed_state_values():
+    """The second round-trip, which absorbs a defect in the first.
+
+    `simulate` rounds again after indexing the levels. That looked redundant
+    until the config-level round was removed as an experiment and this one
+    silently absorbed it -- so a check aimed at only one of the two would have
+    reported that the defect had no effect. Both are asserted.
+    """
+    cfg = load_config()
+    expected = set(cfg.weather_states.values())
+    for site in cfg.sites:
+        produced = set(markov.simulate(cfg, site, iters=40)["precip"].unique())
+        assert produced <= expected, (
+            f"{site}: generated precipitation values {sorted(produced - expected)!r} "
+            f"are not among the five weather states {sorted(expected)!r}"
+        )

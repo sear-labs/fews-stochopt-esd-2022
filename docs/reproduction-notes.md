@@ -789,6 +789,39 @@ would match *nothing* by value -- and the failure surfaces as an empty join, not
 as a wrong number. Model ports rarely hit this; analysis layers serialise, so they
 do.
 
+**That paragraph was true and unasserted from the moment it was written, which
+is the more useful finding.** The comparison it describes *was* being computed --
+`analysis.precipitation_table` writes `committed_share` beside `regenerated_share`
+into `results/clean/precipitation_states.csv` on every run -- and nothing anywhere
+compared the two columns. Injecting the defect showed what that costs: with both
+round-trips removed the regenerated share is `0.0` for five of five states at both
+sites, and the CSV still has ten rows, five states per site, and a plausible
+shape. **An empty join does not empty the file.** It fills a column with zeros,
+which is why this is worth an assertion rather than a paragraph.
+
+**Injecting it also showed that the two round-trips are a pair, and that testing
+either alone proves nothing.** The rounding happens twice -- once in `config` when
+the states are derived from inches, once in `markov.simulate` after indexing the
+levels -- and the second looked redundant. Removing the config one alone left
+every check passing, because `simulate` absorbed it. Only removing both empties
+the join. So a guard aimed at one of the two would have concluded the defect had
+no effect, which is the same shape as the wrong-defect injection the standard
+records from the SAV session, arrived at from the opposite direction: there the
+injected defect was harmless because the code was already correct; here it was
+harmless because a *second* copy of the correction masked it.
+
+Three tests now cover it, and they divide the work rather than repeating it:
+
+| Test | Fires when |
+|---|---|
+| `test_a_fresh_sample_has_the_committed_distribution` | the join goes empty -- both round-trips gone |
+| `test_the_state_values_survive_the_formatting_round_trip` | the config round-trip goes, on its own or with the other |
+| `test_the_generator_emits_only_committed_state_values` | the two layers diverge from each other |
+
+Each was watched to fail against the injection before being kept. The middle one
+also asserts that the unrounded product still *differs* from the committed value,
+so that the test cannot quietly become vacuous if the conversion changes.
+
 **Figures have no numeric acceptance test.** What replaces it is the discipline
 the standard already asks for elsewhere: a text alternative written in the same
 place as the plot, and the numbers behind each figure reachable as a table. Here

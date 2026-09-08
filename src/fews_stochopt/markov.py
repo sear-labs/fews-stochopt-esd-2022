@@ -228,7 +228,8 @@ def simulate(
     `set.seed(12345)` but its sample depended on RNG state accumulated through
     earlier chunks, so the exact sequence is unrecoverable. What is checkable is
     that a fresh sample has the same distribution, which
-    `analysis.compare_precipitation` does.
+    `analysis.precipitation_table` computes and
+    `test_a_fresh_sample_has_the_committed_distribution` asserts.
 
     The output goes to `results/regenerated/`, never over
     `data/raw/precips_c0_*.csv`. An input a later stage can overwrite is not an
@@ -292,8 +293,14 @@ def simulate(
     # Rounded to two decimals, reproducing the original's string round-trip:
     # `gsub('w2', as.character(w2p), ...)` prints the shortest form within 15
     # significant digits, so the committed files hold exactly 26.67 while the
-    # unrounded product is 26.669999999999998. Without the round-trip a
-    # comparison by value finds no matches at all.
+    # unrounded product is 26.669999999999998. All five states are affected.
+    #
+    # This looks redundant -- `config` already rounds -- and it is not. Removing
+    # the config-level round alone leaves every comparison passing, because this
+    # line absorbs it; removing both empties the join for five of five states at
+    # both sites. So a check aimed at either one on its own would have reported
+    # that the defect had no effect. Both are asserted, separately, in
+    # `tests/test_markov_reconstruction.py`.
     precip = np.round(levels[states], 2)
 
     runs = np.repeat(np.arange(1, len(states) + 1), cfg.years)
