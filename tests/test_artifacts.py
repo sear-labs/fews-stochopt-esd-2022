@@ -1,17 +1,26 @@
-"""The shipped artifacts and the walkthrough still match what generates them.
+"""The shipped artifacts and the notebooks still match what generates them.
 
-Three committed things here are build outputs: `artifacts/`, produced by
-`scripts/export_artifacts.py`, and `notebooks/00_walkthrough.ipynb`, produced by
-`scripts/build_walkthrough.py`. A build script and its output drift exactly as
-fast as two pasted copies, and for the same reason -- nobody compares them.
+Four committed things here are build outputs: `artifacts/`, produced by
+`scripts/export_artifacts.py`, and the two notebooks, produced by
+`scripts/build_notebooks.py`. A build script and its output drift exactly as fast
+as two pasted copies, and for the same reason -- nobody compares them.
 
-The verifier gets its own test because it is the repository's central claim: that
-the published result can be checked with no solver and no licence. A claim like
-that is worth nothing if nobody runs it.
+The verifier gets its own tests because it is this repository's central claim:
+that the published result can be checked with no solver and no licence. A claim
+like that is worth nothing if nobody runs it -- and worse than nothing if the
+test that guards it cannot see the way it fails.
+
+**It could not.** `test_the_verification_notebook_needs_no_solver` searched the
+notebook for the literal string `import gurobipy`. The notebook imports
+`fews_stochopt`, which imported `model`, which imports `gurobipy` -- so the
+licence-free notebook failed at import on any machine without a solver, and the
+text search contained nothing to find. The package now resolves its names lazily,
+and the tests at the bottom of this file **block gurobipy and import for real**.
 """
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -120,6 +129,11 @@ def test_the_verification_notebook_needs_no_solver():
     """Archetype P: the two notebooks make different claims, and this is the
     stronger one. If it grew a `gurobipy` import, checking the paper would start
     depending on being able to run it -- which is what splitting them prevents.
+
+    This is the *text* half of that check and it is not sufficient on its own: a
+    transitive import contains none of these strings.
+    `test_the_verification_notebooks_imports_all_resolve_without_a_solver` is the
+    half that actually runs.
     """
     code = _code(VERIFICATION)
     for forbidden in ("import gurobipy", "from gurobipy", "collapsed.solve",
@@ -188,3 +202,105 @@ def test_no_badge_points_at_a_private_repository(badge):
             f"{path.name} carries a Colab badge while the repository is private. "
             f"Either make the repository public or remove the badge."
         )
+
+
+# ---------------------------------------------------------------------------
+# The licence-free claim, tested by removing the licence.
+# ---------------------------------------------------------------------------
+
+_BLOCK_AND_IMPORT = '''
+import sys
+from importlib.abc import MetaPathFinder
+
+
+class Blocker(MetaPathFinder):
+    """Make gurobipy unimportable, as a machine without a solver sees it."""
+
+    def find_spec(self, name, path=None, target=None):
+        if name == "gurobipy" or name.startswith("gurobipy."):
+            raise ImportError("gurobipy is blocked")
+        return None
+
+
+sys.meta_path.insert(0, Blocker())
+
+# The probe must be shown capable of firing before a clean result means anything.
+try:
+    import gurobipy  # noqa: F401
+except ImportError:
+    pass
+else:
+    raise SystemExit("PROBE-BROKEN: gurobipy imported despite the blocker")
+
+{body}
+print("OK")
+'''
+
+
+def _run_without_gurobipy(body: str):
+    script = _BLOCK_AND_IMPORT.format(body=body)
+    return subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=str(ROOT), capture_output=True, text=True,
+        env={**__import__("os").environ, "PYTHONPATH": str(ROOT / "src")},
+    )
+
+
+def test_the_blocker_itself_works():
+    """A search that must return zero has to be shown capable of returning one."""
+    proc = _run_without_gurobipy("import gurobipy")
+    assert proc.returncode != 0, "importing gurobipy succeeded despite the blocker"
+
+
+def test_importing_the_package_does_not_need_a_solver():
+    """`00_verification.ipynb` derives its paths from this package.
+
+    If `import fews_stochopt` pulled in gurobipy, that notebook would fail at
+    import on exactly the machine it exists to serve. **It did**, until the
+    package was made to resolve its names lazily -- and the test guarding the
+    claim missed it, because it searched the notebook for the literal string
+    `import gurobipy` and a transitive import does not contain one.
+    """
+    proc = _run_without_gurobipy(
+        "import fews_stochopt\n"
+        "from fews_stochopt.config import load_config\n"
+        "load_config()"
+    )
+    assert proc.returncode == 0, (
+        "importing fews_stochopt requires gurobipy, so the licence-free claim is "
+        f"false\n--- stdout ---\n{proc.stdout}\n--- stderr ---\n{proc.stderr}"
+    )
+
+
+def test_the_verification_notebooks_imports_all_resolve_without_a_solver():
+    """Every top-level import the verification notebook makes, actually made.
+
+    Reading the source for a forbidden string is not enough: the failure this
+    catches is transitive and invisible to a text search.
+    """
+    code = _code(VERIFICATION)
+    imports = sorted(set(re.findall(r"^\s*(?:import|from)\s+([A-Za-z_]\w*)", code, re.M)))
+    # `google` only exists on Colab and is guarded by try/except in the notebook.
+    imports = [m for m in imports if m != "google"]
+    assert "fews_stochopt" in imports, "the notebook does not import the package"
+
+    proc = _run_without_gurobipy("\n".join(f"import {m}" for m in imports))
+    assert proc.returncode == 0, (
+        "an import in 00_verification.ipynb needs gurobipy: "
+        f"{imports}\n--- stderr ---\n{proc.stderr}"
+    )
+
+
+def test_the_verifier_runs_without_a_solver():
+    """The claim end to end, not just its imports."""
+    proc = _run_without_gurobipy(
+        "import runpy, sys\n"
+        "sys.argv = ['verify_solution.py', '--quiet']\n"
+        "try:\n"
+        "    runpy.run_path('scripts/verify_solution.py', run_name='__main__')\n"
+        "except SystemExit as e:\n"
+        "    assert not e.code, f'verifier exited {e.code}'"
+    )
+    assert proc.returncode == 0, (
+        f"verify_solution.py needs a solver\n--- stderr ---\n{proc.stderr}"
+    )

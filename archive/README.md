@@ -37,7 +37,8 @@ restoring one archived file and watching the manifest reject it.
 
 ## What still runs
 
-Nothing here, reliably. The notebooks call `DataFrame.append`, removed in pandas
+**Nothing here, and that is not a defect.** `stage1-python/README.md` says so
+where somebody opening those eight notebooks will land. The notebooks call `DataFrame.append`, removed in pandas
 2.0. The superseded R carries absolute paths to a machine layout that no longer
 exists. `stage2-r/farm_report.Rmd` and `markov_chain.Rmd` did run, on R 4.6.1 with
 `rmarkdown`, `ggplot2`, `dplyr`, `tidyr` and `readr`, before being ported — that

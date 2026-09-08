@@ -5,12 +5,13 @@
 # verbatim and never maintained: corrections go into src/fews_stochopt/,
 # and the divergence is recorded in docs/reproduction-notes.md.
 #
-# 34 files
+# 35 files
 
-25b4edc692b5f24647d47b6ff1f01ea6b83b5c8eb2a0a5997a92ef662a2611dd  archive/README.md
+10cb680c735abdd877b115306040beb00a3fe19290d926e49701f40ddbf5ac8e  archive/README.md
 a10bda673814843613306be3bc9038739df15e12dced7abc36d6b8d05c4ed883  archive/stage1-python/FarmModelStoch_EV_loop.ipynb
 cbcba3afb7698ae1fb4a541182e45b957f1d96c95fa859e92ee7bf581109a88a  archive/stage1-python/FarmModelStoch_PI_loop.ipynb
 f940f49c47d7c5762864c5ba399cec91893316391eb35a0d9c41286100843e3b  archive/stage1-python/FEWS_Farm_model.py
+e24e722a63ecb2a32b3df0ebb609239993a047a50bf1f8fa5352c6bae831df25  archive/stage1-python/README.md
 49603838aa71513cfd3c3da1f22174741702ad388410b269d5dab6134667f6c8  archive/stage1-python/superseded/Farm Model Original.ipynb
 201cdedef7f9259e263b11fe1d7a0373300348b3b521a7b76b0ed09bb6f79360  archive/stage1-python/superseded/FarmModelStoch v2.ipynb
 884605bebb0d8593fd773bad474bde164e5ffa98c1400e23266be33daddd35e0  archive/stage1-python/superseded/FarmModelStoch v3.ipynb

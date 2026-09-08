@@ -719,3 +719,83 @@ would have permitted about $1,300 of error on quantities asserted to $2. That wa
 raised in review before the amendment merged; the evidence cited for the scaling
 (87 of 91 solves wrongly rejected by an absolute gate) supports "an absolute gate
 is wrong" and does not extend to the remedy. Worth re-petitioning if it recurs.
+
+
+---
+
+## 17. "Needs nothing" was false here too, and the guard could not see it
+
+The session reproducing the SAV paper found that its own verification notebook
+imported pandas, matplotlib and its package while the standard asserted the
+artifact "needs nothing". Checked here rather than assumed, and the same thing
+was true, by a route a text search cannot follow.
+
+`notebooks/00_verification.ipynb` contains no `import gurobipy`. It contains
+`import fews_stochopt`, and `__init__.py` imported `model`, and `model` imports
+`gurobipy`. **So the licence-free notebook failed at import on exactly the machine
+it exists to serve** -- and `test_the_verification_notebook_needs_no_solver`,
+which searched the notebook source for the literal string, had nothing to find.
+
+Measured: `import fews_stochopt` pulled in `gurobipy`, `numpy`, `pandas`, `scipy`
+and `yaml`.
+
+Two fixes, and the second is the one that matters:
+
+- **The package now resolves its names lazily** (PEP 562 `__getattr__`).
+  `import fews_stochopt`, `load_config()` and `fews_stochopt.__file__` need
+  nothing; `fews_stochopt.solve_scenario` still needs Gurobi at the moment it is
+  *used*. `paths.py` in `lithium-optsc-energies-2024` solves the same problem by
+  splitting the module; lazy resolution keeps one public API.
+- **The tests now block `gurobipy` and import for real**, in a subprocess with a
+  `MetaPathFinder` that refuses it. Four checks: the blocker itself fires, the
+  package imports, every top-level import the notebook makes resolves, and
+  `verify_solution.py` runs end to end.
+
+The blocker was wrong on the first attempt -- it used `find_module`, removed from
+modern Python, so it silently blocked nothing and the first "pass" was
+meaningless. `test_the_blocker_itself_works` exists because of that: a search
+that must return zero has to be shown capable of returning one.
+
+**The general shape, worth carrying to the other repos in this migration:** a
+claim about what an artifact *needs* cannot be checked by reading it. Dependencies
+are transitive and the text contains no evidence of them. Block the dependency and
+run.
+
+---
+
+## 18. What porting an ANALYSIS layer taught, as opposed to a model
+
+Archetype P has fewer sightings behind its second half. This repository ported an
+analysis layer rather than a model, so what follows is that half.
+
+**An analysis layer has no objective, so its acceptance test has to be invented.**
+A model port is reconciled on the objective. Porting `farm_report.Rmd` and
+`markov_chain.Rmd` offered no such number, and the two halves needed different
+tests: exact agreement against the package for the tables, and a *distributional*
+comparison for the generator, because its exact draws are unrecoverable.
+
+**Check first whether the "reporting" layer contains a generator.** `stage2-r/`
+looked like three reporting files. One of them, `markov_chain.Rmd`, produced model
+*inputs* -- stages 1-3, not stage 8 -- and that changes its acceptance test from
+eyeballing a figure to reconciling a distribution. Getting the scoping wrong here
+would have produced a port that looked finished and was not tested for the thing
+it did.
+
+**Formatting round-trips can be load-bearing.** R's `as.character` prints the
+shortest form within 15 significant digits, so `gsub('w2', as.character(w2p), ...)`
+wrote exactly `26.67` where the unrounded product is `26.669999999999998`. The
+committed inputs carry the rounded value. A port that computed the exact product
+would match *nothing* by value -- and the failure surfaces as an empty join, not
+as a wrong number. Model ports rarely hit this; analysis layers serialise, so they
+do.
+
+**Figures have no numeric acceptance test.** What replaces it is the discipline
+the standard already asks for elsewhere: a text alternative written in the same
+place as the plot, and the numbers behind each figure reachable as a table. Here
+that is `figures/generated/README.md` and `results/clean/`.
+
+**The committed-output layer question arises in the analysis layer, not the model
+layer.** The model produces raw output and does not care what is kept. It is the
+analysis that decides what everything downstream reads, and therefore what has to
+be committed -- which is where the 135 MB against a 10 MB boundary was resolved by
+committing the aggregate rather than the detail.
