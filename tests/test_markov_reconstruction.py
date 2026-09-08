@@ -154,6 +154,7 @@ def test_a_fresh_sample_has_the_committed_distribution():
     nine of them -- loose enough never to flake, tight enough that a generator
     drawing from the wrong distribution cannot pass.
     """
+    pytest.importorskip("gurobipy", reason="`analysis` reaches `model`; see CLAUDE.md")
     # Imported here, not at module scope. `analysis` reaches `aggregate`, which
     # imports `model`, which imports gurobipy -- so a module-level import makes
     # this whole file uncollectable without a licence, and every test in it is

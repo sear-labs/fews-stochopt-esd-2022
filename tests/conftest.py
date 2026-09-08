@@ -34,6 +34,15 @@ def pipeline_run():
     solved scenarios whose configuration, inputs, source and solver version all
     match. See `src/fews_stochopt/pipeline.py`.
     """
+    # A reader without a licence gets a skip, not nineteen errors. Measured in a
+    # real clone with gurobipy blocked: the pipeline tests failed at fixture
+    # setup, and pytest reports that as an ERROR per test -- which reads as a
+    # broken repository rather than as the documented CI exemption behaving
+    # correctly. The cache is gitignored, so a clone has neither solver nor
+    # cached solves and cannot run this stage at all.
+    if not HAS_SOLVER:
+        pytest.skip("needs a Gurobi licence to solve; see the CI exemption")
+
     runner = ROOT / "scripts" / "run_all.py"
     assert runner.exists(), (
         "scripts/run_all.py is missing -- nothing regenerates the paper's numbers"
@@ -67,3 +76,21 @@ def pipeline_run():
         f"stamp(s); the scenarios were not solved"
     )
     return ROOT
+
+
+def _has_solver() -> bool:
+    """Whether gurobipy can be imported at all."""
+    import importlib.util
+
+    try:
+        return importlib.util.find_spec("gurobipy") is not None
+    except (ImportError, ValueError):
+        return False
+
+
+HAS_SOLVER = _has_solver()
+
+needs_solver = pytest.mark.skipif(
+    not HAS_SOLVER,
+    reason="needs a Gurobi licence; see the CI exemption in CLAUDE.md",
+)

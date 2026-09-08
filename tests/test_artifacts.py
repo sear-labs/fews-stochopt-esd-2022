@@ -83,6 +83,7 @@ def test_verifying_needs_no_solver_and_no_licence():
 
 
 def test_committed_artifacts_are_not_stale():
+    pytest.importorskip("gurobipy", reason="rebuilding the artifacts solves them")
     proc = _run("export_artifacts.py", "--check")
     assert proc.returncode == 0, (
         f"export_artifacts.py --check exited {proc.returncode}\n"
@@ -321,6 +322,7 @@ def test_every_advertised_export_actually_resolves():
     A broken entry here raises loudly rather than resolving wrongly, so this is
     unverified rather than wrong -- which is exactly the state a test removes.
     """
+    pytest.importorskip("gurobipy", reason="two of the ten exports come from `model`")
     import fews_stochopt
 
     exports = fews_stochopt._EXPORTS
@@ -533,6 +535,10 @@ def test_the_committed_notebook_outputs_are_reproducible(path):
     the file-shaped mistake in the same breath as naming it.
     """
     nbformat = pytest.importorskip("nbformat")
+    if path is EXAMPLE:
+        # This one solves, so re-executing it needs a licence. The verification
+        # notebook does not, which is the whole point of the split.
+        pytest.importorskip("gurobipy", reason="01_example.ipynb solves")
     committed = nbformat.read(path, as_version=4)
     old = _cell_outputs(committed)
     new = _cell_outputs(_execute_copy(path))
