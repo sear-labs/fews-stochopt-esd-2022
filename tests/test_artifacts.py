@@ -439,3 +439,104 @@ def test_regenerating_the_figures_needs_no_solver():
         "make_figures.py cannot run without a solver\n"
         f"--- stderr ---\n{proc.stderr[-1500:]}"
     )
+
+
+def test_the_verification_notebooks_committed_outputs_are_reproducible():
+    """Rule 5's exception says a reader sees the outputs without running the
+    notebook. That is only honest if the committed outputs are what the code
+    actually produces -- and `build_notebooks.py --check` deliberately does not
+    check it, comparing source cells because outputs legitimately differ between
+    machines.
+
+    That reasoning is right in general and too strong for this notebook. It
+    executes `verify_solution.py`, which is deterministic arithmetic over
+    committed artifacts with no solver and no RNG, so its outputs *are*
+    reproducible -- with one exception that has to be normalised rather than
+    asserted away: a `<... object at 0x7f...>` repr carries a memory address.
+
+    The example notebook is deliberately not checked this way. It solves, so its
+    last digits move between runs, which is the difference the builder's
+    docstring is talking about.
+    """
+    nbformat = pytest.importorskip("nbformat")
+    nbclient = pytest.importorskip("nbclient")
+
+    committed = nbformat.read(VERIFICATION, as_version=4)
+    fresh = json.loads(json.dumps(committed))
+    fresh = nbformat.from_dict(fresh)
+    nbclient.NotebookClient(
+        fresh, timeout=600, kernel_name="python3",
+        resources={"metadata": {"path": str(ROOT / "notebooks")}},
+    ).execute()
+
+    def texts(nb):
+        out = []
+        for cell in nb.cells:
+            if cell.cell_type != "code":
+                continue
+            chunks = []
+            for o in cell.get("outputs", []):
+                if o.output_type == "stream":
+                    chunks.append(o.text)
+                elif o.output_type in ("execute_result", "display_data"):
+                    chunks.append(str(o.get("data", {}).get("text/plain", "")))
+                elif o.output_type == "error":
+                    chunks.append("ERROR:" + o.get("ename", ""))
+            # A repr carrying a memory address is not a result.
+            out.append(re.sub(r" at 0x[0-9a-fA-F]+", " at 0xADDR", "".join(chunks)))
+        return out
+
+    old, new = texts(committed), texts(fresh)
+    assert old, "the committed notebook has no code-cell outputs to compare"
+    assert len(old) == len(new), (
+        f"{len(old)} committed code cells against {len(new)} executed"
+    )
+    differing = [i for i, (a, b) in enumerate(zip(old, new)) if a != b]
+    assert not differing, (
+        f"cell(s) {differing} produce different output than committed, so the "
+        f"shipped outputs are not what this code produces:\n"
+        + "\n".join(
+            f"--- cell {i}\n  committed: {old[i][:300]!r}\n  fresh    : {new[i][:300]!r}"
+            for i in differing
+        )
+    )
+
+
+def test_the_committed_figures_are_what_the_script_draws(pipeline_run):
+    """The Part 4 corollary, applied to the one generated artifact that lacked it.
+
+    `artifacts/` has `export_artifacts.py --check` and the notebooks have
+    `build_notebooks.py --check`. The figures had only a *source grep* asserting
+    that `make_figures.py` reads `results/clean/` and not raw output -- which is
+    the same text-search weakness that let a transitive gurobipy import through:
+    a read reached indirectly contains none of the forbidden strings.
+
+    Regenerating and comparing bytes is the check that does not depend on how
+    the script is written. Matplotlib output is not deterministic in general, so
+    this asserts a property of this repository rather than a general one.
+
+    On failure the committed bytes are put back, so a red test never leaves the
+    working tree dirty.
+    """
+    figures = sorted((ROOT / "figures" / "generated").glob("*.p*"))
+    assert len(figures) >= 4, f"only {len(figures)} generated figures found"
+
+    before = {p: p.read_bytes() for p in figures}
+    proc = _run("make_figures.py", "--quiet")
+    try:
+        assert proc.returncode == 0, (
+            f"make_figures.py exited {proc.returncode}\n"
+            f"--- stdout ---\n{proc.stdout}\n--- stderr ---\n{proc.stderr}"
+        )
+        after = {p: p.read_bytes() for p in figures}
+        changed = [p.name for p in figures if before[p] != after.get(p)]
+        assert not changed, (
+            f"regenerating changed {len(changed)} committed figure(s): {changed}. "
+            f"Either the cleaned output moved or the committed figures are stale."
+        )
+        missing = [p.name for p in figures if not p.exists()]
+        assert not missing, f"the run removed committed figures: {missing}"
+    except AssertionError:
+        for p, data in before.items():
+            p.write_bytes(data)
+        raise

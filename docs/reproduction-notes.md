@@ -1022,3 +1022,47 @@ The cheap defence, worth more than the resolution to be careful: **name what you
 did not look at.** Section 19 would have been correct, and obviously incomplete,
 if it had said "read `data.py` in full, sampled `markov.py` and `config.py`, did
 not open the other three."
+
+## 21. Closing two of the three gaps I had named as unchecked
+
+Section 20 ended by naming what had not been looked at. Two of those are now
+measured; the third is not, and stays named.
+
+**The committed figures are what the script draws.** Regenerating writes them
+byte-identical -- verified by hashing before and after, not by inference.
+Matplotlib output is not deterministic in general, so this is a property of this
+repository and worth asserting rather than assuming. The figures were the one
+generated artifact with no regenerate-and-compare check: `artifacts/` has
+`export_artifacts.py --check`, the notebooks have `build_notebooks.py --check`,
+and the figures had only a **source grep** looking for forbidden strings in
+`make_figures.py`. That is the same text-search weakness that let a transitive
+`gurobipy` import through section 17 -- a read reached indirectly contains none
+of the strings being searched for.
+`test_the_committed_figures_are_what_the_script_draws` closes it, and restores
+the committed bytes on failure so a red test never leaves the tree dirty.
+
+**The verification notebook's committed outputs are reproducible.** Three of its
+four code cells re-execute byte-identical; the fourth differs *only* in a
+`<pandas...Styler at 0x...>` repr carrying a memory address, while the content it
+wraps -- `largest difference: $23.9864` -- matches. Normalising the address and
+comparing the rest is now
+`test_the_verification_notebooks_committed_outputs_are_reproducible`.
+
+That gap was real but narrower than I described it. `build_notebooks.py --check`
+compares source cells and **its docstring says so, with the reason**: outputs
+legitimately differ between machines. The reasoning is correct in general and too
+strong for this notebook, which runs deterministic arithmetic over committed
+artifacts with no solver and no RNG. The example notebook is deliberately left
+unchecked this way -- it solves, so its last digits move, which is exactly the
+case the builder's docstring is about.
+
+**Still not checked, and not to be quietly upgraded.** Nothing here has run on a
+machine that does not have a Gurobi licence. Every licence-free claim in this
+repository is tested by *blocking the import*, which is a faithful simulation and
+not the same fact. `model.py` has also never been observed under coverage -- the
+cache was warm throughout, and its 8,016 executions are read from provenance
+stamps rather than watched.
+
+The reason for writing this down rather than fixing it: two sessions independently
+listed unchecked items this week and each found something real in the other's
+list. The list is the instrument.
