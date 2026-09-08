@@ -9,7 +9,7 @@ never touches the 135 MB of per-run solver detail, because a figure that
 re-derives per-year means is re-implementing that module and the second copy is
 the one that drifts.
 
-It replaces `stage2-r/farm_report.Rmd`, which drew the same figures in ggplot and
+It replaces `archive/stage2-r/farm_report.Rmd`, which drew the same figures in ggplot and
 is archived verbatim under `archive/stage2-r/`.
 
 Every figure carries a text alternative describing what it *shows*, written in

@@ -37,8 +37,8 @@ REFERENCE = ROOT / "reference" / "solnvalues.csv"
 RESULTS = ROOT / "results"
 
 # These are the paper's Table 4, cross-checked against reference/solnvalues.csv
-# (produced by stage2-r/FM Final Outputs.Rmd). Five of six agree to the paper's
-# printed precision. One does NOT:
+# (produced by archive/stage2-r/superseded/FM Final Outputs.Rmd). Five of six
+# agree to the paper's printed precision. One does NOT:
 #
 #     EVPI, equally probable:   paper $108,725.10   solnvalues.csv 108,725.1417
 #
@@ -55,7 +55,7 @@ PAPER_TABLE_4 = {
     "Dry Most Likely": {"EVPI": 76_606.01, "VSS": 940.90, "EVKW": 11_740.03, "EVKC": 64_865.98},
 }
 
-# From reference/solnvalues.csv, produced by stage2-r/FM Final Outputs.Rmd.
+# From reference/solnvalues.csv, produced by the archived FM Final Outputs.Rmd.
 PUBLISHED = {
     "Equally Probable": {
         "Value_of_Known_Weather": 10396.3181015145,

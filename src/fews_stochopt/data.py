@@ -2,7 +2,7 @@
 
 The two files `data/raw/precips_c0_{EP,DML}.csv` hold 4,000 Monte Carlo
 draws of 25 years each. They are *inputs* to the optimisation, generated once by
-`stage2-r/FM {EP,DML} MC.Rmd`, and they are committed -- the documented exception
+`archive/stage2-r/superseded/FM {EP,DML} MC.Rmd`, and they are committed -- the documented exception
 to the rule that generated files stay out of git.
 
 The layout is the load-bearing fact in this module. Both R reports build their
@@ -16,7 +16,7 @@ so a run's climate is decided by *where it sits in the file*, and the sizes of
 those four blocks are how each site's climate probabilities are encoded. For EP
 the climates are equally likely and the blocks are 1000 runs each. For DML they
 are 0.60/0.25/0.10/0.05 and the blocks are 2400/1000/400/200 -- which is exactly
-the `run_c1 = list(range(2400))` in `FM MI DML All Climates.Rmd`.
+the `run_c1 = list(range(2400))` in `archive/stage2-r/superseded/FM MI DML All Climates.Rmd`.
 
 The consequence is worth stating plainly, because the repository's own README
 records the opposite: **the per-climate inputs are not missing.** They are the

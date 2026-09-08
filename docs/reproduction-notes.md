@@ -774,7 +774,7 @@ A model port is reconciled on the objective. Porting `farm_report.Rmd` and
 tests: exact agreement against the package for the tables, and a *distributional*
 comparison for the generator, because its exact draws are unrecoverable.
 
-**Check first whether the "reporting" layer contains a generator.** `stage2-r/`
+**Check first whether the "reporting" layer contains a generator.** The R folder
 looked like three reporting files. One of them, `markov_chain.Rmd`, produced model
 *inputs* -- stages 1-3, not stage 8 -- and that changes its acceptance test from
 eyeballing a figure to reconciling a distribution. Getting the scoping wrong here

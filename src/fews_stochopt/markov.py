@@ -1,6 +1,6 @@
 """Recovering the weather transition matrix that was lost before the split.
 
-`stage2-r/markov_chain.Rmd` and both `FM * MC.Rmd` reports open by reading
+`archive/stage2-r/markov_chain.Rmd` and both `FM * MC.Rmd` reports open by reading
 `~/Coding/Data/Farm_Model/trans_matrix.csv`, a 20x20 matrix over the states
 `c1w1 .. c4w5`. **That file exists nowhere.** It was already gone when this
 repository was carved out of the original archive, and nothing in the R sources
@@ -211,7 +211,7 @@ def write_reconstruction(cfg: Config, site: str, out_dir) -> dict[str, str]:
 
 
 # ---------------------------------------------------------------------------
-# Generation. Ported from stage2-r/markov_chain.Rmd, which is archived verbatim
+# Generation. Ported from markov_chain.Rmd, which is archived verbatim
 # under archive/stage2-r/ and is no longer maintained.
 # ---------------------------------------------------------------------------
 

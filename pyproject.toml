@@ -49,5 +49,4 @@ testpaths = ["tests"]
 markers = [
     "pinned: checks the pinned reference values still parse; expected to pass",
     "pipeline: runs the full two-stage pipeline; minutes on a cold cache",
-    "rstage: renders the parameterised R report; needs R and rmarkdown",
 ]

@@ -132,7 +132,7 @@ two answers 0.08% apart differ by $0.43 there, and by $20 in the profit they go 
 4,000 realised weather runs.
 
 Re-solving the second stage at the capacities the published run actually used — which survive as two
-literals in `FM Traditional DML.Rmd` — reproduces VSS to **$0.50**, against $24 for the freely re-solved figure. So
+literals in the archived `FM Traditional DML.Rmd` — reproduces VSS to **$0.50**, against $24 for the freely re-solved figure. So
 the discrepancy is entirely the first stage, and the tests assert the pinned version tightly. That
 narrow check is what stops the wide tolerance on the free solve from hiding a real defect.
 

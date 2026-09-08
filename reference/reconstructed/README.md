@@ -6,7 +6,7 @@ the committed precipitation draws by `scripts/reconstruct_markov.py`, and named
 
 ## What was missing
 
-`stage2-r/markov_chain.Rmd`, `FM EP MC.Rmd` and `FM DML MC.Rmd` all open with
+`archive/stage2-r/markov_chain.Rmd`, `FM EP MC.Rmd` and `FM DML MC.Rmd` all open with
 
     tmA <- read.csv('~/Coding/Data/Farm_Model/trans_matrix.csv', header = TRUE)
 
@@ -17,7 +17,7 @@ original archive, and the path names a machine layout that no longer exists.
 ## Why its absence does not block the reproduction
 
 The matrix generates the precipitation draws, and **the draws are committed** --
-`stage1-python/precips_c0_{EP,DML}.csv`, 4,000 sequences of 25 years each. Every
+`data/raw/precips_c0_{EP,DML}.csv`, 4,000 sequences of 25 years each. Every
 number in the paper's Tables 4 and 5 follows from those. The matrix is needed only
 to re-run the generation step, which is the one part of the pipeline the committed
 inputs do not already cover.

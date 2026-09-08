@@ -9,9 +9,9 @@ them a clean clone can run the model but cannot tell whether the answer is right
 
 | File | What it is |
 |---|---|
-| `solnvalues.csv` | **Table 4.** The value-of-information figures, as produced by `stage2-r/FM Final Outputs.Rmd` for the paper. Three columns; the paper's fourth, EVKC, was never in the pipeline output and is reconstructed by `src/fews_stochopt/aggregate.py`. |
+| `solnvalues.csv` | **Table 4.** The value-of-information figures, as produced by `archive/stage2-r/superseded/FM Final Outputs.Rmd` for the paper. Three columns; the paper's fourth, EVKC, was never in the pipeline output and is reconstructed by `src/fews_stochopt/aggregate.py`. |
 | `simstatstrad.csv` | **Table 5.** Mean, standard deviation, t, standard error and half-width of profit and crop yield, for each of the four scenarios at each of the two sites. |
-| `published_first_stage.csv` | The expected-value investment decision the published run used, transcribed from the two `FM Traditional *.Rmd` files where it survives as a pair of literals. |
+| `published_first_stage.csv` | The expected-value investment decision the published run used, transcribed from the two `archive/stage2-r/superseded/FM Traditional *.Rmd` files where it survives as a pair of literals. |
 
 ## Why `published_first_stage.csv` exists
 
