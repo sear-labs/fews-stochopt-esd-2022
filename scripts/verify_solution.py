@@ -269,7 +269,16 @@ def main(argv=None) -> int:
               f"`python scripts/export_artifacts.py` first.", file=sys.stderr)
         return 2
 
-    log(f"Verifying {len(names)} model(s) from {ARTIFACTS}, "
+    # Repo-relative, deliberately. This line is committed into
+    # `00_verification.ipynb`'s output, so an absolute path would bake one
+    # machine's home directory into a shipped artifact -- which fails for
+    # every reader who clones it, and publishes a local path when the
+    # repository goes public. Found by running the suite in a real clone.
+    try:
+        where = ARTIFACTS.relative_to(ROOT).as_posix()
+    except ValueError:
+        where = str(ARTIFACTS)
+    log(f"Verifying {len(names)} model(s) from {where}, "
         f"with no solver and no licence.\n")
     failed = [n for n in names if not check(n, log=log)]
     log("")

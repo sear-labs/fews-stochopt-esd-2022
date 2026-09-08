@@ -742,3 +742,45 @@ def test_the_licence_free_test_modules_still_import_without_a_solver(module):
         f"collection error and every test in it is lost to a reader without a "
         f"licence\n--- stderr ---\n{proc.stderr[-1500:]}"
     )
+
+
+# Backslashes are built with chr(92), never typed. A Windows path in a non-raw
+# Python string makes `\U` an escape sequence, and the first version of this
+# test failed to parse because of it.
+_BS = chr(92)
+_ABSOLUTE_PATH_PATTERNS = {
+    "Windows user directory": "[A-Za-z]:" + _BS + _BS + "+Users",
+    "POSIX home directory": "/(?:home|Users)/[A-Za-z0-9_.-]+/",
+}
+
+
+@pytest.mark.parametrize("path", NOTEBOOKS, ids=lambda p: p.name)
+def test_no_committed_output_carries_an_absolute_path(path):
+    """A shipped artifact must not name the machine that built it.
+
+    `00_verification.ipynb` carried a line reading `Verifying 12 model(s) from`
+    followed by an absolute path into this author's home directory, because
+    `verify_solution.py` logged `ARTIFACTS` rather than a repo-relative name.
+    Two consequences, and the first hid the second: every reader who clones gets
+    a different path there, so the output-reproducibility check fails for
+    everyone except the author -- and a repository heading for publication ships
+    a local home directory inside a file people read.
+
+    Found by running the suite in a **real clone** rather than in a working tree
+    with directories moved aside. A clone is what a stranger gets, by
+    definition; a mutated tree is a guess about what a clone would be, and that
+    guess was wrong twice -- it still held two generated directories a clone
+    does not have, and it could not show this at all, because on the machine
+    that wrote the path the path is correct.
+    """
+    text = path.read_text(encoding="utf-8")
+    found = {
+        label: re.findall(pattern, text)[:3]
+        for label, pattern in _ABSOLUTE_PATH_PATTERNS.items()
+        if re.search(pattern, text)
+    }
+    assert not found, (
+        f"{path.name} carries an absolute path in its committed content: "
+        f"{found}. It cannot reproduce on anyone else's machine, and it names "
+        f"this one in a published artifact."
+    )

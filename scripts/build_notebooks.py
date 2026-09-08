@@ -98,7 +98,10 @@ def run_script(name, *args):
         print(proc.stderr.rstrip())
     if proc.returncode != 0:
         raise RuntimeError(f"{name} exited {proc.returncode}")
-    return proc'''
+    # Return the code, not the CompletedProcess. Its repr carries `args`, which
+    # is the interpreter path and the absolute script path -- so a cell ending
+    # in this call committed one machine's home directory into the notebook.
+    return proc.returncode'''
 
 
 def verification_cells():
