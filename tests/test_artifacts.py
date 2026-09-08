@@ -579,6 +579,65 @@ def test_the_comparison_reads_every_output_channel(path):
     )
 
 
+_OPAQUE = re.compile(r"^<[\w.]+ (?:object|at 0x)[^>]*>$")
+
+
+@pytest.mark.parametrize("path", NOTEBOOKS, ids=lambda p: p.name)
+def test_no_cell_is_captured_only_as_an_object_repr(path):
+    """A narrow guard, described narrowly -- I first wrote it up as the general
+    form of the can-see-the-table guard and measured that it is not.
+
+    **Whether a channel is informative depends on the renderer, not the
+    channel.** A plain DataFrame's `text/plain` carries its numbers; a Styler's
+    is `<Styler at 0x...>` and carries nothing. So the identical comparison over
+    the identical channel is sound for one cell and blind for the next, decided
+    by a rendering choice made in the notebook rather than by anything visible
+    in the test. Confirmed across two repositories on the same injection: the
+    same `text/plain`-only comparison caught the results table in one and missed
+    it in the other.
+
+    **What this does NOT catch, measured rather than assumed.** Narrowing the
+    capture back to `text/plain` alone leaves the two Styler cells with their
+    table gone -- and this test still passes, because those cells also print
+    stream output, so the cell as a whole is not opaque. Per-cell opacity is a
+    weaker property than per-subject blindness, and only the latter is the
+    failure that shipped here.
+
+    What catches that narrowing is the other two: every-output-channel fires on
+    both notebooks, and can-see-the-table fires by name. Verified by injection.
+
+    This one covers the case they do not: a cell whose *entire* output is an
+    opaque repr, which no named value would be looked for in and which reading
+    every channel would still faithfully capture as nothing. Cheap, real, and
+    much smaller than the sentence I first wrote about it.
+    """
+    nbformat = pytest.importorskip("nbformat")
+    nb = nbformat.read(path, as_version=4)
+
+    captured = _cell_outputs(nb)
+    cells = [c for c in nb.cells if c.cell_type == "code"]
+    assert len(captured) == len(cells)
+
+    blind = []
+    for i, (cell, text) in enumerate(zip(cells, captured)):
+        if not cell.get("outputs"):
+            continue
+        # Strip the `channel:` tags `_cell_outputs` adds, then ask whether
+        # anything informative is left.
+        pieces = [
+            piece.split(":", 1)[-1].strip()
+            for piece in re.split(r"(?=(?:stream/|[\w.+-]+/[\w.+-]+):)", text)
+            if piece.strip()
+        ]
+        informative = [x for x in pieces if x and not _OPAQUE.match(x)]
+        if not informative:
+            blind.append((i, text[:120]))
+    assert not blind, (
+        f"{path.name}: cell(s) captured only as an object repr, so the "
+        f"comparison is looking at nothing for them: {blind}"
+    )
+
+
 def test_the_notebook_comparison_can_see_the_table():
     """The guard the blind version needed and did not have.
 

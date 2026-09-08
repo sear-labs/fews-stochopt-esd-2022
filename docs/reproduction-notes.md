@@ -1152,3 +1152,38 @@ compared, an allowlist that reads the wrong channel, a defect that heals without
 anybody noticing. Strict-xfail, the can-see-the-table guard and the
 channel-coverage guard are all the same instrument -- **assertions about what the
 test is looking at, not about what it found.**
+
+### Whether a channel is blind depends on the renderer, not the channel
+
+The SAV session re-measured its own injection after the `image/png` finding and
+corrected its attribution: it had reported that a `text/plain`-only comparison
+would miss its results table, and measured that it *catches* it and misses the
+figure instead. The reason is the transferable part.
+
+Its results cell renders a plain DataFrame, whose `text/plain` repr carries the
+numbers. Mine renders a Styler, whose `text/plain` is `<Styler at 0x...>` and
+carries nothing at all. **Identical comparison, identical channel, sound in one
+repository and blind in the other, decided by a rendering choice made in the
+notebook.** So auditing the test tells you nothing without also auditing what
+each cell renders -- which is the argument for discovering channels rather than
+naming them, and for asserting the subject is visible on top of that.
+
+**And an attempt to generalise the guard overreached, which is worth recording
+because it is the same error one level up.** I added
+`test_no_cell_is_captured_only_as_an_object_repr` and wrote it up as the general
+form that "protects every cell." Injecting the narrowing shows it does not:
+restricting the capture to `text/plain` removes the table from those cells, and
+the test still passes, because those cells also print stream output, so the cell
+as a whole is not opaque. **Per-cell opacity is a weaker property than
+per-subject blindness**, and only the latter is what shipped here.
+
+What actually catches that narrowing, verified by injection rather than by
+reading: `test_the_comparison_reads_every_output_channel` on both notebooks, and
+`test_the_notebook_comparison_can_see_the_table` by name. The opacity guard is
+kept for the case those two do not cover -- a cell whose entire output is an
+opaque repr, which no named value would be looked for in and which reading every
+channel would faithfully capture as nothing -- and its docstring now says that
+rather than the larger thing I first claimed.
+
+Three claims in this section were checked by injection and one of the three was
+wrong. That ratio is the argument for the procedure.
