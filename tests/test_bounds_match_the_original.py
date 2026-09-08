@@ -35,6 +35,14 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+# Skip the whole module rather than fail to collect it. These tests build
+# and solve models, so they genuinely need a licence -- but a module-level
+# import of `model` or `collapsed` raises at COLLECTION time, and without
+# --continue-on-collection-errors that aborts the entire suite. A reader
+# without a licence then sees no results at all rather than the stages they
+# can run. Measured in a real clone with gurobipy blocked.
+pytest.importorskip("gurobipy", reason="these tests build and solve models")
+
 from fews_stochopt import collapsed  # noqa: E402
 from fews_stochopt.config import load_config  # noqa: E402
 from fews_stochopt.data import load_precipitation, rain_dict  # noqa: E402
