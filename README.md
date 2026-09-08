@@ -1,5 +1,8 @@
 # fews-stochopt
 
+[![Check the paper in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sear-labs/fews-stochopt-esd-2022/blob/main/notebooks/00_verification.ipynb)
+&nbsp;*no solver, no licence — checks the published result with arithmetic alone*
+
 Stochastic programming model for climate risk management in agriculture — the food–energy–water
 (FEWS) farm model behind Jones (2022), *Environment Systems and Decisions*,
 [10.1007/s10669-021-09838-8](https://doi.org/10.1007/s10669-021-09838-8).

@@ -186,23 +186,58 @@ def test_the_notebooks_match_their_builder():
     )
 
 
-@pytest.mark.parametrize("badge", ["colab.research.google.com"])
-def test_no_badge_points_at_a_private_repository(badge):
-    """A badge that cannot work is worse than no badge.
+COLAB_PREFIX = (
+    "https://colab.research.google.com/github/"
+    "sear-labs/fews-stochopt-esd-2022/blob/main/notebooks/"
+)
 
-    This repository is private, so an Open-in-Colab badge would render as a 404
-    for every reader while looking correct to anyone with access -- exactly the
-    failure `lithium-optsc-energies-2024` recorded as "the Colab button could
-    never have run". The badge goes in when the repository goes public, and this
-    test is what stops it going in before.
 
-    **Delete this test in the same commit that makes the repository public.**
+def test_the_colab_badges_point_at_this_repository_on_the_default_branch():
+    """The replacement for `test_no_badge_points_at_a_private_repository`.
+
+    That test existed because a badge pointing at a private repository renders
+    as a 404 for every reader while looking correct to anyone with access, and
+    it said to delete it in the commit that made the repository public. This is
+    that commit. Deleting a guard without replacing it would leave the badge
+    unchecked, so the claim changes rather than disappears: every Colab link
+    must name **this** repository, on a branch that exists, and a notebook that
+    is actually here.
+
+    Deliberately not checked: that GitHub serves it. That needs the network, and
+    a test which silently passes when offline is worse than no test.
+
+    No regex. Splitting on whitespace and quote characters is enough to find the
+    links, and this file has already lost two patterns to backslash escaping.
     """
-    for path in (ROOT / "README.md", *NOTEBOOKS):
-        assert badge not in path.read_text(encoding="utf-8"), (
-            f"{path.name} carries a Colab badge while the repository is private. "
-            f"Either make the repository public or remove the badge."
-        )
+    separators = '()[]<>"\'`,' + chr(92)
+    carriers = [ROOT / "README.md", *NOTEBOOKS]
+
+    seen = 0
+    for path in carriers:
+        text = path.read_text(encoding="utf-8")
+        for sep in separators:
+            text = text.replace(sep, " ")
+        for token in text.split():
+            # Only the /github/ links open a notebook. The badge image itself
+            # lives on the same host at /assets/colab-badge.svg and is not a
+            # link to anything.
+            if not token.startswith("https://colab.research.google.com/github/"):
+                continue
+            seen += 1
+            assert token.startswith(COLAB_PREFIX), (
+                f"{path.name} carries a Colab link that does not point at this "
+                f"repository on main: {token}"
+            )
+            notebook = token[len(COLAB_PREFIX):]
+            assert (ROOT / "notebooks" / notebook).exists(), (
+                f"{path.name} links to notebooks/{notebook}, which is not here"
+            )
+
+    assert seen >= 3, (
+        f"expected a Colab badge in the README and in each of the {len(NOTEBOOKS)} "
+        f"notebooks; found {seen}"
+    )
+
 
 
 # ---------------------------------------------------------------------------

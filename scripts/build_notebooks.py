@@ -106,7 +106,9 @@ def run_script(name, *args):
 
 def verification_cells():
     """Claims the published result is correct. Needs nothing but numpy."""
-    yield MD("""# Is the published result correct? --- FEWS farm model
+    yield MD("""[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sear-labs/fews-stochopt-esd-2022/blob/main/notebooks/00_verification.ipynb)
+
+# Is the published result correct? --- FEWS farm model
 
 Jones (2022), *Environment Systems and Decisions*,
 [10.1007/s10669-021-09838-8](https://doi.org/10.1007/s10669-021-09838-8).
@@ -183,7 +185,9 @@ for name in ("value_of_information.png", "profit_against_rainfall.png"):
 
 def example_cells():
     """Claims the implementation runs and behaves. Needs a free solver."""
-    yield MD("""# Running the model --- FEWS farm model
+    yield MD("""[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sear-labs/fews-stochopt-esd-2022/blob/main/notebooks/01_example.ipynb)
+
+# Running the model --- FEWS farm model
 
 Jones (2022), *Environment Systems and Decisions*,
 [10.1007/s10669-021-09838-8](https://doi.org/10.1007/s10669-021-09838-8).
