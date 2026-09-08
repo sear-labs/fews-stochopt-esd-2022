@@ -455,15 +455,35 @@ def _cell_outputs(nb):
         chunks = []
         for o in cell.get("outputs", []):
             if o.output_type == "stream":
-                chunks.append(o.text)
+                chunks.append(f"stream/{o.get('name')}:{o.text}")
             elif o.output_type in ("execute_result", "display_data"):
-                data = o.get("data", {})
-                chunks.append(str(data.get("text/plain", "")))
-                chunks.append(str(data.get("text/html", "")))
+                # Every channel, not an allowlist. Naming two of them is how a
+                # comparison half-sees a change: it goes red on whichever cell
+                # happens to differ in a channel it reads, and green on the cell
+                # whose result is the point, so the failure is reported in the
+                # wrong place. `00_verification.ipynb` carries image/png.
+                for mime in sorted(o.get("data", {})):
+                    chunks.append(f"{mime}:{o['data'][mime]}")
             elif o.output_type == "error":
                 chunks.append("ERROR:" + o.get("ename", ""))
         rows.append("".join(chunks))
     return rows
+
+
+def _channels(nb):
+    """Every MIME type and stream name the notebook's outputs carry."""
+    seen = set()
+    for cell in nb.cells:
+        if cell.cell_type != "code":
+            continue
+        for o in cell.get("outputs", []):
+            if o.output_type == "stream":
+                seen.add(f"stream/{o.get('name')}")
+            elif o.output_type in ("execute_result", "display_data"):
+                seen.update(o.get("data", {}))
+            elif o.output_type == "error":
+                seen.add("error")
+    return seen
 
 
 def _execute_copy(path):
@@ -527,6 +547,35 @@ def test_the_committed_notebook_outputs_are_reproducible(path):
             f"--- cell {i}\n  committed: {old[i][:300]!r}\n  fresh    : {new[i][:300]!r}"
             for i in differing
         )
+    )
+
+
+@pytest.mark.parametrize("path", NOTEBOOKS, ids=lambda p: p.name)
+def test_the_comparison_reads_every_output_channel(path):
+    """Partial blindness is worse than total blindness, and harder to see.
+
+    A comparison naming two MIME types goes red on whichever cell happens to
+    differ in a channel it reads, and green on the cell whose result is the
+    point -- so a real defect is reported at the wrong cell while the right one
+    passes. That survives a casual look at a red test in a way total blindness
+    does not. Measured in the SAV repository on the same injection: two cells
+    affected, differing in different channels, and a `text/plain`-only
+    comparison catching one of the two.
+
+    `00_verification.ipynb` carries `image/png`, which the first version of
+    `_cell_outputs` did not read. This asserts every channel present is
+    captured, so narrowing back to an allowlist fails here rather than silently.
+    """
+    nbformat = pytest.importorskip("nbformat")
+    nb = nbformat.read(path, as_version=4)
+    present = _channels(nb)
+    assert present, f"{path.name} has no outputs at all"
+
+    captured = "".join(_cell_outputs(nb))
+    unread = sorted(c for c in present if f"{c}:" not in captured)
+    assert not unread, (
+        f"{path.name} carries output channel(s) {unread} that the comparison "
+        f"never reads, so a change confined to them would pass unnoticed"
     )
 
 

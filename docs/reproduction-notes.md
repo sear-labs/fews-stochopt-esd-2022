@@ -1115,3 +1115,40 @@ exchange keeps re-deriving, and I managed to break it in the sentence that named
 it: **reason about the artifact, not about the repository.** "Notebooks that
 solve are not comparable" is a statement about a class; whether *this* one is
 comparable was a five-minute measurement.
+
+### Partial blindness, which is worse than the total kind
+
+The fix in section 22 read two channels, `text/plain` and `text/html`. That was
+still an allowlist, and the SAV session ran my own injection against its
+comparison to find out what an allowlist costs. Its result, on the same
+`+$11,111` shape:
+
+    cells differing, whole output : 2
+    cells differing, text/plain   : 1
+    cells differing, text/html    : 1
+
+**Two affected cells, differing in different channels.** A `text/plain`-only
+comparison catches one of the two -- so it goes red on a cell that is not the
+result and green on the cell that is, and the defect is reported in the wrong
+place while the real one passes. Total blindness announces itself the first time
+somebody tests it; this survives a casual look at a red test.
+
+Measured here after that: **`00_verification.ipynb` carries `image/png`**, two of
+them, which the section 22 capture did not read. So the same allowlist gap
+existed here, one channel over. `_cell_outputs` now reads every MIME type in
+`data` rather than naming any, and `test_the_comparison_reads_every_output_channel`
+asserts that no channel present goes unread -- watched to fail by narrowing the
+capture back to two names, which it reports as
+`carries output channel(s) ['image/png']`.
+
+Both notebooks still reproduce strictly with the images included, which is a
+stronger result than section 22 recorded: the embedded matplotlib PNGs are
+byte-identical on re-execution too.
+
+**The general form, since this is the third variant of one shape.** A check has a
+subject and a result, and the failures worth guarding are the ones where the
+subject moves and the result does not: a normaliser that erases what is being
+compared, an allowlist that reads the wrong channel, a defect that heals without
+anybody noticing. Strict-xfail, the can-see-the-table guard and the
+channel-coverage guard are all the same instrument -- **assertions about what the
+test is looking at, not about what it found.**
