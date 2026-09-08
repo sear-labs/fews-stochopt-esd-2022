@@ -1362,3 +1362,51 @@ printing whenever this is repeated:
     python -c "import fews_stochopt as f; print(f.__file__)"
 
 If that path is not inside the clone, the clone is not a stranger.
+
+### The same escape trap, a third time, and a second worthless zero
+
+The SAV session found that its sweep skipped binary files -- `grep -I` ignores
+them -- and asked whether mine had the same hole. It had two, and finding them
+cost one more repetition of a mistake I had just written up.
+
+**The committed sweep was silently skipping two files.** It split `git ls-files`
+on whitespace, and this repository tracks 24 paths containing spaces. Twenty-two
+are under `archive/`, which the sweep exempts anyway, but two are not:
+`figures/Ag Model Flowchart.pdf` and `figures/Ag Model.png`. Whitespace splitting
+turns each into fragments that do not exist, `is_file()` returns False, and they
+are skipped without a word. The `scanned > 100` assertion passed throughout. Now
+split on NUL with `-z`, plus an assertion that **every** listed path resolves --
+because "skipped silently" is the failure mode, not "scanned too few".
+
+**Then the binary scan I wrote to answer their question returned zero, and the
+zero was worthless -- again.** Probing it first, as the rule this section already
+states, showed it blind to a poisoned PNG *and* a poisoned PDF. The cause was the
+same escape trap for the third time in three sections: trying to match either
+one or two backslashes, I wrote `chr(92) + chr(92) + "?" + chr(92) + "?"`, whose
+second half is `\?` -- **a literal question mark**. The pattern required one.
+
+Three variants now, and only one announced itself:
+
+| where | what it did |
+|---|---|
+| a docstring | `\U` began an escape; the file would not parse. **Loud.** |
+| a regex | `\+` meant a literal plus; matched nothing. **Reported success.** |
+| a regex | `\?` meant a literal question mark; matched nothing. **Reported success.** |
+
+The SAV session hit a fourth in `bash`: `printf 'C:\Users...'` failed with
+*missing unicode digit for \U*. Every separator in the committed sweep is built
+with `chr(92)` for this reason, and the comment saying so is load-bearing.
+
+**With a probed scanner, the real answer.** 60 committed binaries -- 53 published
+PDFs (producer `R 4.0.0`), 5 PNGs, 2 with spaces in their names -- and **zero
+paths**. The committed sweep covers them without needing PyMuPDF, because reading
+bytes as UTF-8 with `errors="ignore"` surfaces uncompressed ASCII; that was an
+inference about the reading mode, so
+`test_the_path_sweep_can_see_inside_a_binary` now writes a poisoned PNG and
+requires the sweep's own pattern to find it.
+
+**The limit that remains, stated rather than implied:** the sweep sees
+uncompressed bytes. A path inside a zlib-compressed PDF stream or a `zTXt` chunk
+would not be found by it. That case was checked separately with a decompressing
+scanner, probed the same way, and is clean today -- but it is not what the suite
+enforces.

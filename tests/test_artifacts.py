@@ -819,10 +819,25 @@ def test_no_committed_file_carries_a_machine_path():
     public, where a committed home directory publishes a username and a machine
     layout to everyone who reads the file.
     """
+    # `-z` and a NUL split, not `.split()`. Two tracked files here have spaces
+    # in their names -- `figures/Ag Model Flowchart.pdf` and `figures/Ag
+    # Model.png` -- and whitespace splitting turns each into fragments that no
+    # longer exist, so `is_file()` skips them and the sweep reports a clean tree
+    # having never opened them. The count assertion below passed throughout.
     listed = subprocess.run(
-        ["git", "ls-files"], cwd=str(ROOT), capture_output=True, text=True, check=True
-    ).stdout.split()
+        ["git", "ls-files", "-z"], cwd=str(ROOT), capture_output=True, text=True,
+        check=True,
+    ).stdout.split(chr(0))
+    listed = [n for n in listed if n]
     assert len(listed) > 100, f"git ls-files returned only {len(listed)} paths"
+
+    # Every listed path must actually resolve, or the sweep is skipping files
+    # without saying so -- which is how the whitespace bug hid.
+    missing = [n for n in listed if not (ROOT / n).exists()]
+    assert not missing, (
+        f"{len(missing)} tracked path(s) did not resolve, so the sweep would "
+        f"skip them silently: {missing[:5]}"
+    )
 
     patterns = {"Windows home": _WINDOWS_HOME, "POSIX home": _POSIX_HOME}
     offenders = {}
@@ -845,4 +860,49 @@ def test_no_committed_file_carries_a_machine_path():
         f"committed file(s) carry a machine path: {offenders}. They will not "
         f"reproduce for any other reader, and this repository is intended to be "
         f"published."
+    )
+
+
+def test_the_path_sweep_can_see_inside_a_binary(tmp_path):
+    """The sweep's own probe, for the case its text probe does not cover.
+
+    58 of this repository's committed files are binary -- 53 published PDFs and
+    5 generated PNGs -- and a path can hide in PNG text chunks or PDF metadata.
+    The sweep reads every file as UTF-8 with `errors="ignore"`, which surfaces
+    uncompressed ASCII inside a binary, so those are covered. But that was an
+    inference about the reading mode, and inferences about what a check can see
+    are exactly what this session kept getting wrong.
+
+    So: write a PNG carrying a poisoned path in a `tEXt` chunk, and require the
+    sweep's own pattern to find it. A zero over the real binaries means
+    something only once this returns one.
+
+    **Known limit, stated rather than implied.** This proves the sweep sees
+    *uncompressed* bytes. A path inside a zlib-compressed PDF content stream or
+    a `zTXt` chunk would not be found. The committed binaries were checked for
+    that separately, with a decompressing scanner probed the same way: 60 files,
+    zero hits.
+    """
+    matplotlib = pytest.importorskip("matplotlib")
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    poison = "C:" + chr(92) + "Users" + chr(92) + "probeuser" + chr(92) + "secret"
+    target = tmp_path / "poisoned.png"
+    figure, axes = plt.subplots(figsize=(1, 1))
+    axes.plot([0, 1], [0, 1])
+    figure.savefig(target, metadata={"Software": poison})
+    plt.close(figure)
+
+    assert target.stat().st_size > 0, "the probe wrote nothing"
+    raw = target.read_bytes()
+    assert raw[:8] == b"\x89PNG\r\n\x1a\n", "the probe is not a PNG"
+
+    # Read it exactly as the sweep does.
+    text = target.read_text(encoding="utf-8", errors="ignore")
+    found = re.findall(_WINDOWS_HOME, text)
+    assert found, (
+        "the sweep's pattern does not match a path written into a PNG text "
+        "chunk, so its clean result over 58 committed binaries proves nothing "
+        "about them"
     )
