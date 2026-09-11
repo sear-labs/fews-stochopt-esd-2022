@@ -1,4 +1,7 @@
 cff-version: 1.2.0
+# Zenodo CONCEPT doi - always resolves to the latest version, so this line is
+# correct for the life of the repository and is never edited again.
+doi: 10.5281/zenodo.22715616
 message: "If you use this software, please cite the paper."
 title: "fews-stochopt: stochastic FEWS farm model for agricultural climate risk"
 version: 1.0.0
