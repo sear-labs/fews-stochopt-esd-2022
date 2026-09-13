@@ -507,6 +507,60 @@ def _channels(nb):
     return seen
 
 
+def _png_size(data_uri_b64: str):
+    """(width, height) from a base64 PNG, by reading IHDR. No Pillow needed."""
+    import base64
+    import struct
+
+    raw = base64.b64decode(data_uri_b64)
+    if raw[:8] != b"\x89PNG\r\n\x1a\n":
+        return None
+    return struct.unpack(">II", raw[16:24])
+
+
+def _comparable(nb):
+    """Cell outputs, with rendered images reduced to their dimensions.
+
+    **Every channel is still read.** `image/png` is the one channel whose bytes
+    are not a portable claim: matplotlib stamps its own version into the PNG's
+    `tEXt` chunk -- the committed images say 3.10.6, a CI runner produced 3.11.2
+    -- and font rasterisation differs between platforms even at equal versions.
+    Comparing those bytes asserts something about the machine, not about the
+    code.
+
+    So images are compared by presence and pixel dimensions, and everything else
+    byte for byte. The weakening is confined to one channel and stated here
+    rather than achieved by quietly dropping it, which is the failure this file
+    has already shipped once: a comparison that skipped the channel carrying the
+    result and passed.
+
+    What still covers the figures: `test_the_committed_figures_are_what_the_script_draws`
+    regenerates `figures/generated/` and compares bytes, which is exact on the
+    machine that maintains them.
+    """
+    rows = []
+    for cell in nb.cells:
+        if cell.cell_type != "code":
+            continue
+        chunks = []
+        for o in cell.get("outputs", []):
+            if o.output_type == "stream":
+                chunks.append(f"stream/{o.get('name')}:{o.text}")
+            elif o.output_type in ("execute_result", "display_data"):
+                for mime in sorted(o.get("data", {})):
+                    value = o["data"][mime]
+                    if mime == "image/png":
+                        size = _png_size(value if isinstance(value, str) else "".join(value))
+                        chunks.append(f"{mime}:<png {size[0]}x{size[1]}>" if size
+                                      else f"{mime}:<unreadable png>")
+                    else:
+                        chunks.append(f"{mime}:{value}")
+            elif o.output_type == "error":
+                chunks.append("ERROR:" + o.get("ename", ""))
+        rows.append("".join(chunks))
+    return rows
+
+
 def _execute_copy(path):
     nbformat = pytest.importorskip("nbformat")
     nbclient = pytest.importorskip("nbclient")
@@ -559,8 +613,8 @@ def test_the_committed_notebook_outputs_are_reproducible(path):
         # notebook does not, which is the whole point of the split.
         pytest.importorskip("gurobipy", reason="01_example.ipynb solves")
     committed = nbformat.read(path, as_version=4)
-    old = _cell_outputs(committed)
-    new = _cell_outputs(_execute_copy(path))
+    old = _comparable(committed)
+    new = _comparable(_execute_copy(path))
 
     assert old, "the committed notebook has no code-cell outputs to compare"
     assert len(old) == len(new), f"{len(old)} committed cells against {len(new)}"
