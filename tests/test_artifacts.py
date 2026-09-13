@@ -525,11 +525,18 @@ def _comparable(nb):
     are not a portable claim: matplotlib stamps its own version into the PNG's
     `tEXt` chunk -- the committed images say 3.10.6, a CI runner produced 3.11.2
     -- and font rasterisation differs between platforms even at equal versions.
-    Comparing those bytes asserts something about the machine, not about the
-    code.
+    Comparing those bytes asserts something about the machine, not the code.
 
-    So images are compared by presence and pixel dimensions, and everything else
-    byte for byte. The weakening is confined to one channel and stated here
+    **Pixel dimensions are not portable either, which was measured rather than
+    assumed.** Comparing them was the first attempt and CI rejected it too:
+    1388x586 against 1389x587, and 976x643 against 979x644. Matplotlib's tight
+    bounding box is computed from font metrics, so it moves by a pixel or three
+    wherever the fonts do.
+
+    So images are compared by **presence** -- an image was produced, and it is a
+    readable PNG -- and everything else byte for byte. The stream output beside
+    each image names the file it came from, so *which* figure a cell shows is
+    still compared exactly. The weakening is confined to one channel and stated here
     rather than achieved by quietly dropping it, which is the failure this file
     has already shipped once: a comparison that skipped the channel carrying the
     result and passed.
@@ -550,9 +557,9 @@ def _comparable(nb):
                 for mime in sorted(o.get("data", {})):
                     value = o["data"][mime]
                     if mime == "image/png":
-                        size = _png_size(value if isinstance(value, str) else "".join(value))
-                        chunks.append(f"{mime}:<png {size[0]}x{size[1]}>" if size
-                                      else f"{mime}:<unreadable png>")
+                        # Presence, not bytes and not size. Both were tried.
+                        ok = _png_size(value if isinstance(value, str) else "".join(value))
+                        chunks.append(f"{mime}:<png>" if ok else f"{mime}:<unreadable png>")
                     else:
                         chunks.append(f"{mime}:{value}")
             elif o.output_type == "error":
