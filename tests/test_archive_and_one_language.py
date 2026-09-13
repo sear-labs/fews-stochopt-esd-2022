@@ -221,3 +221,39 @@ def test_no_stage_writes_into_the_raw_inputs():
         "a stage appears to write into data/raw/, which is the input of record:\n"
         + "\n".join(suspicious)
     )
+
+
+def test_the_manifests_are_ordered_the_same_way_on_every_platform():
+    """The freeze compares text, so its ordering has to be platform-independent.
+
+    It was not. `files()` sorted `Path` objects, and `PurePath.__lt__` compares a
+    **case-folded** string on Windows and raw characters on POSIX -- so
+    `FEWS_Farm_model.py` sorts after `FarmModelStoch_*` on one and before it on
+    the other. Eight lines move, every hash is identical, and the freeze fails
+    naming no changed file.
+
+    **The archive freeze therefore could not have passed on any non-Windows
+    clone since it was written.** A reader on Linux or macOS could not verify the
+    archive, which is one of this repository's stated guarantees, and the failure
+    message would not have told them why. It was found the first time CI ran on a
+    clean Ubuntu runner -- the invariant this repository had exempted itself from.
+
+    This asserts the recorded order is the POSIX-string order, which is the same
+    everywhere, rather than whatever the local `Path` comparison yields.
+    """
+    for manifest in (ROOT / "archive" / "MANIFEST.sha256",
+                     ROOT / "data" / "raw" / "MANIFEST.sha256"):
+        assert manifest.exists(), f"{manifest} is missing"
+        listed = [
+            line.split("  ", 1)[1]
+            for line in manifest.read_text(encoding="utf-8").splitlines()
+            if line and not line.startswith("#")
+        ]
+        assert listed, f"{manifest} lists no files"
+        assert listed == sorted(listed), (
+            f"{manifest.relative_to(ROOT).as_posix()} is not in POSIX-string "
+            f"order, so it was written by a platform-dependent sort and will "
+            f"fail the freeze somewhere else.\n"
+            f"  first out of order: "
+            f"{next(b for a, b in zip(sorted(listed), listed) if a != b)}"
+        )

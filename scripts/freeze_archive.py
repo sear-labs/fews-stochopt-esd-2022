@@ -81,9 +81,20 @@ _WHY = {
 
 
 def files(root: Path) -> list[Path]:
+    # Sorted by POSIX string, NOT by Path. `PurePath.__lt__` compares a
+    # case-folded string on Windows and raw characters on POSIX, so sorting
+    # Path objects puts `FEWS_Farm_model.py` after `FarmModelStoch_*` on one
+    # platform and before it on the other. The manifest is compared as text, so
+    # that reordering fails the freeze with every hash identical -- which is
+    # what a clean Linux runner reported the first time one ever ran this.
+    #
+    # It means the archive freeze could not have passed on any non-Windows
+    # clone since it was written: a reader on Linux or macOS could not verify
+    # the archive at all, and nothing here could have told them why.
     return sorted(
-        p for p in root.rglob("*")
-        if p.is_file() and p.name != "MANIFEST.sha256"
+        (p for p in root.rglob("*")
+         if p.is_file() and p.name != "MANIFEST.sha256"),
+        key=lambda p: p.as_posix(),
     )
 
 
