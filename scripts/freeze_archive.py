@@ -133,6 +133,21 @@ def _report(label: str, recorded: str, current: str) -> None:
         print(f"  REMOVED  {k}", file=sys.stderr)
     for k in added:
         print(f"  ADDED    {k}", file=sys.stderr)
+
+    if not (changed or removed or added):
+        # The manifest differs but no file does, so the difference is in the
+        # header -- and naming nothing while saying "has changed" is a useless
+        # message. Met exactly once, from a CI runner, where there was no way to
+        # find out what differed. Show the lines.
+        import difflib
+
+        print("  no file differs; the manifest header does:", file=sys.stderr)
+        diff = difflib.unified_diff(
+            recorded.splitlines(), current.splitlines(),
+            fromfile="committed", tofile="rebuilt", lineterm="", n=1,
+        )
+        for line in list(diff)[:20]:
+            print(f"    {line}", file=sys.stderr)
     if label == "archive":
         why = (
             "The archive is the evidence of what produced the published numbers. "

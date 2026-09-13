@@ -33,6 +33,13 @@ dependencies = [
 # caught these.
 dev = [
     "pytest>=7.4,<9",
+    # pandas' `.style` accessor is optional and needs jinja2. Both notebooks
+    # render a styled table, so executing them fails without it -- with an
+    # AttributeError, not an ImportError, which is why
+    # test_dependencies_declared.py could not see it: `.style` is an attribute
+    # access and that test parses imports. A clean CI runner found it on the
+    # first run, having been invisible on a machine where Anaconda supplies it.
+    "jinja2>=3.0,<4",
     "nbformat>=5.9,<6",
     "nbclient>=0.9,<1",
     "ipykernel>=6.25,<7",
