@@ -536,7 +536,17 @@ def _comparable(nb):
     So images are compared by **presence** -- an image was produced, and it is a
     readable PNG -- and everything else byte for byte. The stream output beside
     each image names the file it came from, so *which* figure a cell shows is
-    still compared exactly. The weakening is confined to one channel and stated here
+    still compared exactly.
+
+    **Nothing is left unguarded by that, which is stronger than "weak but
+    documented".** The notebook does not render figures inline; it embeds files,
+    via `Image(filename=...)` over `figures/generated/`. So a notebook PNG *is*
+    the committed figure file, byte for byte -- and
+    `test_the_committed_figures_are_what_the_script_draws` regenerates those and
+    compares bytes on the machine that maintains them, which is the only machine
+    where byte-equality of a rendered image is a meaningful claim. The cause is
+    confirmed rather than inferred: `scripts/make_figures.py:68` passes
+    `bbox_inches="tight"`, and a tight box is computed from font metrics. The weakening is confined to one channel and stated here
     rather than achieved by quietly dropping it, which is the failure this file
     has already shipped once: a comparison that skipped the channel carrying the
     result and passed.
