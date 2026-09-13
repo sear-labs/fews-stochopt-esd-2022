@@ -1,0 +1,11 @@
+# sha256 over RAW BYTES of every file in data/raw/.
+# A CRLF-normalised hash of the same file differs; this is the raw one.
+#
+# data/raw/ is the input of record. Every number in the paper's Tables 4
+# and 5 follows from these draws, and no stage may write back to them --
+# markov.simulate writes regenerated draws to results/regenerated/ instead.
+#
+# 2 files
+
+7cb9a2a627795f195b30638eee8d97dd37f039756151ef3b69116274e6105ec2  data/raw/precips_c0_DML.csv
+d894cd2bc3aec789f957a1e3df03933068a83d4e11452765ea54e2e680e74854  data/raw/precips_c0_EP.csv

@@ -1,0 +1,71 @@
+# Invariant 6, for the part of this repository that can satisfy it.
+#
+# The recorded exemption said CI on a clean machine was "not possible as things
+# stand", because Gurobi's licence here is academic and node-locked. That was
+# true of the *whole* suite and was quietly taken to mean the whole suite. Since
+# the scenario names moved out of `model.py`, 61 of 100 tests need no solver at
+# all -- including the repository's central claim, that the published result can
+# be checked with arithmetic alone.
+#
+# So this job installs the package and then REMOVES the solver, which is the
+# honest simulation of a reader who has no licence: every solver-bound test
+# skips with a reason, and everything else must pass on a machine that has never
+# seen this project. "Works on my laptop" is exactly what it exists to catch --
+# two defects this repository shipped were invisible from the working tree.
+#
+# What it deliberately does NOT do: solve. The per-run models fit the limited
+# licence bundled with `pip install gurobipy`, but the two joint models are 176k
+# and 704k variables and do not, so a job that tried would fail for a reason
+# that has nothing to do with the code.
+name: licence-free checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  no-solver:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install, then remove the solver
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+          pip uninstall -y gurobipy
+          # Uninstalling rather than hand-listing the other dependencies keeps
+          # pyproject.toml the single source of truth. A second list would drift,
+          # which is what tests/test_dependencies_declared.py already guards.
+
+      - name: Prove the solver is really absent
+        run: |
+          if python -c "import gurobipy" 2>/dev/null; then
+            echo "gurobipy is importable; this job proves nothing"
+            exit 1
+          fi
+          echo "gurobipy is absent, as a reader without a licence sees it"
+
+      - name: Check the published result with no solver
+        run: python scripts/verify_solution.py
+
+      - name: Run the suite
+        run: python -m pytest -q
+
+      - name: Report what a reader without a licence sees
+        if: always()
+        run: python -m pytest -q --no-header -rs | tail -25

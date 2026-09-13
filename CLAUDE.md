@@ -118,13 +118,21 @@ measurements.
   detail would be 135 MB. The boundary is met by committing the right *layer* — the
   per-(site, scenario, year) aggregate at 90 KB — rather than by compressing the wrong one.
   Worth saying because "compress or subset" is not the only escape.
-- **Invariant 6, CI on a clean machine.** Not possible as things stand: Gurobi's licence
-  here is academic and node-locked, expiring 2026-12-04. The per-run solves are 178
-  variables and fit the size-limited licence that ships with `pip install gurobipy`; the
-  two joint models are 176k and 704k variables and do not. **Do not repeat the inherited
-  claim that HiGHS lifts this** -- HiGHS does convex quadratic objectives, this model has a
-  quadratic constraint, and nobody has checked. See section 10 of
-  `docs/reproduction-notes.md` for two routes that do work on the mathematics.
+- **Invariant 6, CI on a clean machine.** **Partly satisfied since 2026-09-13**, and the
+  earlier blanket exemption was wrong. `.github/workflows/licence-free.yml` installs the
+  package on a clean Ubuntu runner, *uninstalls gurobipy*, proves it is gone, and runs the
+  suite -- 61 of 100 tests need no solver, including the central claim. What remains
+  exempt is **solving**: Gurobi's licence here is academic and node-locked, expiring
+  2026-12-04; the per-run solves are 178 variables and fit the size-limited licence that
+  ships with `pip install gurobipy`, but the two joint models are 176k and 704k variables
+  and do not. **Do not repeat the inherited claim that HiGHS lifts this** -- HiGHS does
+  convex quadratic objectives, this model has a quadratic constraint, and nobody has
+  checked. See section 10 of `docs/reproduction-notes.md` for two routes that do work on
+  the mathematics.
+
+  The exemption said "not possible as things stand", which was true of the *whole* suite
+  and was then read as covering all of it. A licence blocks the solving; it never blocked
+  checking.
 - **Part 6, the published path.** This repository is run from a checkout, not a wheel — it
   needs the committed inputs and a licence. `config.repo_root()` says so loudly rather
   than returning a path that is only right on the machine that built it.

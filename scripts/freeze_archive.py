@@ -1,7 +1,19 @@
-"""Record, and check, that nothing in `archive/` has changed.
+"""Record, and check, that nothing which must not change has changed.
 
-    python scripts/freeze_archive.py            # write archive/MANIFEST.sha256
-    python scripts/freeze_archive.py --check    # verify it
+    python scripts/freeze_archive.py            # write both MANIFEST.sha256
+    python scripts/freeze_archive.py --check    # verify them
+
+Two trees, two reasons:
+
+    archive/    Archetype P -- the original is preserved verbatim
+    data/raw/   invariant 4 -- inputs are immutable; no stage writes back
+
+`data/raw/` was added on 2026-09-13. The rule had been stated in prose and
+in `markov.simulate`, which says an input a later stage can overwrite is not
+an input -- and asserted nowhere. The two committed precipitation files are
+what every number in Tables 4 and 5 follows from, and they could have
+changed without a test noticing. The script keeps its name because the
+archive freeze is what most references point at.
 
 Archetype P: the original is preserved verbatim, never edited, never maintained,
 and **a test fails if an archived file changes**. This is that test's instrument.
@@ -37,14 +49,41 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ARCHIVE = ROOT / "archive"
-MANIFEST = ARCHIVE / "MANIFEST.sha256"
+
+# Two trees must not change, for two different reasons, and both are invariants
+# rather than preferences.
+#
+#   archive/   invariant: the original is preserved verbatim (Archetype P)
+#   data/raw/  invariant 4: inputs are immutable -- no stage writes back to them
+#
+# `data/raw/` was unfrozen until 2026-09-13. The rule was stated in prose and in
+# `markov.simulate`'s docstring ("an input a later stage can overwrite is not an
+# input") and asserted nowhere, so the two committed precipitation files -- from
+# which every number in the paper's Tables 4 and 5 follows -- could have changed
+# without a single test noticing.
+FROZEN = (
+    ("archive", ROOT / "archive"),
+    ("data/raw", ROOT / "data" / "raw"),
+)
+
+_WHY = {
+    "archive": [
+        "# archive/ is the code that produced the published result. It is preserved",
+        "# verbatim and never maintained: corrections go into src/fews_stochopt/,",
+        "# and the divergence is recorded in docs/reproduction-notes.md.",
+    ],
+    "data/raw": [
+        "# data/raw/ is the input of record. Every number in the paper's Tables 4",
+        "# and 5 follows from these draws, and no stage may write back to them --",
+        "# markov.simulate writes regenerated draws to results/regenerated/ instead.",
+    ],
+}
 
 
-def files() -> list[Path]:
+def files(root: Path) -> list[Path]:
     return sorted(
-        p for p in ARCHIVE.rglob("*")
-        if p.is_file() and p.name != MANIFEST.name
+        p for p in root.rglob("*")
+        if p.is_file() and p.name != "MANIFEST.sha256"
     )
 
 
@@ -56,24 +95,59 @@ def digest(path: Path) -> str:
     return h.hexdigest()
 
 
-def build() -> str:
-    entries = files()
+def build(label: str, root: Path) -> str:
+    entries = files(root)
     if not entries:
-        raise SystemExit("archive/ is empty; there is nothing to freeze")
+        raise SystemExit(f"{label}/ is empty; there is nothing to freeze")
     lines = [
-        "# sha256 over RAW BYTES of every file in archive/.",
+        f"# sha256 over RAW BYTES of every file in {label}/.",
         "# A CRLF-normalised hash of the same file differs; this is the raw one.",
         "#",
-        "# archive/ is the code that produced the published result. It is preserved",
-        "# verbatim and never maintained: corrections go into src/fews_stochopt/,",
-        "# and the divergence is recorded in docs/reproduction-notes.md.",
+        *_WHY[label],
         "#",
         f"# {len(entries)} files",
         "",
     ]
-    for p in entries:
-        lines.append(f"{digest(p)}  {p.relative_to(ROOT).as_posix()}")
-    return "\n".join(lines) + "\n"
+    for path in entries:
+        lines.append(f"{digest(path)}  {path.relative_to(ROOT).as_posix()}")
+    return chr(10).join(lines) + chr(10)
+
+
+def _parse(text: str) -> dict[str, str]:
+    return {
+        ln.split("  ", 1)[1]: ln.split("  ", 1)[0]
+        for ln in text.splitlines()
+        if ln and not ln.startswith("#")
+    }
+
+
+def _report(label: str, recorded: str, current: str) -> None:
+    was, now = _parse(recorded), _parse(current)
+    changed = sorted(k for k in was.keys() & now.keys() if was[k] != now[k])
+    removed = sorted(was.keys() - now.keys())
+    added = sorted(now.keys() - was.keys())
+    print(f"{label}/ has changed, and it must not:", file=sys.stderr)
+    for k in changed:
+        print(f"  MODIFIED {k}", file=sys.stderr)
+    for k in removed:
+        print(f"  REMOVED  {k}", file=sys.stderr)
+    for k in added:
+        print(f"  ADDED    {k}", file=sys.stderr)
+    if label == "archive":
+        why = (
+            "The archive is the evidence of what produced the published numbers. "
+            "If a change is genuinely intended -- adding a newly found original, "
+            "say -- re-run without --check and say why in the commit."
+        )
+    else:
+        why = (
+            "data/raw/ is the input of record: every number in Tables 4 and 5 "
+            "follows from it. If a stage wrote back to it, that is the defect -- "
+            "fix the stage. If the input genuinely changed, the published "
+            "comparison no longer means what it says, so say why in the commit."
+        )
+    print("", file=sys.stderr)
+    print(why, file=sys.stderr)
 
 
 def main(argv=None) -> int:
@@ -81,45 +155,32 @@ def main(argv=None) -> int:
     ap.add_argument("--check", action="store_true")
     args = ap.parse_args(argv)
 
-    current = build()
-    if not args.check:
-        MANIFEST.write_text(current, encoding="utf-8")
-        print(f"froze {len(files())} archived files into {MANIFEST.relative_to(ROOT)}")
-        return 0
+    failed = 0
+    for label, root in FROZEN:
+        if not root.is_dir():
+            print(f"{label}/ does not exist", file=sys.stderr)
+            return 1
+        manifest = root / "MANIFEST.sha256"
+        current = build(label, root)
 
-    if not MANIFEST.exists():
-        print(f"{MANIFEST} is missing; run without --check", file=sys.stderr)
-        return 1
-    recorded = MANIFEST.read_text(encoding="utf-8")
-    if recorded == current:
-        print(f"archive unchanged: {len(files())} files")
-        return 0
+        if not args.check:
+            manifest.write_text(current, encoding="utf-8")
+            print(f"froze {len(files(root))} files into "
+                  f"{manifest.relative_to(ROOT).as_posix()}")
+            continue
 
-    def parse(text):
-        return {
-            ln.split("  ", 1)[1]: ln.split("  ", 1)[0]
-            for ln in text.splitlines()
-            if ln and not ln.startswith("#")
-        }
+        if not manifest.exists():
+            print(f"{manifest} is missing; run without --check", file=sys.stderr)
+            failed = 1
+            continue
+        recorded = manifest.read_text(encoding="utf-8")
+        if recorded == current:
+            print(f"{label} unchanged: {len(files(root))} files")
+            continue
+        _report(label, recorded, current)
+        failed = 1
 
-    was, now = parse(recorded), parse(current)
-    changed = sorted(k for k in was.keys() & now.keys() if was[k] != now[k])
-    removed = sorted(was.keys() - now.keys())
-    added = sorted(now.keys() - was.keys())
-    print("archive/ has changed, and it must not:", file=sys.stderr)
-    for k in changed:
-        print(f"  MODIFIED {k}", file=sys.stderr)
-    for k in removed:
-        print(f"  REMOVED  {k}", file=sys.stderr)
-    for k in added:
-        print(f"  ADDED    {k}", file=sys.stderr)
-    print(
-        "\nThe archive is the evidence of what produced the published numbers. "
-        "If a change is genuinely intended -- adding a newly found original, say "
-        "-- re-run without --check and say why in the commit.",
-        file=sys.stderr,
-    )
-    return 1
+    return failed
 
 
 if __name__ == "__main__":

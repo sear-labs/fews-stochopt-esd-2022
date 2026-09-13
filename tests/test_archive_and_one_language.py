@@ -134,3 +134,90 @@ def test_figures_read_cleaned_output_and_never_raw():
             f"results/clean/ only."
         )
     assert "clean_dir" in source, "make_figures.py does not read cleaned output"
+
+
+def test_the_raw_inputs_are_frozen():
+    """Invariant 4: inputs are immutable, and no stage writes back to them.
+
+    That rule was stated in prose and in `markov.simulate`'s docstring -- *an
+    input a later stage can overwrite is not an input* -- and asserted nowhere
+    until 2026-09-13. `data/raw/precips_c0_{EP,DML}.csv` are 4,000 sequences of
+    25 years each, and **every number in the paper's Tables 4 and 5 follows from
+    them**. They could have been overwritten by a regeneration, edited by hand,
+    or silently line-ending-converted, and the only symptom would have been that
+    the reproduction quietly started comparing against something else.
+
+    The solve cache would have noticed something -- `.meta.json` carries
+    `input_sha256`, so a change invalidates it and forces a re-solve -- but a
+    re-solve is what the cache does when anything changes. It would have produced
+    new numbers, not a complaint.
+
+    `scripts/freeze_archive.py --check` now covers both trees. Shown to fail by
+    appending one byte to a committed input.
+    """
+    proc = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "freeze_archive.py"), "--check"],
+        cwd=str(ROOT), capture_output=True, text=True,
+    )
+    assert proc.returncode == 0, (
+        f"a frozen tree has changed\n"
+        f"--- stdout ---\n{proc.stdout}\n--- stderr ---\n{proc.stderr}"
+    )
+    assert "data/raw unchanged" in proc.stdout, (
+        f"the freeze did not report on data/raw, so it may not be covering it:\n"
+        f"{proc.stdout}"
+    )
+
+
+def test_the_freeze_covers_every_committed_input():
+    """Guards against the check above passing over an empty or partial manifest.
+
+    The same failure the archive freeze guards against: a manifest that lists
+    nothing passes its own check forever.
+    """
+    raw = ROOT / "data" / "raw"
+    manifest = raw / "MANIFEST.sha256"
+    assert manifest.exists(), "data/raw/MANIFEST.sha256 is missing"
+
+    listed = {
+        line.split("  ", 1)[1]
+        for line in manifest.read_text(encoding="utf-8").splitlines()
+        if line and not line.startswith("#")
+    }
+    on_disk = {
+        p.relative_to(ROOT).as_posix()
+        for p in raw.rglob("*")
+        if p.is_file() and p.name != "MANIFEST.sha256"
+    }
+    assert listed == on_disk, (
+        f"the input manifest does not match what is in data/raw/.\n"
+        f"  listed but absent: {sorted(listed - on_disk)}\n"
+        f"  present but unlisted: {sorted(on_disk - listed)}"
+    )
+    assert len(on_disk) >= 2, f"expected at least the two precipitation files, found {on_disk}"
+
+
+def test_no_stage_writes_into_the_raw_inputs():
+    """The other half of invariant 4, checked in the source rather than by running.
+
+    A freeze catches a write after it happens. This catches the code that would
+    do it: nothing outside the archive may open a path under `data/raw/` for
+    writing, and `markov.simulate` in particular must write regenerated draws to
+    `results/regenerated/`.
+    """
+    suspicious = []
+    for path in sorted((ROOT / "src").rglob("*.py")) + sorted((ROOT / "scripts").rglob("*.py")):
+        text = path.read_text(encoding="utf-8")
+        for number, line in enumerate(text.splitlines(), 1):
+            if "data/raw" not in line and "data\\raw" not in line:
+                continue
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                continue
+            if any(verb in line for verb in ("to_csv", "write_text", "write_bytes",
+                                             'open(', "unlink", "rmtree", "rename")):
+                suspicious.append(f"{path.relative_to(ROOT).as_posix()}:{number}: {stripped}")
+    assert not suspicious, (
+        "a stage appears to write into data/raw/, which is the input of record:\n"
+        + "\n".join(suspicious)
+    )

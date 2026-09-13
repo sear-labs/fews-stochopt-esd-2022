@@ -1,6 +1,9 @@
 # fews-stochopt
 
 [![Check the paper in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/sear-labs/fews-stochopt-esd-2022/blob/main/notebooks/00_verification.ipynb)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22715616.svg)](https://doi.org/10.5281/zenodo.22715616)
+[![licence-free checks](https://github.com/sear-labs/fews-stochopt-esd-2022/actions/workflows/licence-free.yml/badge.svg)](https://github.com/sear-labs/fews-stochopt-esd-2022/actions/workflows/licence-free.yml)
+
 &nbsp;*no solver, no licence — checks the published result with arithmetic alone*
 
 Stochastic programming model for climate risk management in agriculture — the food–energy–water
