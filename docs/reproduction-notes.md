@@ -1433,3 +1433,71 @@ uncompressed bytes. A path inside a zlib-compressed PDF stream or a `zTXt` chunk
 would not be found by it. That case was checked separately with a decompressing
 scanner, probed the same way, and is clean today -- but it is not what the suite
 enforces.
+
+## 25. What the first clean machine found
+
+Invariant 6 had been exempted here as "not possible as things stand" -- Gurobi's
+licence is node-locked, so CI could not run. That was true of *solving* and was
+then read as covering the whole suite. **A licence blocks solving; it never
+blocked checking.** Since the scenario names moved out of `model.py` (section
+20), 61 of 100 tests need no solver at all, so a clean-machine job became
+possible without lifting anything.
+
+`.github/workflows/licence-free.yml` installs the package on an Ubuntu runner,
+**uninstalls gurobipy**, proves it is gone, and runs the suite. Five runs to
+green, and it found four defects in four runs. All four were invisible here.
+
+### 1. jinja2 was undeclared
+
+pandas' `.style` accessor is optional and requires jinja2. Both notebooks render
+a styled table, so executing them on a clean machine fails with
+`AttributeError: The '.style' accessor requires jinja2`. Anaconda supplies jinja2
+here, so it never surfaced -- and `test_dependencies_declared.py` could not see it
+either, because that test parses **imports** and `.style` is an attribute access.
+
+### 2. The archive freeze could not have passed on any non-Windows clone
+
+The first run failed the freeze while **naming no changed file**. Its report only
+diffs hash lines, so a header-level difference printed "has changed" and listed
+nothing, which is useless from a log. Adding a unified-diff fallback showed it:
+every hash identical, eight lines moved.
+
+`files()` sorted `Path` objects, and `PurePath.__lt__` compares a **case-folded**
+string on Windows and raw characters on POSIX. So `FEWS_Farm_model.py` sorts
+after `FarmModelStoch_*` on one platform and before it on the other, and a
+manifest compared as text fails on order alone.
+
+**Verifying the archive is one of this repository's stated guarantees, and it was
+available only on the machine that wrote the manifest.** Nothing was wrong with
+the archive; the instrument was not portable. Sorting by `p.as_posix()` is the
+same everywhere, and a test now asserts the recorded order *is* that order.
+
+### 3 and 4. Rendered images are not comparable across machines, twice over
+
+The committed notebook PNGs differ on a runner because **matplotlib stamps its
+own version into the PNG** -- 3.10.6 committed, 3.11.2 on the runner -- and font
+rasterisation differs by platform regardless.
+
+Comparing **pixel dimensions** instead was the obvious fix and CI rejected that
+too: `1388x586` against `1389x587`, `976x643` against `979x644`. The tight
+bounding box is computed from font metrics, so it moves wherever the fonts do.
+
+Images are now compared by **presence**. The weakening is confined to one channel
+and written where it happens, because this file has already shipped the other
+version of that mistake -- a comparison that quietly skipped the channel carrying
+the result and passed while blind (section 22). Every channel is still read, the
+stream output beside each image still names its file exactly, and
+`test_the_committed_figures_are_what_the_script_draws` still compares figure
+bytes on the machine that maintains them.
+
+### The general shape
+
+Two of the four are the same failure as the licence-free clone work in sections
+23 and 24 -- **a check that passes only on the machine that wrote it** -- and
+this time nobody had to think of them. A clean machine produces that category
+automatically and continuously, which is the argument for invariant 6 over any
+amount of care.
+
+It also cost five pushes to converge, each one a real defect rather than a
+flaky retry. Worth saying because a job that goes green on the first run has
+usually tested less than it looks like it has.

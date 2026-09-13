@@ -107,6 +107,8 @@ measurements.
 | The solver-free test modules stay importable without a solver | `test_the_licence_free_test_modules_still_import_without_a_solver` |
 | The archive must never change | `test_the_archive_is_frozen` |
 | No maintained code in a second language | `test_no_maintained_code_is_in_another_language` |
+| The input of record never changes, and no stage writes to it | `test_the_raw_inputs_are_frozen`, `test_no_stage_writes_into_the_raw_inputs` |
+| Both manifests are ordered the same way on every platform | `test_the_manifests_are_ordered_the_same_way_on_every_platform` |
 | The verification notebook must not need a solver | `test_the_verification_notebook_needs_no_solver` |
 
 ## Exemptions from the invariants
