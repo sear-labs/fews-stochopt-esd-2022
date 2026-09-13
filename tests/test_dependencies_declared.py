@@ -24,6 +24,8 @@ turns this red, naming the module and the file. See `docs/reproduction-notes.md`
 from __future__ import annotations
 
 import ast
+import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -112,4 +114,69 @@ def test_every_import_is_declared_or_standard_library():
         "imported but not declared in pyproject.toml: "
         + ", ".join(f"{m} ({f})" for m, f in undeclared)
         + ". Either add it to [project] dependencies or remove the import."
+    )
+
+
+# ---------------------------------------------------------------------------
+# The version is declared in three places and was checked in none.
+# ---------------------------------------------------------------------------
+
+VERSION_SOURCES = {
+    "pyproject.toml": r'^version\s*=\s*"([^"]+)"',
+    "CITATION.cff": r"^version:\s*(\S+)",
+    "src/fews_stochopt/__init__.py": r'^__version__\s*=\s*"([^"]+)"',
+}
+
+
+def _declared():
+    found = {}
+    for name, pattern in VERSION_SOURCES.items():
+        text = (ROOT / name).read_text(encoding="utf-8")
+        match = re.search(pattern, text, re.M)
+        assert match, f"{name} declares no version matching {pattern!r}"
+        found[name] = match.group(1)
+    return found
+
+
+def test_the_declared_versions_agree():
+    """Three files carry the version and nothing compared them.
+
+    `pyproject.toml`, `CITATION.cff` and `fews_stochopt.__version__`. A release
+    is tagged from whatever these say, the citation metadata is what Zenodo
+    archives, and `__version__` is what a provenance stamp records -- so a
+    disagreement publishes a DOI whose metadata contradicts the package it
+    describes, and nothing here would have objected.
+
+    Found while cutting v1.0.1, by noticing all three had to be edited by hand.
+    """
+    declared = _declared()
+    assert len(set(declared.values())) == 1, (
+        f"the declared versions disagree: {declared}"
+    )
+
+
+def test_the_version_matches_the_tag_when_there_is_one():
+    """If HEAD is tagged, the tag and the metadata must be the same release.
+
+    Skips when HEAD is not tagged, which is the normal state between releases --
+    the check exists for the commit that becomes a release, where getting it
+    wrong is permanent: Zenodo archives the metadata as it stands.
+    """
+    proc = subprocess.run(
+        ["git", "tag", "--points-at", "HEAD"],
+        cwd=str(ROOT), capture_output=True, text=True,
+    )
+    if proc.returncode != 0:
+        pytest.skip("git is unavailable")
+    tags = [t.strip() for t in proc.stdout.split() if t.strip()]
+    version_tags = [t for t in tags if re.fullmatch(r"v\d+\.\d+\.\d+", t)]
+    if not version_tags:
+        pytest.skip("HEAD carries no version tag")
+
+    declared = set(_declared().values())
+    assert len(declared) == 1, f"declared versions disagree: {_declared()}"
+    version = declared.pop()
+    assert version_tags == [f"v{version}"], (
+        f"HEAD is tagged {version_tags} but the metadata says {version}. "
+        f"A release archived under the wrong version cannot be corrected."
     )

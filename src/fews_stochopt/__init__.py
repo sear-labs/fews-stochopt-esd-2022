@@ -26,7 +26,7 @@ from __future__ import annotations
 import importlib
 from typing import TYPE_CHECKING
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 # name -> module it lives in. Resolved on first attribute access, so a name that
 # needs a solver costs nothing until somebody asks for it.

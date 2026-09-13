@@ -4,7 +4,7 @@ cff-version: 1.2.0
 doi: 10.5281/zenodo.22715616
 message: "If you use this software, please cite the paper."
 title: "fews-stochopt: stochastic FEWS farm model for agricultural climate risk"
-version: 1.0.0
+version: 1.0.1
 license: MIT
 # The code is MIT. The committed data -- data/raw/, reference/,
 # results/*.csv, results/clean/ and figures/ -- is CC-BY-4.0; see
