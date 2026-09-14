@@ -17,6 +17,7 @@ goes in the Python and the divergence is recorded.
 """
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -257,3 +258,70 @@ def test_the_manifests_are_ordered_the_same_way_on_every_platform():
             f"  first out of order: "
             f"{next(b for a, b in zip(sorted(listed), listed) if a != b)}"
         )
+
+
+# The archive is exempt from the tree-wide machine-path sweep. An exemption with
+# no limit is a hole, so this bounds it: the archive may contain the original
+# author's historical local paths, and must not contain anything more
+# identifying than that.
+#
+# Six archived files carry a Windows home path naming the author's surname --
+# written here as a placeholder, `C:\Users\<author>\...`, because
+# test_no_committed_file_carries_a_machine_path sweeps this file too, and it is
+# right to: documenting an exemption must not create the thing it documents.
+# Three superseded notebooks,
+# two superseded .Rmd files, and archive/stage1-python/README.md. Leaving them is
+# a decision recorded in README.md: scrubbing would edit archived originals and
+# invalidate the manifest, which is the one property the archive exists to have,
+# and `Jones` is the surname of the paper's named author.
+#
+# `jonesec` is different -- it is the GitHub account username, and it is what
+# leaked from two sibling repositories. It has no business in this one.
+_ARCHIVE_ALLOWED_USER = "Jones"
+_ARCHIVE_FORBIDDEN_USERS = ("jonesec",)
+
+
+def test_the_archive_contains_no_account_username():
+    """Bound the archive's exemption from the machine-path sweep.
+
+    Backslashes built with chr(92): a Windows path in a non-raw Python string
+    makes `\\U` an escape, which has broken five separate edits in this
+    repository's history and cost a whole conformance pass once.
+    """
+    backslash = chr(92)
+    pattern = re.compile(
+        "[A-Za-z]:" + backslash + backslash + "+Users" + backslash + backslash
+        + "+([A-Za-z0-9_.-]+)"
+    )
+
+    archive = ROOT / "archive"
+    assert archive.is_dir(), "archive/ is missing"
+
+    seen, offenders = set(), {}
+    scanned = 0
+    for path in sorted(archive.rglob("*"), key=lambda p: p.as_posix()):
+        if not path.is_file():
+            continue
+        scanned += 1
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for user in pattern.findall(text):
+            seen.add(user)
+            if user in _ARCHIVE_FORBIDDEN_USERS:
+                offenders.setdefault(path.relative_to(ROOT).as_posix(), set()).add(user)
+
+    assert scanned > 30, f"only {scanned} archived files scanned; the sweep is not running"
+    assert not offenders, (
+        f"an archived file names the account username, which the archive's "
+        f"exemption does not cover: { {k: sorted(v) for k, v in offenders.items()} }"
+    )
+    unexpected = seen - {_ARCHIVE_ALLOWED_USER}
+    assert not unexpected, (
+        f"archived files name user(s) {sorted(unexpected)}, beyond the recorded "
+        f"exemption for {_ARCHIVE_ALLOWED_USER!r}. Either the archive gained a "
+        f"file it should not have, or the decision in README.md needs revisiting."
+    )
+    assert _ARCHIVE_ALLOWED_USER in seen, (
+        f"no archived file names {_ARCHIVE_ALLOWED_USER!r} any more. If the "
+        f"archive was scrubbed, the freeze is broken; if it was rebuilt, this "
+        f"exemption and the note in README.md are stale and should go."
+    )

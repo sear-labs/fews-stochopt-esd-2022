@@ -130,6 +130,21 @@ it is the only evidence of what made the numbers. Archived is also not maintaine
 into the Python and the divergence is recorded. `scripts/freeze_archive.py --check` fails if any
 archived byte changes, and `tests/test_archive_and_one_language.py` runs it.
 
+**Six archived files contain the original author's local Windows paths**, of the form
+`C:\Users\<author>\...`, in three superseded notebooks, two superseded `.Rmd`
+files and `archive/stage1-python/README.md`. That is a decision, not an oversight.
+Scrubbing them would edit archived originals and invalidate the manifest, breaking the
+one property the archive exists to have -- and the path names the paper's author, who
+is named on the paper. It is the author's surname, not the account username.
+(The form is written with a placeholder above because the tree-wide sweep below
+correctly rejects a literal one -- documenting the exemption must not create the
+thing it documents.)
+
+Nothing outside `archive/` carries a machine path, enforced over the whole tree by
+`test_no_committed_file_carries_a_machine_path`. The archive is exempt from that sweep,
+and `test_the_archive_contains_no_account_username` bounds the exemption: the archive
+may hold the author's historical paths and must not hold anything more identifying.
+
 ## The one figure that does not reproduce
 
 Dry Most Likely / Expected Value comes back $24.05 low. The expected-value farm invests against a
