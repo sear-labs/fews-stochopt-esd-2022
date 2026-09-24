@@ -145,6 +145,29 @@ Nothing outside `archive/` carries a machine path, enforced over the whole tree 
 and `test_the_archive_contains_no_account_username` bounds the exemption: the archive
 may hold the author's historical paths and must not hold anything more identifying.
 
+**"Verbatim" is true of content, and not literally of bytes.** `archive/README.md` says
+the originals are preserved verbatim and `MANIFEST.sha256` hashes raw bytes, which is
+exactly right about what the freeze *enforces* from the moment of freezing. It is slightly
+wider than what happened on the way in: git converted LF to CRLF when these files were
+first committed on Windows, so the archived bytes differ from the source repository's by
+line endings. The content does not differ. Measured against
+`yamierick/gradschool-research-code`, the two stage-1 notebooks are identical as parsed
+JSON and identical after normalising line endings.
+
+This is recorded here rather than in `archive/README.md` because that file is itself inside
+the frozen manifest, so correcting the claim in place would break the property the claim is
+about.
+
+**A related correction, recorded because the evidence is counter-intuitive.**
+`FarmModelStoch_EV_loop.ipynb` and `FarmModelStoch_PI_loop.ipynb` carry **one and zero**
+output cells, while the six superseded variants beside them carry nine to thirteen. That
+pattern reads as though the two canonical notebooks were stripped before archiving. **They
+were not.** The grad-school source has the same one and zero, and they entered this
+repository at those counts in its first commit. The published run's notebooks were simply
+never saved with their outputs — which is part of why `reference/` exists, and why the
+reproduction is checked against the paper's tables rather than against the notebooks'
+own output.
+
 ## The one figure that does not reproduce
 
 Dry Most Likely / Expected Value comes back $24.05 low. The expected-value farm invests against a
